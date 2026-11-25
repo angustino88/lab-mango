@@ -52,6 +52,9 @@ class MappingStationSerializer(serializers.Serializer):
     name = serializers.CharField(allow_blank=True)
     room_id = serializers.IntegerField(allow_null=True)
     slot_id = serializers.IntegerField(allow_null=True)
+    visual_model_id = serializers.IntegerField(
+        allow_null=True, required=False, help_text="3D library model shown for this resource, after catalog defaults."
+    )
 
 
 @embedded_resource
@@ -60,6 +63,7 @@ class MappingStationSlotSerializer(serializers.Serializer):
     station_id = serializers.IntegerField()
     position_index = serializers.IntegerField()
     slot_code = serializers.CharField()
+
     def get_fields(self):
         fields = super().get_fields()
         fields["label"] = serializers.CharField(allow_blank=True)
@@ -74,6 +78,9 @@ class MappingBenchSerializer(serializers.Serializer):
     name = serializers.CharField(allow_blank=True)
     setup_location_id = serializers.IntegerField(allow_null=True)
     station_slot_id = serializers.IntegerField(allow_null=True)
+    visual_model_id = serializers.IntegerField(
+        allow_null=True, required=False, help_text="3D library model shown for this resource, after catalog defaults."
+    )
 
 
 class MappingEquipmentCategorySerializer(serializers.Serializer):
@@ -105,6 +112,9 @@ class MappingEquipmentSerializer(serializers.Serializer):
     product_model = MappingEquipmentCategorySerializer(allow_null=True, required=False)
     bench_id = serializers.IntegerField(allow_null=True)
     bench_assignment = MappingEquipmentAssignmentSerializer(allow_null=True)
+    visual_model_id = serializers.IntegerField(
+        allow_null=True, required=False, help_text="3D library model shown for this resource, after catalog defaults."
+    )
 
 
 @embedded_resource

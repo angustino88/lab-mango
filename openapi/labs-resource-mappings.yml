@@ -519,6 +519,10 @@ components:
         station_slot_id:
           type: integer
           nullable: true
+        visual_model_id:
+          type: integer
+          nullable: true
+          description: 3D library model shown for this resource, after catalog defaults.
       required:
       - id
       - name
@@ -554,6 +558,10 @@ components:
           allOf:
           - $ref: '#/components/schemas/MappingEquipmentAssignment'
           nullable: true
+        visual_model_id:
+          type: integer
+          nullable: true
+          description: 3D library model shown for this resource, after catalog defaults.
       required:
       - bench_assignment
       - bench_id
@@ -749,6 +757,10 @@ components:
         slot_id:
           type: integer
           nullable: true
+        visual_model_id:
+          type: integer
+          nullable: true
+          description: 3D library model shown for this resource, after catalog defaults.
       required:
       - id
       - name

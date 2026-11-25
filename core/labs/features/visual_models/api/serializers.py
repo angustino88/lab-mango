@@ -5,7 +5,7 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from core.infrastructure.storage.urls import get_media_url
-from core.labs.models.visual_models import VisualModelAsset, VisualModelAssignment
+from core.labs.models.visual_models import VisualModelAsset
 
 from ..validation import MAX_BYTES
 
@@ -13,7 +13,7 @@ from ..validation import MAX_BYTES
 class AssetSerializer(serializers.ModelSerializer):
     url = serializers.SerializerMethodField()
     source_url = serializers.CharField(read_only=True, allow_blank=True)
-    usage_count = serializers.IntegerField(read_only=True, help_text="Resources and types assigned to this model.")
+    usage_count = serializers.IntegerField(read_only=True, help_text="Resources and catalog types using this model.")
 
     class Meta:
         model = VisualModelAsset
@@ -36,23 +36,18 @@ class AssetSerializer(serializers.ModelSerializer):
         return get_media_url(obj.file, request=self.context.get("request")) or ""
 
 
-class AssignmentSerializer(serializers.ModelSerializer):
-    asset_id = serializers.IntegerField(read_only=True)
-
-    class Meta:
-        model = VisualModelAssignment
-        fields = (
-            "scope",
-            "target_key",
-            "asset_id",
-            "rotation",
-            "scale",
-            "offset_x",
-            "offset_y",
-            "offset_z",
-            "version",
-            "updated_at",
-        )
+class SelectionSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField(allow_blank=True)
+    visual_model_id = serializers.IntegerField(allow_null=True, help_text="Model stored on this resource.")
+    effective_visual_model_id = serializers.IntegerField(
+        allow_null=True, help_text="Model shown on the 3D dashboard after inheriting catalog defaults."
+    )
+    origin = serializers.CharField(
+        allow_null=True,
+        help_text="'own', or the catalog the shown model is inherited from (station_type, product_model, "
+        "equipment_category); null when no model applies.",
+    )
 
 
 @extend_schema_field(OpenApiTypes.BINARY)
@@ -77,13 +72,10 @@ class AssetUploadSerializer(AssetDetailsSerializer):
         return value
 
 
-class AssignmentWriteSerializer(serializers.Serializer):
-    asset_id = serializers.IntegerField(min_value=1)
-    rotation = serializers.FloatField(min_value=-360, max_value=360, default=0)
-    scale = serializers.FloatField(min_value=0.01, max_value=2, default=1)
-    offset_x = serializers.FloatField(min_value=-1, max_value=1, default=0)
-    offset_y = serializers.FloatField(min_value=-1, max_value=1, default=0)
-    offset_z = serializers.FloatField(min_value=-1, max_value=1, default=0)
+class SelectionWriteSerializer(serializers.Serializer):
+    visual_model_id = serializers.IntegerField(
+        min_value=1, allow_null=True, help_text="Library model to show, or null to inherit or show none."
+    )
 
 
 def multipart_model_data(data, serializer_class=AssetUploadSerializer):

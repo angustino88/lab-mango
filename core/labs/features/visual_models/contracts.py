@@ -9,7 +9,7 @@ class ModelStorage(Protocol):
 
 @dataclass(frozen=True)
 class AssetDetails:
-    """Editable library metadata and the model-intrinsic placement defaults."""
+    """Editable library metadata and the model's placement."""
 
     name: str
     source_url: str = ""
@@ -19,12 +19,11 @@ class AssetDetails:
 
 
 @dataclass(frozen=True)
-class AssignmentFit:
-    """Per-resource fitting applied on top of the asset's own placement."""
+class ModelSelection:
+    """The model a resource stores and the one it shows after inheriting catalog defaults."""
 
-    asset_id: int
-    rotation: float = 0
-    scale: float = 1
-    offset_x: float = 0
-    offset_y: float = 0
-    offset_z: float = 0
+    id: int
+    name: str
+    visual_model_id: int | None
+    effective_visual_model_id: int | None
+    origin: str | None  # "own", the catalog it is inherited from (e.g. "station_type"), or None when none applies

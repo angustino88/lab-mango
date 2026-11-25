@@ -27,6 +27,7 @@ from core.labs.features.locations.public import (
     station_mapping_rows,
     station_slot_mapping_rows,
 )
+from core.labs.features.visual_models.public import effective_visual_models
 
 COLLECTIONS = (
     "rooms",
@@ -256,6 +257,7 @@ def get_resource_mapping(
         )
         data[collection] = [_shape_row(collection, row) for row in rows]
         pagination[collection] = page_meta
+    _attach_visual_models(data)
 
     return {"data": data, "meta": {"pagination": pagination}}
 
@@ -317,7 +319,16 @@ def list_bench_mappings(
         "license_assignments": license_assignments,
     }
     data = {collection: [_shape_row(collection, row) for row in rows[collection]] for collection in COLLECTIONS}
+    _attach_visual_models(data)
     return {"data": data, "count": count, "summary": summary}
+
+
+def _attach_visual_models(data: dict[str, list[dict[str, Any]]]) -> None:
+    """Add the 3D model each resource shows, after inheriting catalog defaults; one query per collection."""
+    for collection in ("stations", "benches", "equipment"):
+        shown = effective_visual_models(collection, [row["id"] for row in data[collection]])
+        for row in data[collection]:
+            row["visual_model_id"] = shown.get(row["id"])
 
 
 def _shape_row(collection: str, row: Any) -> dict[str, Any]:

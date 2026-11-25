@@ -8,18 +8,19 @@ from core.common.api.pagination import PageNumberQuerySerializer
 from core.common.api.strict_json import StrictObjectJSONParser
 from core.labs.features.base.common import FeatureAPIView
 
-from ..application import assign_model, delete_asset, unassign_model, update_asset, upload_asset
+from ..application import delete_asset, select_visual_model, update_asset, upload_asset
 from ..application.adapters import DjangoModelStorage
-from ..contracts import AssetDetails, AssignmentFit
+from ..contracts import AssetDetails
 from ..exceptions import AssetInUse, InvalidModel, ModelConflict, ModelNotFound
-from ..queries import get_asset, list_assets, list_assignments
-from .preconditions import CREATE_OR_VERSION_PRECONDITIONS, VERSION_PRECONDITIONS, expected_version
+from ..queries import get_asset, get_selection, list_assets, list_selections
+from ..targets import TARGETS
+from .preconditions import VERSION_PRECONDITIONS, expected_version
 from .serializers import (
     AssetDetailsSerializer,
     AssetSerializer,
     AssetUploadSerializer,
-    AssignmentSerializer,
-    AssignmentWriteSerializer,
+    SelectionSerializer,
+    SelectionWriteSerializer,
     multipart_model_data,
 )
 from .uploads import ModelSizeLimit
@@ -136,73 +137,63 @@ class AssetDetailView(FeatureAPIView):
         except ModelConflict:
             return self.respond_problem("precondition_failed", detail=STALE)
         except AssetInUse as exc:
-            return self.respond_problem("conflict", detail=f"{exc} Remove those assignments first.")
+            return self.respond_problem("conflict", detail=f"{exc} Choose another model for them first.")
         return Response(status=204)
 
 
-class AssignmentListView(AppListAPIView, FeatureAPIView):
+class SelectionListView(AppListAPIView, FeatureAPIView):
     schema_tags = ("Visual Models",)
     get_contract = OperationContract(
         query=PageNumberQuerySerializer,
         bad_request=ResponseContract.bad_request(),
-        success=ResponseContract.paginated("VisualModelAssignmentList", AssignmentSerializer),
+        not_found=ResponseContract.not_found(),
+        success=ResponseContract.paginated("VisualModelSelectionList", SelectionSerializer),
     )
 
-    def handle_get(self, request, **kwargs):
+    def handle_get(self, request, segment, **kwargs):
+        """Resources of one kind with their stored and shown model, e.g. the catalog defaults."""
+        if segment not in TARGETS:
+            return self.respond_problem("not_found", detail="This resource kind has no 3D model.")
         _, error = self.validate_query()
-        return error if error is not None else self.list_response_sync(list_assignments())
+        return error if error is not None else self.list_response_sync(list_selections(segment))
 
 
-class AssignmentDetailView(FeatureAPIView):
+class SelectionDetailView(FeatureAPIView):
     schema_tags = ("Visual Models",)
     parser_classes = [StrictObjectJSONParser]
-    put_contract = OperationContract(
-        request=AssignmentWriteSerializer,
+    get_contract = OperationContract(
         bad_request=ResponseContract.bad_request(),
-        success=ResponseContract.success("VisualModelAssignment", AssignmentSerializer),
-        validation_error=ResponseContract.problem(422),
-        precondition_failed=ResponseContract.problem(412),
-        precondition_required=ResponseContract.problem(428),
-        parameters=CREATE_OR_VERSION_PRECONDITIONS,
-    )
-    delete_contract = OperationContract(
-        bad_request=ResponseContract.bad_request(),
-        success=ResponseContract.no_content(),
         not_found=ResponseContract.not_found(),
-        precondition_failed=ResponseContract.problem(412),
-        precondition_required=ResponseContract.problem(428),
-        parameters=VERSION_PRECONDITIONS,
+        success=ResponseContract.success("VisualModelSelection", SelectionSerializer),
+    )
+    put_contract = OperationContract(
+        request=SelectionWriteSerializer,
+        bad_request=ResponseContract.bad_request(),
+        not_found=ResponseContract.not_found(),
+        validation_error=ResponseContract.problem(422),
+        success=ResponseContract.success("VisualModelSelection", SelectionSerializer),
     )
 
-    def handle_put(self, request, scope, target_key, **kwargs):
-        """Assign a library model to a target. Send If-None-Match: * to create, If-Match to update."""
-        version = expected_version(request, allow_create=True)
+    def handle_get(self, request, segment, pk, **kwargs):
+        if request.query_params:
+            return self.respond_problem("bad_request", detail="This endpoint accepts no query parameters.")
+        selection = get_selection(segment, pk) if segment in TARGETS else None
+        if selection is None:
+            return self.respond_problem("not_found", detail="This resource does not exist.")
+        return self.respond(selection)
+
+    def handle_put(self, request, segment, pk, **kwargs):
+        """Store which library model this resource shows. Concurrent writes: the last one wins."""
         serializer, error = self.validate_request()
         if error is not None:
             return error
         assert serializer is not None
         try:
-            assignment = assign_model(
-                scope,
-                target_key,
-                AssignmentFit(**serializer.validated_data),
-                expected_version=version,
-                actor=request.user,
+            selection = select_visual_model(
+                segment, pk, serializer.validated_data["visual_model_id"], actor=request.user
             )
+        except ModelNotFound:
+            return self.respond_problem("not_found", detail="This resource does not exist.")
         except InvalidModel as exc:
             return self.respond_problem("validation_error", detail=str(exc))
-        except ModelConflict:
-            return self.respond_problem("precondition_failed", detail=STALE)
-        return _with_etag(self.respond(assignment), assignment.version)
-
-    def handle_delete(self, request, scope, target_key, **kwargs):
-        if request.query_params:
-            return self.respond_problem("bad_request", detail="This endpoint accepts no query parameters.")
-        version = expected_version(request)
-        try:
-            unassign_model(scope, target_key, expected_version=version, actor=request.user)
-        except ModelNotFound:
-            return self.respond_problem("not_found", detail="This resource has no model assigned.")
-        except ModelConflict:
-            return self.respond_problem("precondition_failed", detail=STALE)
-        return Response(status=204)
+        return self.respond(selection)

@@ -7432,6 +7432,144 @@
         "summary": "Get Benches Profile by ID"
       }
     },
+    "/api/labs/benches/{id}/visual-model": {
+      "get": {
+        "operationId": "labs_benches_visual_model_retrieve_by_id",
+        "description": "Cross-feature API foundation without domain-specific behavior.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Visual Models"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisualModelSelectionSerializersSelectionDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Benches Visual Model by ID"
+      },
+      "put": {
+        "operationId": "labs_benches_visual_model_update_by_id",
+        "description": "Cross-feature API foundation without domain-specific behavior.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Visual Models"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectionWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisualModelSelectionSerializersSelectionDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Update Benches Visual Model by ID"
+      }
+    },
     "/api/labs/benches/{id}/weekly-usage": {
       "get": {
         "operationId": "labs_benches_weekly_usage_retrieve_by_id",
@@ -10907,6 +11045,144 @@
         "summary": "Get Equipment Categories by Category ID"
       }
     },
+    "/api/labs/equipment-categories/{id}/visual-model": {
+      "get": {
+        "operationId": "labs_equipment_categories_visual_model_retrieve_by_id",
+        "description": "Cross-feature API foundation without domain-specific behavior.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Visual Models"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisualModelSelectionSerializersSelectionDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Equipment Categories Visual Model by ID"
+      },
+      "put": {
+        "operationId": "labs_equipment_categories_visual_model_update_by_id",
+        "description": "Cross-feature API foundation without domain-specific behavior.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Visual Models"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectionWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisualModelSelectionSerializersSelectionDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Update Equipment Categories Visual Model by ID"
+      }
+    },
     "/api/labs/equipment-categories/options": {
       "get": {
         "operationId": "labs_equipment_categories_options_retrieve",
@@ -12040,6 +12316,144 @@
           }
         },
         "summary": "Get Equipment Product Models by Model ID"
+      }
+    },
+    "/api/labs/equipment-product-models/{id}/visual-model": {
+      "get": {
+        "operationId": "labs_equipment_product_models_visual_model_retrieve_by_id",
+        "description": "Cross-feature API foundation without domain-specific behavior.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Visual Models"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisualModelSelectionSerializersSelectionDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Equipment Product Models Visual Model by ID"
+      },
+      "put": {
+        "operationId": "labs_equipment_product_models_visual_model_update_by_id",
+        "description": "Cross-feature API foundation without domain-specific behavior.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Visual Models"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectionWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisualModelSelectionSerializersSelectionDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Update Equipment Product Models Visual Model by ID"
       }
     },
     "/api/labs/equipment-product-models/options": {
@@ -14596,6 +15010,144 @@
           }
         },
         "summary": "Delete Equipment by ID"
+      }
+    },
+    "/api/labs/equipment/{id}/visual-model": {
+      "get": {
+        "operationId": "labs_equipment_visual_model_retrieve_by_id",
+        "description": "Cross-feature API foundation without domain-specific behavior.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Visual Models"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisualModelSelectionSerializersSelectionDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Equipment Visual Model by ID"
+      },
+      "put": {
+        "operationId": "labs_equipment_visual_model_update_by_id",
+        "description": "Cross-feature API foundation without domain-specific behavior.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Visual Models"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectionWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisualModelSelectionSerializersSelectionDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Update Equipment Visual Model by ID"
       }
     },
     "/api/labs/equipment/{resource_id}/mapping": {
@@ -30737,6 +31289,144 @@
         "summary": "Create Station Types"
       }
     },
+    "/api/labs/station-types/{id}/visual-model": {
+      "get": {
+        "operationId": "labs_station_types_visual_model_retrieve_by_id",
+        "description": "Cross-feature API foundation without domain-specific behavior.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Visual Models"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisualModelSelectionSerializersSelectionDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Station Types Visual Model by ID"
+      },
+      "put": {
+        "operationId": "labs_station_types_visual_model_update_by_id",
+        "description": "Cross-feature API foundation without domain-specific behavior.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Visual Models"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectionWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisualModelSelectionSerializersSelectionDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Update Station Types Visual Model by ID"
+      }
+    },
     "/api/labs/station-types/{type_id}": {
       "get": {
         "operationId": "labs_station_types_retrieve_by_type_id",
@@ -31276,6 +31966,144 @@
           }
         },
         "summary": "Create Stations"
+      }
+    },
+    "/api/labs/stations/{id}/visual-model": {
+      "get": {
+        "operationId": "labs_stations_visual_model_retrieve_by_id",
+        "description": "Cross-feature API foundation without domain-specific behavior.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Visual Models"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisualModelSelectionSerializersSelectionDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Stations Visual Model by ID"
+      },
+      "put": {
+        "operationId": "labs_stations_visual_model_update_by_id",
+        "description": "Cross-feature API foundation without domain-specific behavior.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Visual Models"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectionWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisualModelSelectionSerializersSelectionDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Update Stations Visual Model by ID"
       }
     },
     "/api/labs/stations/{resource_id}/mapping": {
@@ -35252,9 +36080,9 @@
         "summary": "Delete Visual Model Assets by Asset ID"
       }
     },
-    "/api/labs/visual-model-assignments": {
+    "/api/labs/visual-model-selections/benches": {
       "get": {
-        "operationId": "labs_visual_model_assignments_retrieve",
+        "operationId": "labs_visual_model_selections_benches_retrieve",
         "description": "Cross-feature API foundation without domain-specific behavior.",
         "parameters": [
           {
@@ -35291,7 +36119,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VisualModelAssignmentListSerializersAssignmentPaginatedResponse"
+                  "$ref": "#/components/schemas/VisualModelSelectionListSerializersSelectionPaginatedResponse"
                 }
               }
             },
@@ -35315,47 +36143,38 @@
                 }
               }
             },
-            "description": "The requested page does not exist (page beyond the last page)."
+            "description": ""
           }
         },
-        "summary": "Get Visual Model Assignments"
+        "summary": "Get Visual Model Selections Benches"
       }
     },
-    "/api/labs/visual-model-assignments/{scope}/{target_key}": {
-      "put": {
-        "operationId": "labs_visual_model_assignments_update_by_scope_target_key",
+    "/api/labs/visual-model-selections/equipment": {
+      "get": {
+        "operationId": "labs_visual_model_selections_equipment_retrieve",
         "description": "Cross-feature API foundation without domain-specific behavior.",
         "parameters": [
           {
-            "in": "path",
-            "name": "scope",
+            "in": "query",
+            "name": "page",
             "schema": {
-              "type": "string"
-            },
-            "required": true
+              "type": "integer",
+              "minimum": 1
+            }
           },
           {
-            "in": "path",
-            "name": "target_key",
+            "in": "query",
+            "name": "page_size",
             "schema": {
-              "type": "string"
-            },
-            "required": true
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
           }
         ],
         "tags": [
           "Visual Models"
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AssignmentWrite"
-              }
-            }
-          },
-          "required": true
-        },
         "security": [
           {
             "jwtAuth": []
@@ -35369,90 +36188,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VisualModelAssignmentSerializersAssignmentDetailResponse"
+                  "$ref": "#/components/schemas/VisualModelSelectionListSerializersSelectionPaginatedResponse"
                 }
               }
             },
             "description": ""
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "412": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          },
-          "428": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "summary": "Update Visual Model Assignments by Scope Target Key"
-      },
-      "delete": {
-        "operationId": "labs_visual_model_assignments_destroy_by_scope_target_key",
-        "description": "Cross-feature API foundation without domain-specific behavior.",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "scope",
-            "schema": {
-              "type": "string"
-            },
-            "required": true
-          },
-          {
-            "in": "path",
-            "name": "target_key",
-            "schema": {
-              "type": "string"
-            },
-            "required": true
-          }
-        ],
-        "tags": [
-          "Visual Models"
-        ],
-        "security": [
-          {
-            "jwtAuth": []
-          },
-          {
-            "cookieAuth": []
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No response body"
           },
           "400": {
             "content": {
@@ -35473,8 +36213,57 @@
               }
             },
             "description": ""
+          }
+        },
+        "summary": "Get Visual Model Selections Equipment"
+      }
+    },
+    "/api/labs/visual-model-selections/equipment-categories": {
+      "get": {
+        "operationId": "labs_visual_model_selections_equipment_categories_retrieve",
+        "description": "Cross-feature API foundation without domain-specific behavior.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
           },
-          "412": {
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "tags": [
+          "Visual Models"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisualModelSelectionListSerializersSelectionPaginatedResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
@@ -35484,7 +36273,7 @@
             },
             "description": ""
           },
-          "428": {
+          "404": {
             "content": {
               "application/json": {
                 "schema": {
@@ -35495,7 +36284,214 @@
             "description": ""
           }
         },
-        "summary": "Delete Visual Model Assignments by Scope Target Key"
+        "summary": "Get Visual Model Selections Equipment Categories"
+      }
+    },
+    "/api/labs/visual-model-selections/equipment-product-models": {
+      "get": {
+        "operationId": "labs_visual_model_selections_equipment_product_models_retrieve",
+        "description": "Cross-feature API foundation without domain-specific behavior.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "tags": [
+          "Visual Models"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisualModelSelectionListSerializersSelectionPaginatedResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Visual Model Selections Equipment Product Models"
+      }
+    },
+    "/api/labs/visual-model-selections/station-types": {
+      "get": {
+        "operationId": "labs_visual_model_selections_station_types_retrieve",
+        "description": "Cross-feature API foundation without domain-specific behavior.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "tags": [
+          "Visual Models"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisualModelSelectionListSerializersSelectionPaginatedResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Visual Model Selections Station Types"
+      }
+    },
+    "/api/labs/visual-model-selections/stations": {
+      "get": {
+        "operationId": "labs_visual_model_selections_stations_retrieve",
+        "description": "Cross-feature API foundation without domain-specific behavior.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "tags": [
+          "Visual Models"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisualModelSelectionListSerializersSelectionPaginatedResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Visual Model Selections Stations"
       }
     },
     "/api/labs/workbook-imports/actions/apply": {
@@ -45333,7 +46329,7 @@
           "usage_count": {
             "type": "integer",
             "readOnly": true,
-            "description": "Resources and types assigned to this model."
+            "description": "Resources and catalog types using this model."
           },
           "version": {
             "type": "integer",
@@ -45479,106 +46475,6 @@
           "uid"
         ],
         "x-embedded-resource": true
-      },
-      "Assignment": {
-        "type": "object",
-        "properties": {
-          "scope": {
-            "type": "string",
-            "maxLength": 24
-          },
-          "target_key": {
-            "type": "string",
-            "maxLength": 80
-          },
-          "asset_id": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "rotation": {
-            "type": "number",
-            "format": "double"
-          },
-          "scale": {
-            "type": "number",
-            "format": "double"
-          },
-          "offset_x": {
-            "type": "number",
-            "format": "double"
-          },
-          "offset_y": {
-            "type": "number",
-            "format": "double"
-          },
-          "offset_z": {
-            "type": "number",
-            "format": "double"
-          },
-          "version": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          }
-        },
-        "required": [
-          "asset_id",
-          "scope",
-          "target_key",
-          "updated_at"
-        ]
-      },
-      "AssignmentWrite": {
-        "type": "object",
-        "properties": {
-          "asset_id": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "rotation": {
-            "type": "number",
-            "format": "double",
-            "maximum": 360,
-            "minimum": -360,
-            "default": 0.0
-          },
-          "scale": {
-            "type": "number",
-            "format": "double",
-            "maximum": 2,
-            "minimum": 0.01,
-            "default": 1.0
-          },
-          "offset_x": {
-            "type": "number",
-            "format": "double",
-            "maximum": 1,
-            "minimum": -1,
-            "default": 0.0
-          },
-          "offset_y": {
-            "type": "number",
-            "format": "double",
-            "maximum": 1,
-            "minimum": -1,
-            "default": 0.0
-          },
-          "offset_z": {
-            "type": "number",
-            "format": "double",
-            "maximum": 1,
-            "minimum": -1,
-            "default": 0.0
-          }
-        },
-        "required": [
-          "asset_id"
-        ]
       },
       "AttachmentUploadRequest": {
         "type": "object",
@@ -63396,6 +64292,11 @@
           "station_slot_id": {
             "type": "integer",
             "nullable": true
+          },
+          "visual_model_id": {
+            "type": "integer",
+            "nullable": true,
+            "description": "3D library model shown for this resource, after catalog defaults."
           }
         },
         "required": [
@@ -63451,6 +64352,11 @@
               }
             ],
             "nullable": true
+          },
+          "visual_model_id": {
+            "type": "integer",
+            "nullable": true,
+            "description": "3D library model shown for this resource, after catalog defaults."
           }
         },
         "required": [
@@ -63720,6 +64626,11 @@
           "slot_id": {
             "type": "integer",
             "nullable": true
+          },
+          "visual_model_id": {
+            "type": "integer",
+            "nullable": true,
+            "description": "3D library model shown for this resource, after catalog defaults."
           }
         },
         "required": [
@@ -70225,6 +71136,53 @@
           "pagination"
         ]
       },
+      "Selection": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "visual_model_id": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Model stored on this resource."
+          },
+          "effective_visual_model_id": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Model shown on the 3D dashboard after inheriting catalog defaults."
+          },
+          "origin": {
+            "type": "string",
+            "nullable": true,
+            "description": "'own', or the catalog the shown model is inherited from (station_type, product_model, equipment_category); null when no model applies."
+          }
+        },
+        "required": [
+          "effective_visual_model_id",
+          "id",
+          "name",
+          "origin",
+          "visual_model_id"
+        ]
+      },
+      "SelectionWrite": {
+        "type": "object",
+        "properties": {
+          "visual_model_id": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true,
+            "description": "Library model to show, or null to inherit or show none."
+          }
+        },
+        "required": [
+          "visual_model_id"
+        ]
+      },
       "SendOTP": {
         "type": "object",
         "properties": {
@@ -76335,17 +77293,17 @@
           "data"
         ]
       },
-      "VisualModelAssignmentListSerializersAssignmentPaginatedResponse": {
+      "VisualModelSelectionListSerializersSelectionPaginatedResponse": {
         "type": "object",
         "description": "Base serializer for successful API responses.",
         "properties": {
           "meta": {
-            "$ref": "#/components/schemas/VisualModelAssignmentListSerializersAssignmentPaginationMeta"
+            "$ref": "#/components/schemas/VisualModelSelectionListSerializersSelectionPaginationMeta"
           },
           "data": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Assignment"
+              "$ref": "#/components/schemas/Selection"
             }
           }
         },
@@ -76354,7 +77312,7 @@
           "meta"
         ]
       },
-      "VisualModelAssignmentListSerializersAssignmentPagination": {
+      "VisualModelSelectionListSerializersSelectionPagination": {
         "type": "object",
         "properties": {
           "count": {
@@ -76386,23 +77344,23 @@
           "previous"
         ]
       },
-      "VisualModelAssignmentListSerializersAssignmentPaginationMeta": {
+      "VisualModelSelectionListSerializersSelectionPaginationMeta": {
         "type": "object",
         "properties": {
           "pagination": {
-            "$ref": "#/components/schemas/VisualModelAssignmentListSerializersAssignmentPagination"
+            "$ref": "#/components/schemas/VisualModelSelectionListSerializersSelectionPagination"
           }
         },
         "required": [
           "pagination"
         ]
       },
-      "VisualModelAssignmentSerializersAssignmentDetailResponse": {
+      "VisualModelSelectionSerializersSelectionDetailResponse": {
         "type": "object",
         "description": "Base serializer for successful API responses.",
         "properties": {
           "data": {
-            "$ref": "#/components/schemas/Assignment"
+            "$ref": "#/components/schemas/Selection"
           }
         },
         "required": [

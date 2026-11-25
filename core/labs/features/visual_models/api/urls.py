@@ -1,14 +1,25 @@
 from django.urls import path
 
-from .views import AssetDetailView, AssetListView, AssignmentDetailView, AssignmentListView
+from ..targets import TARGETS
+from .views import AssetDetailView, AssetListView, SelectionDetailView, SelectionListView
 
 urlpatterns = [
     path("visual-model-assets", AssetListView.as_view(), name="visual-model-asset-list"),
     path("visual-model-assets/<int:asset_id>", AssetDetailView.as_view(), name="visual-model-asset-detail"),
-    path("visual-model-assignments", AssignmentListView.as_view(), name="visual-model-assignment-list"),
-    path(
-        "visual-model-assignments/<str:scope>/<str:target_key>",
-        AssignmentDetailView.as_view(),
-        name="visual-model-assignment-detail",
-    ),
 ]
+# One concrete route per resource kind: the model a station, bench, device or catalog row shows.
+for segment in TARGETS:
+    urlpatterns += [
+        path(
+            f"visual-model-selections/{segment}",
+            SelectionListView.as_view(),
+            {"segment": segment},
+            name=f"visual-model-selection-list-{segment}",
+        ),
+        path(
+            f"{segment}/<int:pk>/visual-model",
+            SelectionDetailView.as_view(),
+            {"segment": segment},
+            name=f"visual-model-selection-{segment}",
+        ),
+    ]

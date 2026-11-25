@@ -1078,7 +1078,7 @@ components:
         usage_count:
           type: integer
           readOnly: true
-          description: Resources and types assigned to this model.
+          description: Resources and catalog types using this model.
         version:
           type: integer
           maximum: 2147483647
@@ -1185,84 +1185,6 @@ components:
       - sku
       - uid
       x-embedded-resource: true
-    Assignment:
-      type: object
-      properties:
-        scope:
-          type: string
-          maxLength: 24
-        target_key:
-          type: string
-          maxLength: 80
-        asset_id:
-          type: integer
-          readOnly: true
-        rotation:
-          type: number
-          format: double
-        scale:
-          type: number
-          format: double
-        offset_x:
-          type: number
-          format: double
-        offset_y:
-          type: number
-          format: double
-        offset_z:
-          type: number
-          format: double
-        version:
-          type: integer
-          maximum: 2147483647
-          minimum: 0
-        updated_at:
-          type: string
-          format: date-time
-          readOnly: true
-      required:
-      - asset_id
-      - scope
-      - target_key
-      - updated_at
-    AssignmentWrite:
-      type: object
-      properties:
-        asset_id:
-          type: integer
-          minimum: 1
-        rotation:
-          type: number
-          format: double
-          maximum: 360
-          minimum: -360
-          default: 0.0
-        scale:
-          type: number
-          format: double
-          maximum: 2
-          minimum: 0.01
-          default: 1.0
-        offset_x:
-          type: number
-          format: double
-          maximum: 1
-          minimum: -1
-          default: 0.0
-        offset_y:
-          type: number
-          format: double
-          maximum: 1
-          minimum: -1
-          default: 0.0
-        offset_z:
-          type: number
-          format: double
-          maximum: 1
-          minimum: -1
-          default: 0.0
-      required:
-      - asset_id
     AttachmentUploadRequest:
       type: object
       properties:
@@ -14175,6 +14097,10 @@ components:
         station_slot_id:
           type: integer
           nullable: true
+        visual_model_id:
+          type: integer
+          nullable: true
+          description: 3D library model shown for this resource, after catalog defaults.
       required:
       - id
       - name
@@ -14210,6 +14136,10 @@ components:
           allOf:
           - $ref: '#/components/schemas/MappingEquipmentAssignment'
           nullable: true
+        visual_model_id:
+          type: integer
+          nullable: true
+          description: 3D library model shown for this resource, after catalog defaults.
       required:
       - bench_assignment
       - bench_id
@@ -14405,6 +14335,10 @@ components:
         slot_id:
           type: integer
           nullable: true
+        visual_model_id:
+          type: integer
+          nullable: true
+          description: 3D library model shown for this resource, after catalog defaults.
       required:
       - id
       - name
@@ -19196,6 +19130,43 @@ components:
           $ref: '#/components/schemas/SampleCustomerReferenceListSerializersSampleCustomerCatalogRecordPagination'
       required:
       - pagination
+    Selection:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        visual_model_id:
+          type: integer
+          nullable: true
+          description: Model stored on this resource.
+        effective_visual_model_id:
+          type: integer
+          nullable: true
+          description: Model shown on the 3D dashboard after inheriting catalog defaults.
+        origin:
+          type: string
+          nullable: true
+          description: '''own'', or the catalog the shown model is inherited from
+            (station_type, product_model, equipment_category); null when no model
+            applies.'
+      required:
+      - effective_visual_model_id
+      - id
+      - name
+      - origin
+      - visual_model_id
+    SelectionWrite:
+      type: object
+      properties:
+        visual_model_id:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: Library model to show, or null to inherit or show none.
+      required:
+      - visual_model_id
     SendOTP:
       type: object
       properties:
@@ -23618,20 +23589,20 @@ components:
           $ref: '#/components/schemas/Asset'
       required:
       - data
-    VisualModelAssignmentListSerializersAssignmentPaginatedResponse:
+    VisualModelSelectionListSerializersSelectionPaginatedResponse:
       type: object
       description: Base serializer for successful API responses.
       properties:
         meta:
-          $ref: '#/components/schemas/VisualModelAssignmentListSerializersAssignmentPaginationMeta'
+          $ref: '#/components/schemas/VisualModelSelectionListSerializersSelectionPaginationMeta'
         data:
           type: array
           items:
-            $ref: '#/components/schemas/Assignment'
+            $ref: '#/components/schemas/Selection'
       required:
       - data
       - meta
-    VisualModelAssignmentListSerializersAssignmentPagination:
+    VisualModelSelectionListSerializersSelectionPagination:
       type: object
       properties:
         count:
@@ -23655,19 +23626,19 @@ components:
       - page
       - page_size
       - previous
-    VisualModelAssignmentListSerializersAssignmentPaginationMeta:
+    VisualModelSelectionListSerializersSelectionPaginationMeta:
       type: object
       properties:
         pagination:
-          $ref: '#/components/schemas/VisualModelAssignmentListSerializersAssignmentPagination'
+          $ref: '#/components/schemas/VisualModelSelectionListSerializersSelectionPagination'
       required:
       - pagination
-    VisualModelAssignmentSerializersAssignmentDetailResponse:
+    VisualModelSelectionSerializersSelectionDetailResponse:
       type: object
       description: Base serializer for successful API responses.
       properties:
         data:
-          $ref: '#/components/schemas/Assignment'
+          $ref: '#/components/schemas/Selection'
       required:
       - data
     Watcher:

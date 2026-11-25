@@ -52,6 +52,14 @@ class Bench(ResourceModel):
         null=True,
         blank=True,
     )
+    visual_model = models.ForeignKey(
+        "labs.VisualModelAsset",
+        related_name="benches",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        help_text="3D model from the shared library shown on the 3D dashboard.",
+    )
     lifecycle_status = models.CharField(
         max_length=32,
         choices=LIFECYCLE_STATUSES,

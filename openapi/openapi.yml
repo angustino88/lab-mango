@@ -186,6 +186,34 @@ paths:
     $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1leaderboard~1users~1{id}~1profile
   /api/labs/leaderboard/users/{id}/weekly-usage:
     $ref: ./labs-leaderboard.yml#/paths/~1api~1labs~1leaderboard~1users~1{id}~1weekly-usage
+  /api/labs/benches/{id}/visual-model:
+    $ref: ./labs-visual-models.yml#/paths/~1api~1labs~1benches~1{id}~1visual-model
+  /api/labs/equipment-categories/{id}/visual-model:
+    $ref: ./labs-visual-models.yml#/paths/~1api~1labs~1equipment-categories~1{id}~1visual-model
+  /api/labs/equipment-product-models/{id}/visual-model:
+    $ref: ./labs-visual-models.yml#/paths/~1api~1labs~1equipment-product-models~1{id}~1visual-model
+  /api/labs/equipment/{id}/visual-model:
+    $ref: ./labs-visual-models.yml#/paths/~1api~1labs~1equipment~1{id}~1visual-model
+  /api/labs/station-types/{id}/visual-model:
+    $ref: ./labs-visual-models.yml#/paths/~1api~1labs~1station-types~1{id}~1visual-model
+  /api/labs/stations/{id}/visual-model:
+    $ref: ./labs-visual-models.yml#/paths/~1api~1labs~1stations~1{id}~1visual-model
+  /api/labs/visual-model-assets:
+    $ref: ./labs-visual-models.yml#/paths/~1api~1labs~1visual-model-assets
+  /api/labs/visual-model-assets/{asset_id}:
+    $ref: ./labs-visual-models.yml#/paths/~1api~1labs~1visual-model-assets~1{asset_id}
+  /api/labs/visual-model-selections/benches:
+    $ref: ./labs-visual-models.yml#/paths/~1api~1labs~1visual-model-selections~1benches
+  /api/labs/visual-model-selections/equipment:
+    $ref: ./labs-visual-models.yml#/paths/~1api~1labs~1visual-model-selections~1equipment
+  /api/labs/visual-model-selections/equipment-categories:
+    $ref: ./labs-visual-models.yml#/paths/~1api~1labs~1visual-model-selections~1equipment-categories
+  /api/labs/visual-model-selections/equipment-product-models:
+    $ref: ./labs-visual-models.yml#/paths/~1api~1labs~1visual-model-selections~1equipment-product-models
+  /api/labs/visual-model-selections/station-types:
+    $ref: ./labs-visual-models.yml#/paths/~1api~1labs~1visual-model-selections~1station-types
+  /api/labs/visual-model-selections/stations:
+    $ref: ./labs-visual-models.yml#/paths/~1api~1labs~1visual-model-selections~1stations
   /api/labs/benches/{resource_id}/mapping:
     $ref: ./labs-resource-mappings.yml#/paths/~1api~1labs~1benches~1{resource_id}~1mapping
   /api/labs/equipment/{resource_id}/mapping:
@@ -636,14 +664,6 @@ paths:
     $ref: ./labs-telemetry.yml#/paths/~1api~1labs~1telemetry~1sources~1{device_id}~1channels
   /api/labs/telemetry/targets/{target_type}/{resource_id}:
     $ref: ./labs-telemetry.yml#/paths/~1api~1labs~1telemetry~1targets~1{target_type}~1{resource_id}
-  /api/labs/visual-model-assets:
-    $ref: ./labs-visual-models.yml#/paths/~1api~1labs~1visual-model-assets
-  /api/labs/visual-model-assets/{asset_id}:
-    $ref: ./labs-visual-models.yml#/paths/~1api~1labs~1visual-model-assets~1{asset_id}
-  /api/labs/visual-model-assignments:
-    $ref: ./labs-visual-models.yml#/paths/~1api~1labs~1visual-model-assignments
-  /api/labs/visual-model-assignments/{scope}/{target_key}:
-    $ref: ./labs-visual-models.yml#/paths/~1api~1labs~1visual-model-assignments~1{scope}~1{target_key}
   /api/labs/workbook-imports/actions/apply:
     $ref: ./labs-workbook-import.yml#/paths/~1api~1labs~1workbook-imports~1actions~1apply
   /api/labs/workbook-imports/actions/check:

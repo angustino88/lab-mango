@@ -14,12 +14,6 @@ IF_MATCH = OpenApiParameter(
     "If-Match", str, OpenApiParameter.HEADER, description='Current quoted version, for example "1".'
 )
 VERSION_PRECONDITIONS = [IF_MATCH]
-CREATE_OR_VERSION_PRECONDITIONS = [
-    IF_MATCH,
-    OpenApiParameter(
-        "If-None-Match", str, OpenApiParameter.HEADER, description="Use * on PUT to assign a target that has no model."
-    ),
-]
 
 
 def expected_version(request, *, allow_create=False):

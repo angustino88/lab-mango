@@ -17,6 +17,14 @@ if TYPE_CHECKING:
 
 class StationType(TimeStampedModel, UserStampedModel):
     name = models.CharField(max_length=255, unique=True)
+    visual_model = models.ForeignKey(
+        "labs.VisualModelAsset",
+        related_name="station_types",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        help_text="3D model from the shared library shown on the 3D dashboard.",
+    )
 
     def __str__(self) -> str:
         return self.name
@@ -51,6 +59,14 @@ class Station(ResourceModel, PhysicalLocationNode):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
+    )
+    visual_model = models.ForeignKey(
+        "labs.VisualModelAsset",
+        related_name="stations",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        help_text="3D model from the shared library shown on the 3D dashboard.",
     )
     position = ArrayField(
         models.FloatField(

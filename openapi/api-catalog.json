@@ -1,7 +1,7 @@
 {
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
-  "total_endpoints": 532,
+  "total_endpoints": 547,
   "generated_at": "2026-11-25",
   "endpoints": [
     {
@@ -28716,6 +28716,453 @@
       }
     },
     {
+      "endpoint": "/api/labs/benches/{id}/visual-model",
+      "method": "GET",
+      "operation_id": "labs_benches_visual_model_retrieve_by_id",
+      "summary": "Get Benches Visual Model by ID",
+      "description": "Cross-feature API foundation without domain-specific behavior.",
+      "tags": [
+        "Visual Models"
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "visual_model_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Model stored on this resource."
+                  },
+                  "effective_visual_model_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Model shown on the 3D dashboard after inheriting catalog defaults."
+                  },
+                  "origin": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "'own', or the catalog the shown model is inherited from (station_type, product_model, equipment_category); null when no model applies."
+                  }
+                },
+                "required": [
+                  "effective_visual_model_id",
+                  "id",
+                  "name",
+                  "origin",
+                  "visual_model_id"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "name": "string",
+              "visual_model_id": 1,
+              "effective_visual_model_id": 1,
+              "origin": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/benches/{id}/visual-model",
+      "method": "PUT",
+      "operation_id": "labs_benches_visual_model_update_by_id",
+      "summary": "Update Benches Visual Model by ID",
+      "description": "Cross-feature API foundation without domain-specific behavior.",
+      "tags": [
+        "Visual Models"
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "visual_model_id": {
+              "type": "integer",
+              "minimum": 1,
+              "nullable": true,
+              "description": "Library model to show, or null to inherit or show none."
+            }
+          },
+          "required": [
+            "visual_model_id"
+          ]
+        },
+        "example_payload": {
+          "visual_model_id": 1
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "visual_model_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Model stored on this resource."
+                  },
+                  "effective_visual_model_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Model shown on the 3D dashboard after inheriting catalog defaults."
+                  },
+                  "origin": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "'own', or the catalog the shown model is inherited from (station_type, product_model, equipment_category); null when no model applies."
+                  }
+                },
+                "required": [
+                  "effective_visual_model_id",
+                  "id",
+                  "name",
+                  "origin",
+                  "visual_model_id"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "name": "string",
+              "visual_model_id": 1,
+              "effective_visual_model_id": 1,
+              "origin": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
       "endpoint": "/api/labs/benches/{id}/weekly-usage",
       "method": "GET",
       "operation_id": "labs_benches_weekly_usage_retrieve_by_id",
@@ -38441,6 +38888,453 @@
       }
     },
     {
+      "endpoint": "/api/labs/equipment-categories/{id}/visual-model",
+      "method": "GET",
+      "operation_id": "labs_equipment_categories_visual_model_retrieve_by_id",
+      "summary": "Get Equipment Categories Visual Model by ID",
+      "description": "Cross-feature API foundation without domain-specific behavior.",
+      "tags": [
+        "Visual Models"
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "visual_model_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Model stored on this resource."
+                  },
+                  "effective_visual_model_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Model shown on the 3D dashboard after inheriting catalog defaults."
+                  },
+                  "origin": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "'own', or the catalog the shown model is inherited from (station_type, product_model, equipment_category); null when no model applies."
+                  }
+                },
+                "required": [
+                  "effective_visual_model_id",
+                  "id",
+                  "name",
+                  "origin",
+                  "visual_model_id"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "name": "string",
+              "visual_model_id": 1,
+              "effective_visual_model_id": 1,
+              "origin": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/equipment-categories/{id}/visual-model",
+      "method": "PUT",
+      "operation_id": "labs_equipment_categories_visual_model_update_by_id",
+      "summary": "Update Equipment Categories Visual Model by ID",
+      "description": "Cross-feature API foundation without domain-specific behavior.",
+      "tags": [
+        "Visual Models"
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "visual_model_id": {
+              "type": "integer",
+              "minimum": 1,
+              "nullable": true,
+              "description": "Library model to show, or null to inherit or show none."
+            }
+          },
+          "required": [
+            "visual_model_id"
+          ]
+        },
+        "example_payload": {
+          "visual_model_id": 1
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "visual_model_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Model stored on this resource."
+                  },
+                  "effective_visual_model_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Model shown on the 3D dashboard after inheriting catalog defaults."
+                  },
+                  "origin": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "'own', or the catalog the shown model is inherited from (station_type, product_model, equipment_category); null when no model applies."
+                  }
+                },
+                "required": [
+                  "effective_visual_model_id",
+                  "id",
+                  "name",
+                  "origin",
+                  "visual_model_id"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "name": "string",
+              "visual_model_id": 1,
+              "effective_visual_model_id": 1,
+              "origin": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
       "endpoint": "/api/labs/equipment-kinds",
       "method": "GET",
       "operation_id": "labs_equipment_kinds_retrieve",
@@ -41742,6 +42636,453 @@
         },
         "403": {
           "description": "Access denied by the existing API-key or authenticated-user permission policy.",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/equipment-product-models/{id}/visual-model",
+      "method": "GET",
+      "operation_id": "labs_equipment_product_models_visual_model_retrieve_by_id",
+      "summary": "Get Equipment Product Models Visual Model by ID",
+      "description": "Cross-feature API foundation without domain-specific behavior.",
+      "tags": [
+        "Visual Models"
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "visual_model_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Model stored on this resource."
+                  },
+                  "effective_visual_model_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Model shown on the 3D dashboard after inheriting catalog defaults."
+                  },
+                  "origin": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "'own', or the catalog the shown model is inherited from (station_type, product_model, equipment_category); null when no model applies."
+                  }
+                },
+                "required": [
+                  "effective_visual_model_id",
+                  "id",
+                  "name",
+                  "origin",
+                  "visual_model_id"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "name": "string",
+              "visual_model_id": 1,
+              "effective_visual_model_id": 1,
+              "origin": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/equipment-product-models/{id}/visual-model",
+      "method": "PUT",
+      "operation_id": "labs_equipment_product_models_visual_model_update_by_id",
+      "summary": "Update Equipment Product Models Visual Model by ID",
+      "description": "Cross-feature API foundation without domain-specific behavior.",
+      "tags": [
+        "Visual Models"
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "visual_model_id": {
+              "type": "integer",
+              "minimum": 1,
+              "nullable": true,
+              "description": "Library model to show, or null to inherit or show none."
+            }
+          },
+          "required": [
+            "visual_model_id"
+          ]
+        },
+        "example_payload": {
+          "visual_model_id": 1
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "visual_model_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Model stored on this resource."
+                  },
+                  "effective_visual_model_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Model shown on the 3D dashboard after inheriting catalog defaults."
+                  },
+                  "origin": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "'own', or the catalog the shown model is inherited from (station_type, product_model, equipment_category); null when no model applies."
+                  }
+                },
+                "required": [
+                  "effective_visual_model_id",
+                  "id",
+                  "name",
+                  "origin",
+                  "visual_model_id"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "name": "string",
+              "visual_model_id": 1,
+              "effective_visual_model_id": 1,
+              "origin": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
           "content_type": "application/json",
           "schema": {
             "type": "object",
@@ -67624,6 +68965,453 @@
           }
         },
         "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/equipment/{id}/visual-model",
+      "method": "GET",
+      "operation_id": "labs_equipment_visual_model_retrieve_by_id",
+      "summary": "Get Equipment Visual Model by ID",
+      "description": "Cross-feature API foundation without domain-specific behavior.",
+      "tags": [
+        "Visual Models"
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "visual_model_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Model stored on this resource."
+                  },
+                  "effective_visual_model_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Model shown on the 3D dashboard after inheriting catalog defaults."
+                  },
+                  "origin": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "'own', or the catalog the shown model is inherited from (station_type, product_model, equipment_category); null when no model applies."
+                  }
+                },
+                "required": [
+                  "effective_visual_model_id",
+                  "id",
+                  "name",
+                  "origin",
+                  "visual_model_id"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "name": "string",
+              "visual_model_id": 1,
+              "effective_visual_model_id": 1,
+              "origin": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/equipment/{id}/visual-model",
+      "method": "PUT",
+      "operation_id": "labs_equipment_visual_model_update_by_id",
+      "summary": "Update Equipment Visual Model by ID",
+      "description": "Cross-feature API foundation without domain-specific behavior.",
+      "tags": [
+        "Visual Models"
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "visual_model_id": {
+              "type": "integer",
+              "minimum": 1,
+              "nullable": true,
+              "description": "Library model to show, or null to inherit or show none."
+            }
+          },
+          "required": [
+            "visual_model_id"
+          ]
+        },
+        "example_payload": {
+          "visual_model_id": 1
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "visual_model_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Model stored on this resource."
+                  },
+                  "effective_visual_model_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Model shown on the 3D dashboard after inheriting catalog defaults."
+                  },
+                  "origin": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "'own', or the catalog the shown model is inherited from (station_type, product_model, equipment_category); null when no model applies."
+                  }
+                },
+                "required": [
+                  "effective_visual_model_id",
+                  "id",
+                  "name",
+                  "origin",
+                  "visual_model_id"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "name": "string",
+              "visual_model_id": 1,
+              "effective_visual_model_id": 1,
+              "origin": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
           "description": "",
           "content_type": "application/json",
           "schema": {
@@ -107659,6 +109447,453 @@
       }
     },
     {
+      "endpoint": "/api/labs/station-types/{id}/visual-model",
+      "method": "GET",
+      "operation_id": "labs_station_types_visual_model_retrieve_by_id",
+      "summary": "Get Station Types Visual Model by ID",
+      "description": "Cross-feature API foundation without domain-specific behavior.",
+      "tags": [
+        "Visual Models"
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "visual_model_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Model stored on this resource."
+                  },
+                  "effective_visual_model_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Model shown on the 3D dashboard after inheriting catalog defaults."
+                  },
+                  "origin": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "'own', or the catalog the shown model is inherited from (station_type, product_model, equipment_category); null when no model applies."
+                  }
+                },
+                "required": [
+                  "effective_visual_model_id",
+                  "id",
+                  "name",
+                  "origin",
+                  "visual_model_id"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "name": "string",
+              "visual_model_id": 1,
+              "effective_visual_model_id": 1,
+              "origin": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/station-types/{id}/visual-model",
+      "method": "PUT",
+      "operation_id": "labs_station_types_visual_model_update_by_id",
+      "summary": "Update Station Types Visual Model by ID",
+      "description": "Cross-feature API foundation without domain-specific behavior.",
+      "tags": [
+        "Visual Models"
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "visual_model_id": {
+              "type": "integer",
+              "minimum": 1,
+              "nullable": true,
+              "description": "Library model to show, or null to inherit or show none."
+            }
+          },
+          "required": [
+            "visual_model_id"
+          ]
+        },
+        "example_payload": {
+          "visual_model_id": 1
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "visual_model_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Model stored on this resource."
+                  },
+                  "effective_visual_model_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Model shown on the 3D dashboard after inheriting catalog defaults."
+                  },
+                  "origin": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "'own', or the catalog the shown model is inherited from (station_type, product_model, equipment_category); null when no model applies."
+                  }
+                },
+                "required": [
+                  "effective_visual_model_id",
+                  "id",
+                  "name",
+                  "origin",
+                  "visual_model_id"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "name": "string",
+              "visual_model_id": 1,
+              "effective_visual_model_id": 1,
+              "origin": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
       "endpoint": "/api/labs/station-types/{type_id}",
       "method": "GET",
       "operation_id": "labs_station_types_retrieve_by_type_id",
@@ -110279,6 +112514,453 @@
           }
         },
         "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/stations/{id}/visual-model",
+      "method": "GET",
+      "operation_id": "labs_stations_visual_model_retrieve_by_id",
+      "summary": "Get Stations Visual Model by ID",
+      "description": "Cross-feature API foundation without domain-specific behavior.",
+      "tags": [
+        "Visual Models"
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "visual_model_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Model stored on this resource."
+                  },
+                  "effective_visual_model_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Model shown on the 3D dashboard after inheriting catalog defaults."
+                  },
+                  "origin": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "'own', or the catalog the shown model is inherited from (station_type, product_model, equipment_category); null when no model applies."
+                  }
+                },
+                "required": [
+                  "effective_visual_model_id",
+                  "id",
+                  "name",
+                  "origin",
+                  "visual_model_id"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "name": "string",
+              "visual_model_id": 1,
+              "effective_visual_model_id": 1,
+              "origin": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/stations/{id}/visual-model",
+      "method": "PUT",
+      "operation_id": "labs_stations_visual_model_update_by_id",
+      "summary": "Update Stations Visual Model by ID",
+      "description": "Cross-feature API foundation without domain-specific behavior.",
+      "tags": [
+        "Visual Models"
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "visual_model_id": {
+              "type": "integer",
+              "minimum": 1,
+              "nullable": true,
+              "description": "Library model to show, or null to inherit or show none."
+            }
+          },
+          "required": [
+            "visual_model_id"
+          ]
+        },
+        "example_payload": {
+          "visual_model_id": 1
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "visual_model_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Model stored on this resource."
+                  },
+                  "effective_visual_model_id": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Model shown on the 3D dashboard after inheriting catalog defaults."
+                  },
+                  "origin": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "'own', or the catalog the shown model is inherited from (station_type, product_model, equipment_category); null when no model applies."
+                  }
+                },
+                "required": [
+                  "effective_visual_model_id",
+                  "id",
+                  "name",
+                  "origin",
+                  "visual_model_id"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "name": "string",
+              "visual_model_id": 1,
+              "effective_visual_model_id": 1,
+              "origin": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
           "description": "",
           "content_type": "application/json",
           "schema": {
@@ -126750,7 +129432,7 @@
                     "usage_count": {
                       "type": "integer",
                       "readOnly": true,
-                      "description": "Resources and types assigned to this model."
+                      "description": "Resources and catalog types using this model."
                     },
                     "version": {
                       "type": "integer",
@@ -127040,7 +129722,7 @@
                   "usage_count": {
                     "type": "integer",
                     "readOnly": true,
-                    "description": "Resources and types assigned to this model."
+                    "description": "Resources and catalog types using this model."
                   },
                   "version": {
                     "type": "integer",
@@ -127136,7 +129818,7 @@
                   "usage_count": {
                     "type": "integer",
                     "readOnly": true,
-                    "description": "Resources and types assigned to this model."
+                    "description": "Resources and catalog types using this model."
                   },
                   "version": {
                     "type": "integer",
@@ -127473,7 +130155,7 @@
                   "usage_count": {
                     "type": "integer",
                     "readOnly": true,
-                    "description": "Resources and types assigned to this model."
+                    "description": "Resources and catalog types using this model."
                   },
                   "version": {
                     "type": "integer",
@@ -128082,10 +130764,10 @@
       }
     },
     {
-      "endpoint": "/api/labs/visual-model-assignments",
+      "endpoint": "/api/labs/visual-model-selections/benches",
       "method": "GET",
-      "operation_id": "labs_visual_model_assignments_retrieve",
-      "summary": "Get Visual Model Assignments",
+      "operation_id": "labs_visual_model_selections_benches_retrieve",
+      "summary": "Get Visual Model Selections Benches",
       "description": "Cross-feature API foundation without domain-specific behavior.",
       "tags": [
         "Visual Models"
@@ -128146,54 +130828,34 @@
                 "items": {
                   "type": "object",
                   "properties": {
-                    "scope": {
-                      "type": "string",
-                      "maxLength": 24
+                    "id": {
+                      "type": "integer"
                     },
-                    "target_key": {
-                      "type": "string",
-                      "maxLength": 80
+                    "name": {
+                      "type": "string"
                     },
-                    "asset_id": {
+                    "visual_model_id": {
                       "type": "integer",
-                      "readOnly": true
+                      "nullable": true,
+                      "description": "Model stored on this resource."
                     },
-                    "rotation": {
-                      "type": "number",
-                      "format": "double"
-                    },
-                    "scale": {
-                      "type": "number",
-                      "format": "double"
-                    },
-                    "offset_x": {
-                      "type": "number",
-                      "format": "double"
-                    },
-                    "offset_y": {
-                      "type": "number",
-                      "format": "double"
-                    },
-                    "offset_z": {
-                      "type": "number",
-                      "format": "double"
-                    },
-                    "version": {
+                    "effective_visual_model_id": {
                       "type": "integer",
-                      "maximum": 2147483647,
-                      "minimum": 0
+                      "nullable": true,
+                      "description": "Model shown on the 3D dashboard after inheriting catalog defaults."
                     },
-                    "updated_at": {
+                    "origin": {
                       "type": "string",
-                      "format": "date-time",
-                      "readOnly": true
+                      "nullable": true,
+                      "description": "'own', or the catalog the shown model is inherited from (station_type, product_model, equipment_category); null when no model applies."
                     }
                   },
                   "required": [
-                    "asset_id",
-                    "scope",
-                    "target_key",
-                    "updated_at"
+                    "effective_visual_model_id",
+                    "id",
+                    "name",
+                    "origin",
+                    "visual_model_id"
                   ]
                 }
               }
@@ -128212,16 +130874,11 @@
             },
             "data": [
               {
-                "scope": "string",
-                "target_key": "string",
-                "asset_id": 1,
-                "rotation": 0.0,
-                "scale": 0.0,
-                "offset_x": 0.0,
-                "offset_y": 0.0,
-                "offset_z": 0.0,
-                "version": 1,
-                "updated_at": "2026-10-20T12:00:00Z"
+                "id": 1,
+                "name": "string",
+                "visual_model_id": 1,
+                "effective_visual_model_id": 1,
+                "origin": "string"
               }
             ]
           }
@@ -128280,7 +130937,7 @@
           }
         },
         "404": {
-          "description": "The requested page does not exist (page beyond the last page).",
+          "description": "",
           "content_type": "application/json",
           "schema": {
             "type": "object",
@@ -128335,97 +130992,38 @@
       }
     },
     {
-      "endpoint": "/api/labs/visual-model-assignments/{scope}/{target_key}",
-      "method": "PUT",
-      "operation_id": "labs_visual_model_assignments_update_by_scope_target_key",
-      "summary": "Update Visual Model Assignments by Scope Target Key",
+      "endpoint": "/api/labs/visual-model-selections/equipment",
+      "method": "GET",
+      "operation_id": "labs_visual_model_selections_equipment_retrieve",
+      "summary": "Get Visual Model Selections Equipment",
       "description": "Cross-feature API foundation without domain-specific behavior.",
       "tags": [
         "Visual Models"
       ],
       "parameters": [
         {
-          "name": "scope",
-          "in": "path",
-          "required": true,
+          "name": "page",
+          "in": "query",
+          "required": false,
           "description": "",
           "schema": {
-            "type": "string"
+            "type": "integer",
+            "minimum": 1
           }
         },
         {
-          "name": "target_key",
-          "in": "path",
-          "required": true,
+          "name": "page_size",
+          "in": "query",
+          "required": false,
           "description": "",
           "schema": {
-            "type": "string"
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 1
           }
         }
       ],
-      "request_body": {
-        "content_type": "application/json",
-        "supported_content_types": [
-          "application/json"
-        ],
-        "required": true,
-        "description": "",
-        "schema": {
-          "type": "object",
-          "properties": {
-            "asset_id": {
-              "type": "integer",
-              "minimum": 1
-            },
-            "rotation": {
-              "type": "number",
-              "format": "double",
-              "maximum": 360,
-              "minimum": -360,
-              "default": 0.0
-            },
-            "scale": {
-              "type": "number",
-              "format": "double",
-              "maximum": 2,
-              "minimum": 0.01,
-              "default": 1.0
-            },
-            "offset_x": {
-              "type": "number",
-              "format": "double",
-              "maximum": 1,
-              "minimum": -1,
-              "default": 0.0
-            },
-            "offset_y": {
-              "type": "number",
-              "format": "double",
-              "maximum": 1,
-              "minimum": -1,
-              "default": 0.0
-            },
-            "offset_z": {
-              "type": "number",
-              "format": "double",
-              "maximum": 1,
-              "minimum": -1,
-              "default": 0.0
-            }
-          },
-          "required": [
-            "asset_id"
-          ]
-        },
-        "example_payload": {
-          "asset_id": 1,
-          "rotation": 0.0,
-          "scale": 1.0,
-          "offset_x": 0.0,
-          "offset_y": 0.0,
-          "offset_z": 0.0
-        }
-      },
+      "request_body": null,
       "responses": {
         "200": {
           "description": "",
@@ -128434,329 +131032,84 @@
             "type": "object",
             "description": "Base serializer for successful API responses.",
             "properties": {
+              "meta": {
+                "type": "object",
+                "properties": {
+                  "pagination": {
+                    "type": "object",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  }
+                },
+                "required": [
+                  "pagination"
+                ]
+              },
               "data": {
-                "type": "object",
-                "properties": {
-                  "scope": {
-                    "type": "string",
-                    "maxLength": 24
-                  },
-                  "target_key": {
-                    "type": "string",
-                    "maxLength": 80
-                  },
-                  "asset_id": {
-                    "type": "integer",
-                    "readOnly": true
-                  },
-                  "rotation": {
-                    "type": "number",
-                    "format": "double"
-                  },
-                  "scale": {
-                    "type": "number",
-                    "format": "double"
-                  },
-                  "offset_x": {
-                    "type": "number",
-                    "format": "double"
-                  },
-                  "offset_y": {
-                    "type": "number",
-                    "format": "double"
-                  },
-                  "offset_z": {
-                    "type": "number",
-                    "format": "double"
-                  },
-                  "version": {
-                    "type": "integer",
-                    "maximum": 2147483647,
-                    "minimum": 0
-                  },
-                  "updated_at": {
-                    "type": "string",
-                    "format": "date-time",
-                    "readOnly": true
-                  }
-                },
-                "required": [
-                  "asset_id",
-                  "scope",
-                  "target_key",
-                  "updated_at"
-                ]
-              }
-            },
-            "required": [
-              "data"
-            ]
-          },
-          "example_payload": {
-            "data": {
-              "scope": "string",
-              "target_key": "string",
-              "asset_id": 1,
-              "rotation": 0.0,
-              "scale": 0.0,
-              "offset_x": 0.0,
-              "offset_y": 0.0,
-              "offset_z": 0.0,
-              "version": 1,
-              "updated_at": "2026-10-20T12:00:00Z"
-            }
-          }
-        },
-        "400": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "visual_model_id": {
+                      "type": "integer",
+                      "nullable": true,
+                      "description": "Model stored on this resource."
+                    },
+                    "effective_visual_model_id": {
+                      "type": "integer",
+                      "nullable": true,
+                      "description": "Model shown on the 3D dashboard after inheriting catalog defaults."
+                    },
+                    "origin": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "'own', or the catalog the shown model is inherited from (station_type, product_model, equipment_category); null when no model applies."
                     }
                   },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
+                  "required": [
+                    "effective_visual_model_id",
+                    "id",
+                    "name",
+                    "origin",
+                    "visual_model_id"
+                  ]
+                }
               }
             },
             "required": [
-              "error"
+              "data",
+              "meta"
             ]
           },
           "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "422": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
+            "meta": {
+              "pagination": {
+                "type": null,
+                "description": null
               }
             },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        },
-        "412": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
+            "data": [
+              {
+                "id": 1,
+                "name": "string",
+                "visual_model_id": 1,
+                "effective_visual_model_id": 1,
+                "origin": "string"
               }
-            },
-            "required": [
-              "error"
             ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
           }
-        },
-        "428": {
-          "description": "",
-          "content_type": "application/json",
-          "schema": {
-            "type": "object",
-            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
-            "properties": {
-              "error": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      }
-                    }
-                  },
-                  "request_id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "details",
-                  "message",
-                  "request_id"
-                ]
-              }
-            },
-            "required": [
-              "error"
-            ]
-          },
-          "example_payload": {
-            "error": {
-              "code": "string",
-              "message": "string",
-              "details": [
-                {}
-              ],
-              "request_id": "string"
-            }
-          }
-        }
-      }
-    },
-    {
-      "endpoint": "/api/labs/visual-model-assignments/{scope}/{target_key}",
-      "method": "DELETE",
-      "operation_id": "labs_visual_model_assignments_destroy_by_scope_target_key",
-      "summary": "Delete Visual Model Assignments by Scope Target Key",
-      "description": "Cross-feature API foundation without domain-specific behavior.",
-      "tags": [
-        "Visual Models"
-      ],
-      "parameters": [
-        {
-          "name": "scope",
-          "in": "path",
-          "required": true,
-          "description": "",
-          "schema": {
-            "type": "string"
-          }
-        },
-        {
-          "name": "target_key",
-          "in": "path",
-          "required": true,
-          "description": "",
-          "schema": {
-            "type": "string"
-          }
-        }
-      ],
-      "request_body": null,
-      "responses": {
-        "204": {
-          "description": "No response body",
-          "content_type": null,
-          "schema": null,
-          "example_payload": null
         },
         "400": {
           "description": "",
@@ -128863,8 +131216,130 @@
               "request_id": "string"
             }
           }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/visual-model-selections/equipment-categories",
+      "method": "GET",
+      "operation_id": "labs_visual_model_selections_equipment_categories_retrieve",
+      "summary": "Get Visual Model Selections Equipment Categories",
+      "description": "Cross-feature API foundation without domain-specific behavior.",
+      "tags": [
+        "Visual Models"
+      ],
+      "parameters": [
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
         },
-        "412": {
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 1
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "meta": {
+                "type": "object",
+                "properties": {
+                  "pagination": {
+                    "type": "object",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  }
+                },
+                "required": [
+                  "pagination"
+                ]
+              },
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "visual_model_id": {
+                      "type": "integer",
+                      "nullable": true,
+                      "description": "Model stored on this resource."
+                    },
+                    "effective_visual_model_id": {
+                      "type": "integer",
+                      "nullable": true,
+                      "description": "Model shown on the 3D dashboard after inheriting catalog defaults."
+                    },
+                    "origin": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "'own', or the catalog the shown model is inherited from (station_type, product_model, equipment_category); null when no model applies."
+                    }
+                  },
+                  "required": [
+                    "effective_visual_model_id",
+                    "id",
+                    "name",
+                    "origin",
+                    "visual_model_id"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "data",
+              "meta"
+            ]
+          },
+          "example_payload": {
+            "meta": {
+              "pagination": {
+                "type": null,
+                "description": null
+              }
+            },
+            "data": [
+              {
+                "id": 1,
+                "name": "string",
+                "visual_model_id": 1,
+                "effective_visual_model_id": 1,
+                "origin": "string"
+              }
+            ]
+          }
+        },
+        "400": {
           "description": "",
           "content_type": "application/json",
           "schema": {
@@ -128917,7 +131392,691 @@
             }
           }
         },
-        "428": {
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/visual-model-selections/equipment-product-models",
+      "method": "GET",
+      "operation_id": "labs_visual_model_selections_equipment_product_models_retrieve",
+      "summary": "Get Visual Model Selections Equipment Product Models",
+      "description": "Cross-feature API foundation without domain-specific behavior.",
+      "tags": [
+        "Visual Models"
+      ],
+      "parameters": [
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 1
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "meta": {
+                "type": "object",
+                "properties": {
+                  "pagination": {
+                    "type": "object",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  }
+                },
+                "required": [
+                  "pagination"
+                ]
+              },
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "visual_model_id": {
+                      "type": "integer",
+                      "nullable": true,
+                      "description": "Model stored on this resource."
+                    },
+                    "effective_visual_model_id": {
+                      "type": "integer",
+                      "nullable": true,
+                      "description": "Model shown on the 3D dashboard after inheriting catalog defaults."
+                    },
+                    "origin": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "'own', or the catalog the shown model is inherited from (station_type, product_model, equipment_category); null when no model applies."
+                    }
+                  },
+                  "required": [
+                    "effective_visual_model_id",
+                    "id",
+                    "name",
+                    "origin",
+                    "visual_model_id"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "data",
+              "meta"
+            ]
+          },
+          "example_payload": {
+            "meta": {
+              "pagination": {
+                "type": null,
+                "description": null
+              }
+            },
+            "data": [
+              {
+                "id": 1,
+                "name": "string",
+                "visual_model_id": 1,
+                "effective_visual_model_id": 1,
+                "origin": "string"
+              }
+            ]
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/visual-model-selections/station-types",
+      "method": "GET",
+      "operation_id": "labs_visual_model_selections_station_types_retrieve",
+      "summary": "Get Visual Model Selections Station Types",
+      "description": "Cross-feature API foundation without domain-specific behavior.",
+      "tags": [
+        "Visual Models"
+      ],
+      "parameters": [
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 1
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "meta": {
+                "type": "object",
+                "properties": {
+                  "pagination": {
+                    "type": "object",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  }
+                },
+                "required": [
+                  "pagination"
+                ]
+              },
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "visual_model_id": {
+                      "type": "integer",
+                      "nullable": true,
+                      "description": "Model stored on this resource."
+                    },
+                    "effective_visual_model_id": {
+                      "type": "integer",
+                      "nullable": true,
+                      "description": "Model shown on the 3D dashboard after inheriting catalog defaults."
+                    },
+                    "origin": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "'own', or the catalog the shown model is inherited from (station_type, product_model, equipment_category); null when no model applies."
+                    }
+                  },
+                  "required": [
+                    "effective_visual_model_id",
+                    "id",
+                    "name",
+                    "origin",
+                    "visual_model_id"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "data",
+              "meta"
+            ]
+          },
+          "example_payload": {
+            "meta": {
+              "pagination": {
+                "type": null,
+                "description": null
+              }
+            },
+            "data": [
+              {
+                "id": 1,
+                "name": "string",
+                "visual_model_id": 1,
+                "effective_visual_model_id": 1,
+                "origin": "string"
+              }
+            ]
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/visual-model-selections/stations",
+      "method": "GET",
+      "operation_id": "labs_visual_model_selections_stations_retrieve",
+      "summary": "Get Visual Model Selections Stations",
+      "description": "Cross-feature API foundation without domain-specific behavior.",
+      "tags": [
+        "Visual Models"
+      ],
+      "parameters": [
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 1
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "meta": {
+                "type": "object",
+                "properties": {
+                  "pagination": {
+                    "type": "object",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  }
+                },
+                "required": [
+                  "pagination"
+                ]
+              },
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "visual_model_id": {
+                      "type": "integer",
+                      "nullable": true,
+                      "description": "Model stored on this resource."
+                    },
+                    "effective_visual_model_id": {
+                      "type": "integer",
+                      "nullable": true,
+                      "description": "Model shown on the 3D dashboard after inheriting catalog defaults."
+                    },
+                    "origin": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "'own', or the catalog the shown model is inherited from (station_type, product_model, equipment_category); null when no model applies."
+                    }
+                  },
+                  "required": [
+                    "effective_visual_model_id",
+                    "id",
+                    "name",
+                    "origin",
+                    "visual_model_id"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "data",
+              "meta"
+            ]
+          },
+          "example_payload": {
+            "meta": {
+              "pagination": {
+                "type": null,
+                "description": null
+              }
+            },
+            "data": [
+              {
+                "id": 1,
+                "name": "string",
+                "visual_model_id": 1,
+                "effective_visual_model_id": 1,
+                "origin": "string"
+              }
+            ]
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
           "description": "",
           "content_type": "application/json",
           "schema": {

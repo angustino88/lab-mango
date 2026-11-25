@@ -1,25 +1,36 @@
 import json
 import struct
-from dataclasses import replace
 
 import pytest
 from django.core.exceptions import PermissionDenied
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.db.models import ProtectedError
 from django.test import override_settings
 from rest_framework.test import APIClient
 
 from core.labs.features.visual_models.application import (
-    assign_model,
     delete_asset,
+    select_visual_model,
     update_asset,
     upload_asset,
 )
-from core.labs.features.visual_models.contracts import AssetDetails, AssignmentFit
+from core.labs.features.visual_models.contracts import AssetDetails
 from core.labs.features.visual_models.exceptions import AssetInUse, InvalidModel, ModelConflict
+from core.labs.features.visual_models.queries import effective_visual_models
 from core.labs.features.visual_models.validation import validate_glb
-from core.labs.models.visual_models import VisualModelAsset, VisualModelAssignment
-from tests.factories import UserFactory, grant_labs_role
+from core.labs.models import Equipment, Station
+from core.labs.models.resource.equipment.reference_data import (
+    EquipmentManufacturer,
+    EquipmentProductModel,
+    EquipmentType,
+)
+from core.labs.models.resource.location.station import StationType
+from core.labs.models.visual_models import VisualModelAsset
+from tests.factories import (
+    BenchFactory,
+    ComputingEquipmentFactory,
+    UserFactory,
+    grant_labs_role,
+)
 
 
 def glb(**extra):
@@ -80,26 +91,77 @@ def test_identical_upload_reuses_the_library_asset(operator):
     assert storage.saved == 1 and VisualModelAsset.objects.count() == 1
 
 
+def _asset(operator, name="Model", **extra):
+    asset, _ = upload_asset(glb(**extra), AssetDetails(name=name), actor=operator, storage=MemoryStorage())
+    return asset
+
+
 @pytest.mark.django_db
-def test_many_targets_share_one_asset_and_it_cannot_be_deleted_while_assigned(operator):
+def test_equipment_shows_its_own_then_product_model_then_category_model(operator):
+    device = ComputingEquipmentFactory.create()
+    category_model = _asset(operator, "Category", extras={"n": 1})
+    product_model = _asset(operator, "Product", extras={"n": 2})
+    own_model = _asset(operator, "Own", extras={"n": 3})
+    category_id = device.kind.category_id
+
+    assert effective_visual_models("equipment", [device.pk]) == {device.pk: None}
+    select_visual_model("equipment-categories", category_id, category_model.pk, actor=operator)
+    selection = select_visual_model("equipment", device.pk, None, actor=operator)
+    assert (selection.effective_visual_model_id, selection.origin) == (category_model.pk, "equipment_category")
+    manufacturer = EquipmentManufacturer.objects.create(name="Acme")
+    manufacturer.categories.add(device.kind.category)
+    equipment_type = EquipmentType.objects.create(kind=device.kind, name="Scope")
+    catalog_model = EquipmentProductModel.objects.create(
+        manufacturer=manufacturer, equipment_type=equipment_type, name="X100"
+    )
+    Equipment.objects.filter(pk=device.pk).update(product_model=catalog_model)
+    select_visual_model("equipment-product-models", catalog_model.pk, product_model.pk, actor=operator)
+    selection = select_visual_model("equipment", device.pk, None, actor=operator)
+    assert (selection.effective_visual_model_id, selection.origin) == (product_model.pk, "product_model")
+    selection = select_visual_model("equipment", device.pk, own_model.pk, actor=operator)
+    assert (selection.visual_model_id, selection.origin) == (own_model.pk, "own")
+    assert Equipment.objects.get(pk=device.pk).visual_model_id == own_model.pk
+
+
+@pytest.mark.django_db
+def test_station_inherits_station_type_model_and_bench_stores_its_own(operator):
+    workbench = _asset(operator, "Workbench")
+    station_type = StationType.objects.create(name="Workbench")
+    bench = BenchFactory.create()
+    station = Station.objects.create(sku="ST-VM-1", name="Station", type=station_type)
+    select_visual_model("station-types", station_type.pk, workbench.pk, actor=operator)
+    assert effective_visual_models("stations", [station.pk]) == {station.pk: workbench.pk}
+    select_visual_model("benches", bench.pk, workbench.pk, actor=operator)
+    assert effective_visual_models("benches", [bench.pk]) == {bench.pk: workbench.pk}
+    with pytest.raises(InvalidModel):
+        select_visual_model("benches", bench.pk, 999999, actor=operator)
+
+
+@pytest.mark.django_db
+def test_used_asset_cannot_be_deleted_and_counts_every_table(operator):
     storage = MemoryStorage()
     asset, _ = upload_asset(glb(), AssetDetails(name="Scope"), actor=operator, storage=storage)
-    for scope, key in [("equipment_category", "4"), ("equipment", "12"), ("equipment_model", "7")]:
-        assign_model(scope, key, AssignmentFit(asset_id=asset.pk), expected_version=0, actor=operator)
-    assert VisualModelAssignment.objects.filter(asset=asset).count() == 3
+    device = ComputingEquipmentFactory.create()
+    bench = BenchFactory.create()
+    select_visual_model("equipment", device.pk, asset.pk, actor=operator)
+    select_visual_model("benches", bench.pk, asset.pk, actor=operator)
+    select_visual_model("equipment-categories", device.kind.category_id, asset.pk, actor=operator)
     with pytest.raises(AssetInUse) as exc:
         delete_asset(asset.pk, expected_version=1, actor=operator, storage=storage)
     assert exc.value.usage_count == 3
-    with pytest.raises(ProtectedError):
-        asset.delete()
-    VisualModelAssignment.objects.all().delete()
+    for segment, pk in (
+        ("equipment", device.pk),
+        ("benches", bench.pk),
+        ("equipment-categories", device.kind.category_id),
+    ):
+        select_visual_model(segment, pk, None, actor=operator)
     delete_asset(asset.pk, expected_version=1, actor=operator, storage=storage)
     assert not VisualModelAsset.objects.exists()
 
 
 @pytest.mark.django_db
-def test_versions_guard_asset_and_assignment_edits(operator):
-    asset, _ = upload_asset(glb(), AssetDetails(name="Bench"), actor=operator, storage=MemoryStorage())
+def test_asset_versions_guard_metadata_edits(operator):
+    asset = _asset(operator, "Bench")
     updated = update_asset(asset.pk, AssetDetails(name="Bench", surface=0.8), expected_version=1, actor=operator)
     assert updated.version == 2
     unchanged = update_asset(asset.pk, AssetDetails(name="Bench", surface=0.8), expected_version=2, actor=operator)
@@ -107,89 +169,69 @@ def test_versions_guard_asset_and_assignment_edits(operator):
     with pytest.raises(ModelConflict):
         update_asset(asset.pk, AssetDetails(name="Stale"), expected_version=1, actor=operator)
 
-    fit = AssignmentFit(asset_id=asset.pk, scale=0.8)
-    created = assign_model("bench", "*", fit, expected_version=0, actor=operator)
-    assert created.version == 1
-    with pytest.raises(ModelConflict):
-        assign_model("bench", "*", fit, expected_version=0, actor=operator)
-    moved = assign_model("bench", "*", replace(fit, offset_y=0.2), expected_version=1, actor=operator)
-    assert moved.version == 2
-    with pytest.raises(InvalidModel):
-        assign_model("bench", "*", replace(fit, asset_id=999999), expected_version=2, actor=operator)
-
 
 @pytest.mark.django_db
-def test_commands_deny_non_operator():
+def test_commands_deny_non_operator(operator):
     with pytest.raises(PermissionDenied):
         upload_asset(glb(), AssetDetails(name="Bench"), actor=UserFactory.create(), storage=MemoryStorage())
+    bench = BenchFactory.create()
+    with pytest.raises(PermissionDenied):
+        select_visual_model("benches", bench.pk, None, actor=UserFactory.create())
 
 
 @pytest.mark.django_db
-def test_upload_assign_reload_and_remove_over_http(client, tmp_path):
+def test_upload_select_and_read_over_http(client, tmp_path):
+    device = ComputingEquipmentFactory.create()
+    category_id = device.kind.category_id
     with override_settings(MEDIA_ROOT=str(tmp_path), MINIO_ENABLED=False):
         response = client.post(
             "/api/labs/visual-model-assets",
-            {
-                "file": SimpleUploadedFile("scope.glb", glb()),
-                "name": "Oscilloscope",
-                "rotation": 90,
-                "license": "Fixture",
-                "source_url": "https://example.com/model",
-            },
+            {"file": SimpleUploadedFile("scope.glb", glb()), "name": "Oscilloscope", "license": "Fixture"},
             format="multipart",
         )
         assert response.status_code == 201, response.data
         asset = response.data["data"]
-        assert asset["usage_count"] == 0 and asset["version"] == 1 and asset["url"]
         duplicate = client.post(
             "/api/labs/visual-model-assets",
             {"file": SimpleUploadedFile("again.glb", glb()), "name": "Again"},
             format="multipart",
         )
-        assert duplicate.status_code == 200, duplicate.data
-        assert duplicate.data["data"]["id"] == asset["id"]
+        assert duplicate.status_code == 200 and duplicate.data["data"]["id"] == asset["id"]
 
-        for key in ["4", "5"]:
-            assigned = client.put(
-                f"/api/labs/visual-model-assignments/equipment_category/{key}",
-                {"asset_id": asset["id"], "scale": 0.8, "offset_y": 0.2},
-                format="json",
-                HTTP_IF_NONE_MATCH="*",
-            )
-            assert assigned.status_code == 200, assigned.data
-            assert assigned["ETag"] == '"1"'
+        url = f"/api/labs/equipment-categories/{category_id}/visual-model"
+        selected = client.put(url, {"visual_model_id": asset["id"]}, format="json")
+        assert selected.status_code == 200, selected.data
+        assert selected.data["data"]["visual_model_id"] == asset["id"]
 
-        other = APIClient()
-        other.force_authenticate(user=grant_labs_role(UserFactory.create(), "coord"))
-        assets = other.get("/api/labs/visual-model-assets?page_size=100")
-        assert assets.status_code == 200, assets.data
-        assert assets.data["data"][0]["usage_count"] == 2
-        assignments = other.get("/api/labs/visual-model-assignments?page_size=100")
-        assert [row["target_key"] for row in assignments.data["data"]] == ["4", "5"]
-        assert assignments.data["data"][0]["offset_y"] == 0.2
+        inherited = client.get(f"/api/labs/equipment/{device.pk}/visual-model")
+        assert inherited.status_code == 200, inherited.data
+        assert inherited.data["data"]["visual_model_id"] is None
+        assert inherited.data["data"]["effective_visual_model_id"] == asset["id"]
+        assert inherited.data["data"]["origin"] == "equipment_category"
 
-        in_use = client.delete(f"/api/labs/visual-model-assets/{asset['id']}", HTTP_IF_MATCH='"1"')
-        assert in_use.status_code == 409
-        for key in ["4", "5"]:
-            url = f"/api/labs/visual-model-assignments/equipment_category/{key}"
-            assert client.delete(url, HTTP_IF_MATCH='"2"').status_code == 412
-            assert client.delete(url, HTTP_IF_MATCH='"1"').status_code == 204
-            assert client.delete(url, HTTP_IF_MATCH='"1"').status_code == 404
+        defaults = client.get("/api/labs/visual-model-selections/equipment-categories?page_size=100")
+        assert defaults.status_code == 200, defaults.data
+        row = next(item for item in defaults.data["data"] if item["id"] == category_id)
+        assert row["visual_model_id"] == asset["id"] and row["name"]
+
+        assets = client.get("/api/labs/visual-model-assets?page_size=100")
+        assert assets.data["data"][0]["usage_count"] == 1
+        assert client.delete(f"/api/labs/visual-model-assets/{asset['id']}", HTTP_IF_MATCH='"1"').status_code == 409
+        assert client.put(url, {"visual_model_id": None}, format="json").status_code == 200
         assert client.delete(f"/api/labs/visual-model-assets/{asset['id']}", HTTP_IF_MATCH='"1"').status_code == 204
 
-        other.force_authenticate(user=UserFactory.create())
-        assert other.get("/api/labs/visual-model-assets").status_code == 403
-        assert other.get("/api/labs/visual-model-assignments").status_code == 403
+    assert client.put(url, {"visual_model_id": 999999}, format="json").status_code == 422
+    assert client.get("/api/labs/equipment/999999/visual-model").status_code == 404
+    assert client.get("/api/labs/visual-model-selections/rooms").status_code == 404
+    other = APIClient()
+    other.force_authenticate(user=UserFactory.create())
+    assert other.get("/api/labs/visual-model-assets").status_code == 403
+    assert other.put(url, {"visual_model_id": None}, format="json").status_code == 403
 
 
 @pytest.mark.django_db
-def test_asset_metadata_update_requires_current_version(client):
-    asset, _ = upload_asset(
-        glb(),
-        AssetDetails(name="Bench"),
-        actor=grant_labs_role(UserFactory.create(), "coord"),
-        storage=MemoryStorage(),
-    )
+def test_asset_metadata_update_requires_current_version(client, operator):
+    asset = _asset(operator, "Bench")
     url = f"/api/labs/visual-model-assets/{asset.pk}"
     body = {"name": "Workbench", "surface": 0.75, "license": "CC-BY-4.0"}
     assert client.put(url, body, format="json").status_code == 428
@@ -206,7 +248,6 @@ def test_asset_metadata_update_requires_current_version(client):
 @pytest.mark.django_db
 def test_upload_limit_and_query_validation(client):
     assert client.get("/api/labs/visual-model-assets?page_size=no").status_code == 400
-    assert client.delete("/api/labs/visual-model-assignments/bench/1?expected_version=no").status_code == 400
     response = client.post(
         "/api/labs/visual-model-assets",
         {"file": SimpleUploadedFile("large.glb", b"X" * (16 * 1024 * 1024)), "name": "Oversize"},
@@ -217,22 +258,31 @@ def test_upload_limit_and_query_validation(client):
 
 
 @pytest.mark.django_db
-def test_assignment_rejects_unknown_scope_and_missing_precondition(client, operator):
-    asset, _ = upload_asset(glb(), AssetDetails(name="Rack"), actor=operator, storage=MemoryStorage())
-    body = {"asset_id": asset.pk}
-    assert client.put("/api/labs/visual-model-assignments/bench/1", body, format="json").status_code == 428
-    bad = client.put("/api/labs/visual-model-assignments/room/1", body, format="json", HTTP_IF_NONE_MATCH="*")
-    assert bad.status_code == 422
-
-
-@pytest.mark.django_db
-def test_catalog_serialization_query_budget(django_assert_num_queries):
-    from core.labs.features.visual_models.api.serializers import AssetSerializer, AssignmentSerializer
-    from core.labs.features.visual_models.queries import list_assets, list_assignments
+def test_catalog_queries_have_fixed_cost(django_assert_num_queries, operator):
+    from core.labs.features.visual_models.api.serializers import AssetSerializer
+    from core.labs.features.visual_models.queries import list_assets, list_selections
 
     for index in range(3):
         asset = VisualModelAsset.objects.create(name="Model", file="models/test.glb", sha256=f"{index:064x}", size=1)
-        VisualModelAssignment.objects.create(scope="equipment_category", target_key=str(index + 1), asset=asset)
+        StationType.objects.create(name=f"Type {index}", visual_model=asset)
     with override_settings(MINIO_ENABLED=False), django_assert_num_queries(2):
         assert len(AssetSerializer(list_assets(), many=True).data) == 3
-        assert len(AssignmentSerializer(list_assignments(), many=True).data) == 3
+        assert len(list_selections("station-types")[0:10]) == 3
+
+
+@pytest.mark.django_db
+def test_room_mapping_rows_carry_the_shown_model(operator):
+    from core.labs.features.resource_mappings.queries import get_resource_mapping
+
+    workbench = _asset(operator, "Workbench")
+    instrument = _asset(operator, "Instrument", extras={"n": 9})
+    station_type = StationType.objects.create(name="Workbench")
+    station = Station.objects.create(sku="ST-VM-2", name="Station", type=station_type)
+    bench = BenchFactory.create(setup_location=station)
+    select_visual_model("station-types", station_type.pk, workbench.pk, actor=operator)
+    select_visual_model("benches", bench.pk, instrument.pk, actor=operator)
+
+    mapping = get_resource_mapping(resource_type="stations", resource_id=station.pk)
+    assert mapping is not None
+    assert [(row["id"], row["visual_model_id"]) for row in mapping["data"]["stations"]] == [(station.pk, workbench.pk)]
+    assert [(row["id"], row["visual_model_id"]) for row in mapping["data"]["benches"]] == [(bench.pk, instrument.pk)]

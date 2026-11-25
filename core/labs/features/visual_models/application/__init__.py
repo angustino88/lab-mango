@@ -1,17 +1,19 @@
-"""Library writes. Unique sha256/target constraints and locked version checks guard concurrent editors."""
+"""Library and selection writes. The unique sha256, row locks and version checks guard concurrent editors."""
 
 import hashlib
 import math
-import re
 
 from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError, transaction
 
-from core.labs.models.visual_models import VISUAL_MODEL_SCOPES, VisualModelAsset, VisualModelAssignment
+from core.common.models.user_stamped import UserStampedModel
+from core.labs.models.visual_models import VisualModelAsset
 from core.users.public import LabsPermission, has_permission
 
-from ..contracts import AssetDetails, AssignmentFit, ModelStorage
+from ..contracts import AssetDetails, ModelSelection, ModelStorage
 from ..exceptions import AssetInUse, InvalidModel, ModelConflict, ModelNotFound
+from ..queries import asset_usage, get_selection
+from ..targets import TARGETS
 from ..validation import validate_glb
 
 
@@ -94,8 +96,8 @@ def delete_asset(asset_id: int, *, expected_version: int, actor, storage: ModelS
             raise ModelNotFound
         if asset.version != expected_version:
             raise ModelConflict
-        # Assignments reference the asset with PROTECT; this check gives a clear error before the database does.
-        usage = asset.assignments.count()
+        # Resources reference the asset with PROTECT; this check gives a clear error before the database does.
+        usage = asset_usage(asset.pk)
         if usage:
             raise AssetInUse(usage)
         name = asset.file.name
@@ -104,69 +106,26 @@ def delete_asset(asset_id: int, *, expected_version: int, actor, storage: ModelS
             transaction.on_commit(lambda: storage.delete(name))
 
 
-def _check_target(scope: str, target_key: str) -> None:
-    if scope not in VISUAL_MODEL_SCOPES or not (
-        re.fullmatch(r"[1-9][0-9]*", target_key) or (scope == "bench" and target_key == "*")
-    ):
-        raise InvalidModel("Select a supported catalog type or resource.")
-
-
-def assign_model(
-    scope: str, target_key: str, fit: AssignmentFit, *, expected_version: int, actor
-) -> VisualModelAssignment:
-    """Create (``expected_version`` 0) or update the assignment for one target."""
+def select_visual_model(segment: str, pk: int, asset_id: int | None, *, actor) -> ModelSelection:
+    """Store ``asset_id`` (or clear it with None) on one resource. Last write wins; the row lock serializes writers."""
     ensure_editor(actor)
-    _check_target(scope, target_key)
-    _check_finite(fit.rotation, fit.scale, fit.offset_x, fit.offset_y, fit.offset_z)
-    if any(abs(value) > 1 for value in (fit.offset_x, fit.offset_y, fit.offset_z)):
-        raise InvalidModel("Offsets must be between -1 and 1.")
-    if not 0 < fit.scale <= 2 or not -360 <= fit.rotation <= 360:
-        raise InvalidModel("The placement settings are out of range.")
-    values = {
-        "asset_id": fit.asset_id,
-        "rotation": fit.rotation,
-        "scale": fit.scale,
-        "offset_x": fit.offset_x,
-        "offset_y": fit.offset_y,
-        "offset_z": fit.offset_z,
-    }
+    target = TARGETS.get(segment)
+    if target is None:
+        raise ModelNotFound
     with transaction.atomic():
-        # Lock the asset so it cannot be deleted while this assignment is written.
-        if not VisualModelAsset.objects.select_for_update().filter(pk=fit.asset_id).exists():
-            raise InvalidModel("Select a model from the library.")
-        assignment = (
-            VisualModelAssignment.objects.select_for_update().filter(scope=scope, target_key=target_key).first()
-        )
-        if assignment is None:
-            if expected_version != 0:
-                raise ModelConflict
-            try:
-                with transaction.atomic():
-                    return VisualModelAssignment.objects.create(scope=scope, target_key=target_key, **values)
-            except IntegrityError as exc:
-                # The unique target constraint rejected a concurrent create.
-                raise ModelConflict from exc
-        if assignment.version != expected_version:
-            raise ModelConflict
-        changed = False
-        for field, value in values.items():
-            if getattr(assignment, field) != value:
-                setattr(assignment, field, value)
-                changed = True
-        if changed:
-            assignment.version += 1
-            assignment.save()
-    return assignment
-
-
-def unassign_model(scope: str, target_key: str, *, expected_version: int, actor) -> None:
-    ensure_editor(actor)
-    with transaction.atomic():
-        assignment = (
-            VisualModelAssignment.objects.select_for_update().filter(scope=scope, target_key=target_key).first()
-        )
-        if assignment is None:
+        row = target.queryset().select_for_update(of=("self",)).filter(pk=pk).first()
+        if row is None:
             raise ModelNotFound
-        if assignment.version != expected_version:
-            raise ModelConflict
-        assignment.delete()
+        # Lock the asset so it cannot be deleted while it is being assigned.
+        if asset_id is not None and not VisualModelAsset.objects.select_for_update().filter(pk=asset_id).exists():
+            raise InvalidModel("Select a model from the library.")
+        if row.visual_model_id != asset_id:
+            row.visual_model_id = asset_id
+            fields = ["visual_model"] + [name for name in ("updated_at",) if hasattr(row, name)]
+            if isinstance(row, UserStampedModel):
+                row.save(update_fields=fields, actor=actor)
+            else:
+                row.save(update_fields=fields)
+    selection = get_selection(segment, pk)
+    assert selection is not None
+    return selection
