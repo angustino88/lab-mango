@@ -1,4 +1,4 @@
-"""Neutral .xlsx reading and writing (openpyxl). Knows sheets, rows and cells, nothing about the domain."""
+"""Neutral .xlsx reading (python-calamine) and writing (openpyxl). Knows sheets, rows and cells, nothing about the domain."""
 
 from .xlsx import (
     XLSX_CONTENT_TYPE,

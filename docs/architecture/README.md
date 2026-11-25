@@ -28,6 +28,7 @@ The backend is a Django and Django REST Framework application with PostgreSQL. T
 | --- | --- | --- |
 | Reference data provisioning and deletion policy (all Labs models) | [Reference data](reference-data.md) | Proposed framework |
 | Catalog and selector API standard (all domains) | [ADR 002](decisions/002-catalog-and-selector-api.md) | Accepted and implemented |
+| Reading .xlsx uploads with python-calamine | [ADR 008](decisions/008-xlsx-reader-python-calamine.md) | Accepted and implemented |
 | Model validation without redundant queries (`validate_for_write`) | [ADR 009](decisions/009-validate-for-write.md) | Accepted and implemented |
 
 ## 4. Cross-domain rules

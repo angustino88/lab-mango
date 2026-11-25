@@ -32,7 +32,7 @@ warning_count}`, `sheets[] {key, name, rows, created, existing, failed, ignored_
 
 | Choice | Why |
 |---|---|
-| The server parses the file (openpyxl, `core/infrastructure/spreadsheets`) | The rules (category fields, slot capacity, utilities, lifecycle) live in the backend. A single parser means the row numbers in the report are exact, and the frontend only uploads and renders the report |
+| The server parses the file (python-calamine reads, openpyxl writes the template and export; `core/infrastructure/spreadsheets`, [ADR 008](../../../../../docs/architecture/decisions/008-xlsx-reader-python-calamine.md)) | The rules (category fields, slot capacity, utilities, lifecycle) live in the backend. A single parser means the row numbers in the report are exact, and the frontend only uploads and renders the report |
 | One declaration (`queries/sheets.py`) drives both the template and the importer | The template and the importer cannot drift apart |
 | Check = run the real writes, then roll back | The preview shows exactly what Apply will do, including rows that depend on rows earlier in the same file |
 | One transaction; each row in a savepoint | All or nothing (WRT-7), but one bad row does not hide the problems of the other rows (ERR-7) |
