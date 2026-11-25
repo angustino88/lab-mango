@@ -6,14 +6,18 @@ from rest_framework.exceptions import APIException, ParseError
 
 class ModelPreconditionRequired(APIException):
     status_code = 428
-    default_detail = "Send If-Match with the current quoted version, or If-None-Match: * to create."
+    default_detail = "Send If-Match with the current quoted version, or If-None-Match: * to create where documented."
     default_code = "precondition_required"
 
 
-MODEL_PRECONDITIONS = [
-    OpenApiParameter("If-Match", str, OpenApiParameter.HEADER, description='Current quoted version, for example "1".'),
+IF_MATCH = OpenApiParameter(
+    "If-Match", str, OpenApiParameter.HEADER, description='Current quoted version, for example "1".'
+)
+VERSION_PRECONDITIONS = [IF_MATCH]
+CREATE_OR_VERSION_PRECONDITIONS = [
+    IF_MATCH,
     OpenApiParameter(
-        "If-None-Match", str, OpenApiParameter.HEADER, description="Use * on PUT to create an unassigned target."
+        "If-None-Match", str, OpenApiParameter.HEADER, description="Use * on PUT to assign a target that has no model."
     ),
 ]
 

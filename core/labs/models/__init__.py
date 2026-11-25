@@ -131,11 +131,11 @@ from .telemetry import (
     TelemetryDevice,
     TelemetryTarget,
 )
-
-from .visual_models import VisualModel
+from .visual_models import VisualModelAsset, VisualModelAssignment
 
 __all__ = [
-    "VisualModel",
+    "VisualModelAsset",
+    "VisualModelAssignment",
     "ActiveLaboratoryObservation",
     "ActiveUserObservation",
     "AgentReportedModel",

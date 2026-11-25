@@ -1,7 +1,7 @@
 {
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
-  "total_endpoints": 528,
+  "total_endpoints": 532,
   "generated_at": "2026-11-25",
   "endpoints": [
     {
@@ -126646,10 +126646,10 @@
       }
     },
     {
-      "endpoint": "/api/labs/visual-models",
+      "endpoint": "/api/labs/visual-model-assets",
       "method": "GET",
-      "operation_id": "labs_visual_models_retrieve",
-      "summary": "Get Visual Models",
+      "operation_id": "labs_visual_model_assets_retrieve",
+      "summary": "Get Visual Model Assets",
       "description": "Cross-feature API foundation without domain-specific behavior.",
       "tags": [
         "Visual Models"
@@ -126710,13 +126710,9 @@
                 "items": {
                   "type": "object",
                   "properties": {
-                    "scope": {
-                      "type": "string",
-                      "maxLength": 24
-                    },
-                    "target_key": {
-                      "type": "string",
-                      "maxLength": 80
+                    "id": {
+                      "type": "integer",
+                      "readOnly": true
                     },
                     "name": {
                       "type": "string",
@@ -126726,17 +126722,14 @@
                       "type": "string",
                       "readOnly": true
                     },
-                    "rotation": {
-                      "type": "number",
-                      "format": "double"
+                    "sha256": {
+                      "type": "string",
+                      "maxLength": 64
                     },
-                    "scale": {
-                      "type": "number",
-                      "format": "double"
-                    },
-                    "surface": {
-                      "type": "number",
-                      "format": "double"
+                    "size": {
+                      "type": "integer",
+                      "maximum": 2147483647,
+                      "minimum": 0
                     },
                     "source_url": {
                       "type": "string",
@@ -126746,30 +126739,39 @@
                       "type": "string",
                       "maxLength": 255
                     },
-                    "offset_x": {
+                    "rotation": {
                       "type": "number",
                       "format": "double"
                     },
-                    "offset_y": {
+                    "surface": {
                       "type": "number",
                       "format": "double"
                     },
-                    "offset_z": {
-                      "type": "number",
-                      "format": "double"
+                    "usage_count": {
+                      "type": "integer",
+                      "readOnly": true,
+                      "description": "Resources and types assigned to this model."
                     },
                     "version": {
                       "type": "integer",
                       "maximum": 2147483647,
                       "minimum": 0
+                    },
+                    "updated_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "readOnly": true
                     }
                   },
                   "required": [
+                    "id",
                     "name",
-                    "scope",
+                    "sha256",
+                    "size",
                     "source_url",
-                    "target_key",
-                    "url"
+                    "updated_at",
+                    "url",
+                    "usage_count"
                   ]
                 }
               }
@@ -126788,19 +126790,18 @@
             },
             "data": [
               {
-                "scope": "string",
-                "target_key": "string",
+                "id": 1,
                 "name": "string",
                 "url": "string",
-                "rotation": 0.0,
-                "scale": 0.0,
-                "surface": 0.0,
+                "sha256": "string",
+                "size": 1,
                 "source_url": "string",
                 "license": "string",
-                "offset_x": 0.0,
-                "offset_y": 0.0,
-                "offset_z": 0.0,
-                "version": 1
+                "rotation": 0.0,
+                "surface": 0.0,
+                "usage_count": 1,
+                "version": 1,
+                "updated_at": "2026-10-20T12:00:00Z"
               }
             ]
           }
@@ -126914,34 +126915,15 @@
       }
     },
     {
-      "endpoint": "/api/labs/visual-models/{scope}/{target_key}",
-      "method": "PUT",
-      "operation_id": "labs_visual_models_update_by_scope_target_key",
-      "summary": "Update Visual Models by Scope Target Key",
+      "endpoint": "/api/labs/visual-model-assets",
+      "method": "POST",
+      "operation_id": "labs_visual_model_assets_create",
+      "summary": "Create Visual Model Assets",
       "description": "Cross-feature API foundation without domain-specific behavior.",
       "tags": [
         "Visual Models"
       ],
-      "parameters": [
-        {
-          "name": "scope",
-          "in": "path",
-          "required": true,
-          "description": "",
-          "schema": {
-            "type": "string"
-          }
-        },
-        {
-          "name": "target_key",
-          "in": "path",
-          "required": true,
-          "description": "",
-          "schema": {
-            "type": "string"
-          }
-        }
-      ],
+      "parameters": [],
       "request_body": {
         "content_type": "multipart/form-data",
         "supported_content_types": [
@@ -126952,61 +126934,16 @@
         "schema": {
           "type": "object",
           "properties": {
-            "file": {
-              "type": "string",
-              "format": "binary"
-            },
             "name": {
               "type": "string",
               "maxLength": 160
-            },
-            "rotation": {
-              "type": "number",
-              "format": "double",
-              "maximum": 360,
-              "minimum": -360,
-              "default": 0.0
-            },
-            "scale": {
-              "type": "number",
-              "format": "double",
-              "maximum": 2,
-              "minimum": 0.01,
-              "default": 1.0
-            },
-            "offset_x": {
-              "type": "number",
-              "format": "double",
-              "maximum": 1,
-              "minimum": -1,
-              "default": 0.0
-            },
-            "offset_y": {
-              "type": "number",
-              "format": "double",
-              "maximum": 1,
-              "minimum": -1,
-              "default": 0.0
-            },
-            "offset_z": {
-              "type": "number",
-              "format": "double",
-              "maximum": 1,
-              "minimum": -1,
-              "default": 0.0
-            },
-            "surface": {
-              "type": "number",
-              "format": "double",
-              "maximum": 1,
-              "minimum": 0,
-              "default": 1.0
             },
             "source_url": {
               "oneOf": [
                 {
                   "type": "string",
-                  "format": "uri"
+                  "format": "uri",
+                  "default": ""
                 },
                 {
                   "type": "string",
@@ -127018,26 +126955,137 @@
               "type": "string",
               "default": "",
               "maxLength": 255
+            },
+            "rotation": {
+              "type": "number",
+              "format": "double",
+              "maximum": 360,
+              "minimum": -360,
+              "default": 0.0
+            },
+            "surface": {
+              "type": "number",
+              "format": "double",
+              "maximum": 1,
+              "minimum": 0,
+              "default": 1.0
+            },
+            "file": {
+              "type": "string",
+              "format": "binary"
             }
           },
           "required": [
+            "file",
             "name"
           ]
         },
         "example_payload": {
-          "file": "string",
           "name": "string",
-          "rotation": 0.0,
-          "scale": 1.0,
-          "offset_x": 0.0,
-          "offset_y": 0.0,
-          "offset_z": 0.0,
-          "surface": 1.0,
           "source_url": "https://example.com/resource",
-          "license": ""
+          "license": "",
+          "rotation": 0.0,
+          "surface": 1.0,
+          "file": "string"
         }
       },
       "responses": {
+        "201": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 160
+                  },
+                  "url": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "size": {
+                    "type": "integer",
+                    "maximum": 2147483647,
+                    "minimum": 0
+                  },
+                  "source_url": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "license": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "rotation": {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  "surface": {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  "usage_count": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "description": "Resources and types assigned to this model."
+                  },
+                  "version": {
+                    "type": "integer",
+                    "maximum": 2147483647,
+                    "minimum": 0
+                  },
+                  "updated_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  }
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "sha256",
+                  "size",
+                  "source_url",
+                  "updated_at",
+                  "url",
+                  "usage_count"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "name": "string",
+              "url": "string",
+              "sha256": "string",
+              "size": 1,
+              "source_url": "string",
+              "license": "string",
+              "rotation": 0.0,
+              "surface": 0.0,
+              "usage_count": 1,
+              "version": 1,
+              "updated_at": "2026-10-20T12:00:00Z"
+            }
+          }
+        },
         "200": {
           "description": "",
           "content_type": "application/json",
@@ -127048,13 +127096,9 @@
               "data": {
                 "type": "object",
                 "properties": {
-                  "scope": {
-                    "type": "string",
-                    "maxLength": 24
-                  },
-                  "target_key": {
-                    "type": "string",
-                    "maxLength": 80
+                  "id": {
+                    "type": "integer",
+                    "readOnly": true
                   },
                   "name": {
                     "type": "string",
@@ -127064,17 +127108,14 @@
                     "type": "string",
                     "readOnly": true
                   },
-                  "rotation": {
-                    "type": "number",
-                    "format": "double"
+                  "sha256": {
+                    "type": "string",
+                    "maxLength": 64
                   },
-                  "scale": {
-                    "type": "number",
-                    "format": "double"
-                  },
-                  "surface": {
-                    "type": "number",
-                    "format": "double"
+                  "size": {
+                    "type": "integer",
+                    "maximum": 2147483647,
+                    "minimum": 0
                   },
                   "source_url": {
                     "type": "string",
@@ -127084,30 +127125,39 @@
                     "type": "string",
                     "maxLength": 255
                   },
-                  "offset_x": {
+                  "rotation": {
                     "type": "number",
                     "format": "double"
                   },
-                  "offset_y": {
+                  "surface": {
                     "type": "number",
                     "format": "double"
                   },
-                  "offset_z": {
-                    "type": "number",
-                    "format": "double"
+                  "usage_count": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "description": "Resources and types assigned to this model."
                   },
                   "version": {
                     "type": "integer",
                     "maximum": 2147483647,
                     "minimum": 0
+                  },
+                  "updated_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
                   }
                 },
                 "required": [
+                  "id",
                   "name",
-                  "scope",
+                  "sha256",
+                  "size",
                   "source_url",
-                  "target_key",
-                  "url"
+                  "updated_at",
+                  "url",
+                  "usage_count"
                 ]
               }
             },
@@ -127117,19 +127167,18 @@
           },
           "example_payload": {
             "data": {
-              "scope": "string",
-              "target_key": "string",
+              "id": 1,
               "name": "string",
               "url": "string",
-              "rotation": 0.0,
-              "scale": 0.0,
-              "surface": 0.0,
+              "sha256": "string",
+              "size": 1,
               "source_url": "string",
               "license": "string",
-              "offset_x": 0.0,
-              "offset_y": 0.0,
-              "offset_z": 0.0,
-              "version": 1
+              "rotation": 0.0,
+              "surface": 0.0,
+              "usage_count": 1,
+              "version": 1,
+              "updated_at": "2026-10-20T12:00:00Z"
             }
           }
         },
@@ -127291,6 +127340,343 @@
               "request_id": "string"
             }
           }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/visual-model-assets/{asset_id}",
+      "method": "PUT",
+      "operation_id": "labs_visual_model_assets_update_by_asset_id",
+      "summary": "Update Visual Model Assets by Asset ID",
+      "description": "Cross-feature API foundation without domain-specific behavior.",
+      "tags": [
+        "Visual Models"
+      ],
+      "parameters": [
+        {
+          "name": "asset_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "maxLength": 160
+            },
+            "source_url": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "format": "uri",
+                  "default": ""
+                },
+                {
+                  "type": "string",
+                  "maxLength": 0
+                }
+              ]
+            },
+            "license": {
+              "type": "string",
+              "default": "",
+              "maxLength": 255
+            },
+            "rotation": {
+              "type": "number",
+              "format": "double",
+              "maximum": 360,
+              "minimum": -360,
+              "default": 0.0
+            },
+            "surface": {
+              "type": "number",
+              "format": "double",
+              "maximum": 1,
+              "minimum": 0,
+              "default": 1.0
+            }
+          },
+          "required": [
+            "name"
+          ]
+        },
+        "example_payload": {
+          "name": "string",
+          "source_url": "https://example.com/resource",
+          "license": "",
+          "rotation": 0.0,
+          "surface": 1.0
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 160
+                  },
+                  "url": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "size": {
+                    "type": "integer",
+                    "maximum": 2147483647,
+                    "minimum": 0
+                  },
+                  "source_url": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "license": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "rotation": {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  "surface": {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  "usage_count": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "description": "Resources and types assigned to this model."
+                  },
+                  "version": {
+                    "type": "integer",
+                    "maximum": 2147483647,
+                    "minimum": 0
+                  },
+                  "updated_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  }
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "sha256",
+                  "size",
+                  "source_url",
+                  "updated_at",
+                  "url",
+                  "usage_count"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "name": "string",
+              "url": "string",
+              "sha256": "string",
+              "size": 1,
+              "source_url": "string",
+              "license": "string",
+              "rotation": 0.0,
+              "surface": 0.0,
+              "usage_count": 1,
+              "version": 1,
+              "updated_at": "2026-10-20T12:00:00Z"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
         },
         "412": {
           "description": "",
@@ -127401,10 +127787,945 @@
       }
     },
     {
-      "endpoint": "/api/labs/visual-models/{scope}/{target_key}",
+      "endpoint": "/api/labs/visual-model-assets/{asset_id}",
       "method": "DELETE",
-      "operation_id": "labs_visual_models_destroy_by_scope_target_key",
-      "summary": "Delete Visual Models by Scope Target Key",
+      "operation_id": "labs_visual_model_assets_destroy_by_asset_id",
+      "summary": "Delete Visual Model Assets by Asset ID",
+      "description": "Cross-feature API foundation without domain-specific behavior.",
+      "tags": [
+        "Visual Models"
+      ],
+      "parameters": [
+        {
+          "name": "asset_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "204": {
+          "description": "No response body",
+          "content_type": null,
+          "schema": null,
+          "example_payload": null
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "412": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "428": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/visual-model-assignments",
+      "method": "GET",
+      "operation_id": "labs_visual_model_assignments_retrieve",
+      "summary": "Get Visual Model Assignments",
+      "description": "Cross-feature API foundation without domain-specific behavior.",
+      "tags": [
+        "Visual Models"
+      ],
+      "parameters": [
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 1
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "meta": {
+                "type": "object",
+                "properties": {
+                  "pagination": {
+                    "type": "object",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  }
+                },
+                "required": [
+                  "pagination"
+                ]
+              },
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "scope": {
+                      "type": "string",
+                      "maxLength": 24
+                    },
+                    "target_key": {
+                      "type": "string",
+                      "maxLength": 80
+                    },
+                    "asset_id": {
+                      "type": "integer",
+                      "readOnly": true
+                    },
+                    "rotation": {
+                      "type": "number",
+                      "format": "double"
+                    },
+                    "scale": {
+                      "type": "number",
+                      "format": "double"
+                    },
+                    "offset_x": {
+                      "type": "number",
+                      "format": "double"
+                    },
+                    "offset_y": {
+                      "type": "number",
+                      "format": "double"
+                    },
+                    "offset_z": {
+                      "type": "number",
+                      "format": "double"
+                    },
+                    "version": {
+                      "type": "integer",
+                      "maximum": 2147483647,
+                      "minimum": 0
+                    },
+                    "updated_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "readOnly": true
+                    }
+                  },
+                  "required": [
+                    "asset_id",
+                    "scope",
+                    "target_key",
+                    "updated_at"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "data",
+              "meta"
+            ]
+          },
+          "example_payload": {
+            "meta": {
+              "pagination": {
+                "type": null,
+                "description": null
+              }
+            },
+            "data": [
+              {
+                "scope": "string",
+                "target_key": "string",
+                "asset_id": 1,
+                "rotation": 0.0,
+                "scale": 0.0,
+                "offset_x": 0.0,
+                "offset_y": 0.0,
+                "offset_z": 0.0,
+                "version": 1,
+                "updated_at": "2026-10-20T12:00:00Z"
+              }
+            ]
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "The requested page does not exist (page beyond the last page).",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/visual-model-assignments/{scope}/{target_key}",
+      "method": "PUT",
+      "operation_id": "labs_visual_model_assignments_update_by_scope_target_key",
+      "summary": "Update Visual Model Assignments by Scope Target Key",
+      "description": "Cross-feature API foundation without domain-specific behavior.",
+      "tags": [
+        "Visual Models"
+      ],
+      "parameters": [
+        {
+          "name": "scope",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "target_key",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "asset_id": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "rotation": {
+              "type": "number",
+              "format": "double",
+              "maximum": 360,
+              "minimum": -360,
+              "default": 0.0
+            },
+            "scale": {
+              "type": "number",
+              "format": "double",
+              "maximum": 2,
+              "minimum": 0.01,
+              "default": 1.0
+            },
+            "offset_x": {
+              "type": "number",
+              "format": "double",
+              "maximum": 1,
+              "minimum": -1,
+              "default": 0.0
+            },
+            "offset_y": {
+              "type": "number",
+              "format": "double",
+              "maximum": 1,
+              "minimum": -1,
+              "default": 0.0
+            },
+            "offset_z": {
+              "type": "number",
+              "format": "double",
+              "maximum": 1,
+              "minimum": -1,
+              "default": 0.0
+            }
+          },
+          "required": [
+            "asset_id"
+          ]
+        },
+        "example_payload": {
+          "asset_id": 1,
+          "rotation": 0.0,
+          "scale": 1.0,
+          "offset_x": 0.0,
+          "offset_y": 0.0,
+          "offset_z": 0.0
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "scope": {
+                    "type": "string",
+                    "maxLength": 24
+                  },
+                  "target_key": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "asset_id": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "rotation": {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  "scale": {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  "offset_x": {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  "offset_y": {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  "offset_z": {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  "version": {
+                    "type": "integer",
+                    "maximum": 2147483647,
+                    "minimum": 0
+                  },
+                  "updated_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  }
+                },
+                "required": [
+                  "asset_id",
+                  "scope",
+                  "target_key",
+                  "updated_at"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "scope": "string",
+              "target_key": "string",
+              "asset_id": 1,
+              "rotation": 0.0,
+              "scale": 0.0,
+              "offset_x": 0.0,
+              "offset_y": 0.0,
+              "offset_z": 0.0,
+              "version": 1,
+              "updated_at": "2026-10-20T12:00:00Z"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "412": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "428": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/visual-model-assignments/{scope}/{target_key}",
+      "method": "DELETE",
+      "operation_id": "labs_visual_model_assignments_destroy_by_scope_target_key",
+      "summary": "Delete Visual Model Assignments by Scope Target Key",
       "description": "Cross-feature API foundation without domain-specific behavior.",
       "tags": [
         "Visual Models"
@@ -127438,6 +128759,59 @@
           "example_payload": null
         },
         "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
           "description": "",
           "content_type": "application/json",
           "schema": {

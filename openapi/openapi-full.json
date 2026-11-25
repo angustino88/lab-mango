@@ -34924,9 +34924,9 @@
         "summary": "Get Telemetry Targets by Target Type Resource ID"
       }
     },
-    "/api/labs/visual-models": {
+    "/api/labs/visual-model-assets": {
       "get": {
-        "operationId": "labs_visual_models_retrieve",
+        "operationId": "labs_visual_model_assets_retrieve",
         "description": "Cross-feature API foundation without domain-specific behavior.",
         "parameters": [
           {
@@ -34963,7 +34963,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VisualModelListSerializersModelPaginatedResponse"
+                  "$ref": "#/components/schemas/VisualModelAssetListSerializersAssetPaginatedResponse"
                 }
               }
             },
@@ -34990,31 +34990,11 @@
             "description": "The requested page does not exist (page beyond the last page)."
           }
         },
-        "summary": "Get Visual Models"
-      }
-    },
-    "/api/labs/visual-models/{scope}/{target_key}": {
-      "put": {
-        "operationId": "labs_visual_models_update_by_scope_target_key",
+        "summary": "Get Visual Model Assets"
+      },
+      "post": {
+        "operationId": "labs_visual_model_assets_create",
         "description": "Cross-feature API foundation without domain-specific behavior.",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "scope",
-            "schema": {
-              "type": "string"
-            },
-            "required": true
-          },
-          {
-            "in": "path",
-            "name": "target_key",
-            "schema": {
-              "type": "string"
-            },
-            "required": true
-          }
-        ],
         "tags": [
           "Visual Models"
         ],
@@ -35022,7 +35002,7 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/ModelWrite"
+                "$ref": "#/components/schemas/AssetUpload"
               }
             }
           },
@@ -35037,11 +35017,21 @@
           }
         ],
         "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisualModelAssetSerializersAssetDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
           "200": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VisualModelSerializersModelDetailResponse"
+                  "$ref": "#/components/schemas/VisualModelAssetExistingSerializersAssetDetailResponse"
                 }
               }
             },
@@ -35076,6 +35066,86 @@
               }
             },
             "description": ""
+          }
+        },
+        "summary": "Create Visual Model Assets"
+      }
+    },
+    "/api/labs/visual-model-assets/{asset_id}": {
+      "put": {
+        "operationId": "labs_visual_model_assets_update_by_asset_id",
+        "description": "Cross-feature API foundation without domain-specific behavior.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "asset_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Visual Models"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetDetails"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisualModelAssetSerializersAssetDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
           },
           "412": {
             "content": {
@@ -35098,10 +35168,258 @@
             "description": ""
           }
         },
-        "summary": "Update Visual Models by Scope Target Key"
+        "summary": "Update Visual Model Assets by Asset ID"
       },
       "delete": {
-        "operationId": "labs_visual_models_destroy_by_scope_target_key",
+        "operationId": "labs_visual_model_assets_destroy_by_asset_id",
+        "description": "Cross-feature API foundation without domain-specific behavior.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "asset_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Visual Models"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No response body"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "412": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Delete Visual Model Assets by Asset ID"
+      }
+    },
+    "/api/labs/visual-model-assignments": {
+      "get": {
+        "operationId": "labs_visual_model_assignments_retrieve",
+        "description": "Cross-feature API foundation without domain-specific behavior.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "tags": [
+          "Visual Models"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisualModelAssignmentListSerializersAssignmentPaginatedResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
+          }
+        },
+        "summary": "Get Visual Model Assignments"
+      }
+    },
+    "/api/labs/visual-model-assignments/{scope}/{target_key}": {
+      "put": {
+        "operationId": "labs_visual_model_assignments_update_by_scope_target_key",
+        "description": "Cross-feature API foundation without domain-specific behavior.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scope",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "target_key",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Visual Models"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignmentWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisualModelAssignmentSerializersAssignmentDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "412": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Update Visual Model Assignments by Scope Target Key"
+      },
+      "delete": {
+        "operationId": "labs_visual_model_assignments_destroy_by_scope_target_key",
         "description": "Cross-feature API foundation without domain-specific behavior.",
         "parameters": [
           {
@@ -35146,6 +35464,16 @@
             },
             "description": ""
           },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
           "412": {
             "content": {
               "application/json": {
@@ -35167,7 +35495,7 @@
             "description": ""
           }
         },
-        "summary": "Delete Visual Models by Scope Target Key"
+        "summary": "Delete Visual Model Assignments by Scope Target Key"
       }
     },
     "/api/labs/workbook-imports/actions/apply": {
@@ -44962,6 +45290,166 @@
           "trend"
         ]
       },
+      "Asset": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "url": {
+            "type": "string",
+            "readOnly": true
+          },
+          "sha256": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "size": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": 0
+          },
+          "source_url": {
+            "type": "string",
+            "readOnly": true
+          },
+          "license": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "rotation": {
+            "type": "number",
+            "format": "double"
+          },
+          "surface": {
+            "type": "number",
+            "format": "double"
+          },
+          "usage_count": {
+            "type": "integer",
+            "readOnly": true,
+            "description": "Resources and types assigned to this model."
+          },
+          "version": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": 0
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "sha256",
+          "size",
+          "source_url",
+          "updated_at",
+          "url",
+          "usage_count"
+        ]
+      },
+      "AssetDetails": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "source_url": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "uri",
+                "default": ""
+              },
+              {
+                "type": "string",
+                "maxLength": 0
+              }
+            ]
+          },
+          "license": {
+            "type": "string",
+            "default": "",
+            "maxLength": 255
+          },
+          "rotation": {
+            "type": "number",
+            "format": "double",
+            "maximum": 360,
+            "minimum": -360,
+            "default": 0.0
+          },
+          "surface": {
+            "type": "number",
+            "format": "double",
+            "maximum": 1,
+            "minimum": 0,
+            "default": 1.0
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "AssetUpload": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "source_url": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "uri",
+                "default": ""
+              },
+              {
+                "type": "string",
+                "maxLength": 0
+              }
+            ]
+          },
+          "license": {
+            "type": "string",
+            "default": "",
+            "maxLength": 255
+          },
+          "rotation": {
+            "type": "number",
+            "format": "double",
+            "maximum": 360,
+            "minimum": -360,
+            "default": 0.0
+          },
+          "surface": {
+            "type": "number",
+            "format": "double",
+            "maximum": 1,
+            "minimum": 0,
+            "default": 1.0
+          },
+          "file": {
+            "type": "string",
+            "format": "binary"
+          }
+        },
+        "required": [
+          "file",
+          "name"
+        ]
+      },
       "AssignedEquipment": {
         "type": "object",
         "description": "Equipment that holds a license seat: its identity, SKU and name.",
@@ -44991,6 +45479,106 @@
           "uid"
         ],
         "x-embedded-resource": true
+      },
+      "Assignment": {
+        "type": "object",
+        "properties": {
+          "scope": {
+            "type": "string",
+            "maxLength": 24
+          },
+          "target_key": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "asset_id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "rotation": {
+            "type": "number",
+            "format": "double"
+          },
+          "scale": {
+            "type": "number",
+            "format": "double"
+          },
+          "offset_x": {
+            "type": "number",
+            "format": "double"
+          },
+          "offset_y": {
+            "type": "number",
+            "format": "double"
+          },
+          "offset_z": {
+            "type": "number",
+            "format": "double"
+          },
+          "version": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": 0
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "asset_id",
+          "scope",
+          "target_key",
+          "updated_at"
+        ]
+      },
+      "AssignmentWrite": {
+        "type": "object",
+        "properties": {
+          "asset_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "rotation": {
+            "type": "number",
+            "format": "double",
+            "maximum": 360,
+            "minimum": -360,
+            "default": 0.0
+          },
+          "scale": {
+            "type": "number",
+            "format": "double",
+            "maximum": 2,
+            "minimum": 0.01,
+            "default": 1.0
+          },
+          "offset_x": {
+            "type": "number",
+            "format": "double",
+            "maximum": 1,
+            "minimum": -1,
+            "default": 0.0
+          },
+          "offset_y": {
+            "type": "number",
+            "format": "double",
+            "maximum": 1,
+            "minimum": -1,
+            "default": 0.0
+          },
+          "offset_z": {
+            "type": "number",
+            "format": "double",
+            "maximum": 1,
+            "minimum": -1,
+            "default": 0.0
+          }
+        },
+        "required": [
+          "asset_id"
+        ]
       },
       "AttachmentUploadRequest": {
         "type": "object",
@@ -63381,146 +63969,6 @@
         "type": "string",
         "description": "* `delta` - delta\n* `reset` - reset"
       },
-      "Model": {
-        "type": "object",
-        "properties": {
-          "scope": {
-            "type": "string",
-            "maxLength": 24
-          },
-          "target_key": {
-            "type": "string",
-            "maxLength": 80
-          },
-          "name": {
-            "type": "string",
-            "maxLength": 160
-          },
-          "url": {
-            "type": "string",
-            "readOnly": true
-          },
-          "rotation": {
-            "type": "number",
-            "format": "double"
-          },
-          "scale": {
-            "type": "number",
-            "format": "double"
-          },
-          "surface": {
-            "type": "number",
-            "format": "double"
-          },
-          "source_url": {
-            "type": "string",
-            "readOnly": true
-          },
-          "license": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "offset_x": {
-            "type": "number",
-            "format": "double"
-          },
-          "offset_y": {
-            "type": "number",
-            "format": "double"
-          },
-          "offset_z": {
-            "type": "number",
-            "format": "double"
-          },
-          "version": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
-          }
-        },
-        "required": [
-          "name",
-          "scope",
-          "source_url",
-          "target_key",
-          "url"
-        ]
-      },
-      "ModelWrite": {
-        "type": "object",
-        "properties": {
-          "file": {
-            "type": "string",
-            "format": "binary"
-          },
-          "name": {
-            "type": "string",
-            "maxLength": 160
-          },
-          "rotation": {
-            "type": "number",
-            "format": "double",
-            "maximum": 360,
-            "minimum": -360,
-            "default": 0.0
-          },
-          "scale": {
-            "type": "number",
-            "format": "double",
-            "maximum": 2,
-            "minimum": 0.01,
-            "default": 1.0
-          },
-          "offset_x": {
-            "type": "number",
-            "format": "double",
-            "maximum": 1,
-            "minimum": -1,
-            "default": 0.0
-          },
-          "offset_y": {
-            "type": "number",
-            "format": "double",
-            "maximum": 1,
-            "minimum": -1,
-            "default": 0.0
-          },
-          "offset_z": {
-            "type": "number",
-            "format": "double",
-            "maximum": 1,
-            "minimum": -1,
-            "default": 0.0
-          },
-          "surface": {
-            "type": "number",
-            "format": "double",
-            "maximum": 1,
-            "minimum": 0,
-            "default": 1.0
-          },
-          "source_url": {
-            "oneOf": [
-              {
-                "type": "string",
-                "format": "uri"
-              },
-              {
-                "type": "string",
-                "maxLength": 0
-              }
-            ]
-          },
-          "license": {
-            "type": "string",
-            "default": "",
-            "maxLength": 255
-          }
-        },
-        "required": [
-          "name"
-        ]
-      },
       "Money": {
         "type": "object",
         "description": "FMT-2 money: ``amount`` is a decimal string, ``currency`` is ISO 4217 uppercase.",
@@ -75801,17 +76249,29 @@
         "type": "string",
         "description": "* `public` - public\n* `internal` - internal"
       },
-      "VisualModelListSerializersModelPaginatedResponse": {
+      "VisualModelAssetExistingSerializersAssetDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Asset"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "VisualModelAssetListSerializersAssetPaginatedResponse": {
         "type": "object",
         "description": "Base serializer for successful API responses.",
         "properties": {
           "meta": {
-            "$ref": "#/components/schemas/VisualModelListSerializersModelPaginationMeta"
+            "$ref": "#/components/schemas/VisualModelAssetListSerializersAssetPaginationMeta"
           },
           "data": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Model"
+              "$ref": "#/components/schemas/Asset"
             }
           }
         },
@@ -75820,7 +76280,7 @@
           "meta"
         ]
       },
-      "VisualModelListSerializersModelPagination": {
+      "VisualModelAssetListSerializersAssetPagination": {
         "type": "object",
         "properties": {
           "count": {
@@ -75852,23 +76312,97 @@
           "previous"
         ]
       },
-      "VisualModelListSerializersModelPaginationMeta": {
+      "VisualModelAssetListSerializersAssetPaginationMeta": {
         "type": "object",
         "properties": {
           "pagination": {
-            "$ref": "#/components/schemas/VisualModelListSerializersModelPagination"
+            "$ref": "#/components/schemas/VisualModelAssetListSerializersAssetPagination"
           }
         },
         "required": [
           "pagination"
         ]
       },
-      "VisualModelSerializersModelDetailResponse": {
+      "VisualModelAssetSerializersAssetDetailResponse": {
         "type": "object",
         "description": "Base serializer for successful API responses.",
         "properties": {
           "data": {
-            "$ref": "#/components/schemas/Model"
+            "$ref": "#/components/schemas/Asset"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "VisualModelAssignmentListSerializersAssignmentPaginatedResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/VisualModelAssignmentListSerializersAssignmentPaginationMeta"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Assignment"
+            }
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "VisualModelAssignmentListSerializersAssignmentPagination": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "next": {
+            "type": "string",
+            "nullable": true
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "count",
+          "next",
+          "page",
+          "page_size",
+          "previous"
+        ]
+      },
+      "VisualModelAssignmentListSerializersAssignmentPaginationMeta": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/VisualModelAssignmentListSerializersAssignmentPagination"
+          }
+        },
+        "required": [
+          "pagination"
+        ]
+      },
+      "VisualModelAssignmentSerializersAssignmentDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Assignment"
           }
         },
         "required": [

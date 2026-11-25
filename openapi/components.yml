@@ -1044,6 +1044,124 @@ components:
       required:
       - count
       - trend
+    Asset:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 160
+        url:
+          type: string
+          readOnly: true
+        sha256:
+          type: string
+          maxLength: 64
+        size:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        source_url:
+          type: string
+          readOnly: true
+        license:
+          type: string
+          maxLength: 255
+        rotation:
+          type: number
+          format: double
+        surface:
+          type: number
+          format: double
+        usage_count:
+          type: integer
+          readOnly: true
+          description: Resources and types assigned to this model.
+        version:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - id
+      - name
+      - sha256
+      - size
+      - source_url
+      - updated_at
+      - url
+      - usage_count
+    AssetDetails:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 160
+        source_url:
+          oneOf:
+          - type: string
+            format: uri
+            default: ''
+          - type: string
+            maxLength: 0
+        license:
+          type: string
+          default: ''
+          maxLength: 255
+        rotation:
+          type: number
+          format: double
+          maximum: 360
+          minimum: -360
+          default: 0.0
+        surface:
+          type: number
+          format: double
+          maximum: 1
+          minimum: 0
+          default: 1.0
+      required:
+      - name
+    AssetUpload:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 160
+        source_url:
+          oneOf:
+          - type: string
+            format: uri
+            default: ''
+          - type: string
+            maxLength: 0
+        license:
+          type: string
+          default: ''
+          maxLength: 255
+        rotation:
+          type: number
+          format: double
+          maximum: 360
+          minimum: -360
+          default: 0.0
+        surface:
+          type: number
+          format: double
+          maximum: 1
+          minimum: 0
+          default: 1.0
+        file:
+          type: string
+          format: binary
+      required:
+      - file
+      - name
     AssignedEquipment:
       type: object
       description: 'Equipment that holds a license seat: its identity, SKU and name.'
@@ -1067,6 +1185,84 @@ components:
       - sku
       - uid
       x-embedded-resource: true
+    Assignment:
+      type: object
+      properties:
+        scope:
+          type: string
+          maxLength: 24
+        target_key:
+          type: string
+          maxLength: 80
+        asset_id:
+          type: integer
+          readOnly: true
+        rotation:
+          type: number
+          format: double
+        scale:
+          type: number
+          format: double
+        offset_x:
+          type: number
+          format: double
+        offset_y:
+          type: number
+          format: double
+        offset_z:
+          type: number
+          format: double
+        version:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - asset_id
+      - scope
+      - target_key
+      - updated_at
+    AssignmentWrite:
+      type: object
+      properties:
+        asset_id:
+          type: integer
+          minimum: 1
+        rotation:
+          type: number
+          format: double
+          maximum: 360
+          minimum: -360
+          default: 0.0
+        scale:
+          type: number
+          format: double
+          maximum: 2
+          minimum: 0.01
+          default: 1.0
+        offset_x:
+          type: number
+          format: double
+          maximum: 1
+          minimum: -1
+          default: 0.0
+        offset_y:
+          type: number
+          format: double
+          maximum: 1
+          minimum: -1
+          default: 0.0
+        offset_z:
+          type: number
+          format: double
+          maximum: 1
+          minimum: -1
+          default: 0.0
+      required:
+      - asset_id
     AttachmentUploadRequest:
       type: object
       properties:
@@ -14397,112 +14593,6 @@ components:
       description: '* `delta` - delta
 
         * `reset` - reset'
-    Model:
-      type: object
-      properties:
-        scope:
-          type: string
-          maxLength: 24
-        target_key:
-          type: string
-          maxLength: 80
-        name:
-          type: string
-          maxLength: 160
-        url:
-          type: string
-          readOnly: true
-        rotation:
-          type: number
-          format: double
-        scale:
-          type: number
-          format: double
-        surface:
-          type: number
-          format: double
-        source_url:
-          type: string
-          readOnly: true
-        license:
-          type: string
-          maxLength: 255
-        offset_x:
-          type: number
-          format: double
-        offset_y:
-          type: number
-          format: double
-        offset_z:
-          type: number
-          format: double
-        version:
-          type: integer
-          maximum: 2147483647
-          minimum: 0
-      required:
-      - name
-      - scope
-      - source_url
-      - target_key
-      - url
-    ModelWrite:
-      type: object
-      properties:
-        file:
-          type: string
-          format: binary
-        name:
-          type: string
-          maxLength: 160
-        rotation:
-          type: number
-          format: double
-          maximum: 360
-          minimum: -360
-          default: 0.0
-        scale:
-          type: number
-          format: double
-          maximum: 2
-          minimum: 0.01
-          default: 1.0
-        offset_x:
-          type: number
-          format: double
-          maximum: 1
-          minimum: -1
-          default: 0.0
-        offset_y:
-          type: number
-          format: double
-          maximum: 1
-          minimum: -1
-          default: 0.0
-        offset_z:
-          type: number
-          format: double
-          maximum: 1
-          minimum: -1
-          default: 0.0
-        surface:
-          type: number
-          format: double
-          maximum: 1
-          minimum: 0
-          default: 1.0
-        source_url:
-          oneOf:
-          - type: string
-            format: uri
-          - type: string
-            maxLength: 0
-        license:
-          type: string
-          default: ''
-          maxLength: 255
-      required:
-      - name
     Money:
       type: object
       description: 'FMT-2 money: ``amount`` is a decimal string, ``currency`` is ISO
@@ -23468,20 +23558,28 @@ components:
       description: '* `public` - public
 
         * `internal` - internal'
-    VisualModelListSerializersModelPaginatedResponse:
+    VisualModelAssetExistingSerializersAssetDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Asset'
+      required:
+      - data
+    VisualModelAssetListSerializersAssetPaginatedResponse:
       type: object
       description: Base serializer for successful API responses.
       properties:
         meta:
-          $ref: '#/components/schemas/VisualModelListSerializersModelPaginationMeta'
+          $ref: '#/components/schemas/VisualModelAssetListSerializersAssetPaginationMeta'
         data:
           type: array
           items:
-            $ref: '#/components/schemas/Model'
+            $ref: '#/components/schemas/Asset'
       required:
       - data
       - meta
-    VisualModelListSerializersModelPagination:
+    VisualModelAssetListSerializersAssetPagination:
       type: object
       properties:
         count:
@@ -23505,19 +23603,71 @@ components:
       - page
       - page_size
       - previous
-    VisualModelListSerializersModelPaginationMeta:
+    VisualModelAssetListSerializersAssetPaginationMeta:
       type: object
       properties:
         pagination:
-          $ref: '#/components/schemas/VisualModelListSerializersModelPagination'
+          $ref: '#/components/schemas/VisualModelAssetListSerializersAssetPagination'
       required:
       - pagination
-    VisualModelSerializersModelDetailResponse:
+    VisualModelAssetSerializersAssetDetailResponse:
       type: object
       description: Base serializer for successful API responses.
       properties:
         data:
-          $ref: '#/components/schemas/Model'
+          $ref: '#/components/schemas/Asset'
+      required:
+      - data
+    VisualModelAssignmentListSerializersAssignmentPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/VisualModelAssignmentListSerializersAssignmentPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assignment'
+      required:
+      - data
+      - meta
+    VisualModelAssignmentListSerializersAssignmentPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    VisualModelAssignmentListSerializersAssignmentPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/VisualModelAssignmentListSerializersAssignmentPagination'
+      required:
+      - pagination
+    VisualModelAssignmentSerializersAssignmentDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Assignment'
       required:
       - data
     Watcher:

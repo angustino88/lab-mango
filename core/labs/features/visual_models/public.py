@@ -1,4 +1,12 @@
-from .application import remove_model, save_model
-from .queries import list_models
+from .application import assign_model, delete_asset, unassign_model, update_asset, upload_asset
+from .queries import list_assets, list_assignments
 
-__all__ = ["list_models", "remove_model", "save_model"]
+__all__ = [
+    "assign_model",
+    "delete_asset",
+    "list_assets",
+    "list_assignments",
+    "unassign_model",
+    "update_asset",
+    "upload_asset",
+]

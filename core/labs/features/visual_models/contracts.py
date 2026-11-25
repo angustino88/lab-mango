@@ -8,17 +8,23 @@ class ModelStorage(Protocol):
 
 
 @dataclass(frozen=True)
-class SaveModelInput:
-    scope: str
-    target_key: str
+class AssetDetails:
+    """Editable library metadata and the model-intrinsic placement defaults."""
+
     name: str
-    content: bytes | None
-    expected_version: int
+    source_url: str = ""
+    license: str = ""
+    rotation: float = 0
+    surface: float = 1
+
+
+@dataclass(frozen=True)
+class AssignmentFit:
+    """Per-resource fitting applied on top of the asset's own placement."""
+
+    asset_id: int
     rotation: float = 0
     scale: float = 1
-    surface: float = 1
     offset_x: float = 0
     offset_y: float = 0
     offset_z: float = 0
-    source_url: str = ""
-    license: str = ""
