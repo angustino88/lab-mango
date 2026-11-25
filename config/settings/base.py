@@ -457,8 +457,10 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 25,
     "DEFAULT_THROTTLE_CLASSES": (
-        "rest_framework.throttling.AnonRateThrottle",
-        "rest_framework.throttling.UserRateThrottle",
+        # Fail open on a Redis outage (see core/common/api/throttling.py); auth endpoints keep
+        # their own fail-closed ScopedRateThrottle.
+        "core.common.api.throttling.ResilientAnonRateThrottle",
+        "core.common.api.throttling.ResilientUserRateThrottle",
     ),
     # Scoped throttles for public auth endpoints (see ScopedRateThrottle on each view).
     # Counters live in the default cache (Redis in production, shared across workers).
@@ -499,6 +501,10 @@ CACHE_CIRCUIT_BREAKER_SECONDS = env.float("CACHE_CIRCUIT_BREAKER_SECONDS", defau
 # Short-TTL cache for user Labs roles and Entra binding checks (invalidated on commit).
 API_AUTH_CACHE_ENABLED = env.bool("API_AUTH_CACHE_ENABLED", default=True)
 API_AUTH_CACHE_TTL = env.int("API_AUTH_CACHE_TTL", default=120)
+# Throttles with outage_policy="allow" (the global anon/user limits) let requests through while the
+# rate-limit cache is unreachable. False makes them refuse with 503 instead. Auth endpoint throttles
+# always fail closed.
+API_THROTTLE_FAIL_OPEN = env.bool("API_THROTTLE_FAIL_OPEN", default=True)
 # Emit Server-Timing headers only in non-production (or when explicitly enabled).
 API_SERVER_TIMING_ENABLED = env.bool("API_SERVER_TIMING_ENABLED", default=DEBUG)
 

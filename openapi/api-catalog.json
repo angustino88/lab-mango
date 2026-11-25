@@ -2,7 +2,7 @@
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
   "total_endpoints": 521,
-  "generated_at": "2026-11-24",
+  "generated_at": "2026-11-25",
   "endpoints": [
     {
       "endpoint": "/agent/bookings/actions/check-in",
@@ -8002,7 +8002,7 @@
       "method": "GET",
       "operation_id": "labs_analytics_finance_expense_type_breakdown_retrieve",
       "summary": "Get Analytics Finance Expense Type Breakdown",
-      "description": "Actual cash flow by expense type and source; purchases use procurement.\n\nNo purchase commitment/allocation reporting. Same inclusive month window,\ntimezone boundaries, signed refunds, access, no-FX and no-dedup semantics.\nAll finance reads share 30 requests/minute per user, or per IP for API keys.\nInvalid queries return invalid_query (400); exhausted budgets return rate_limited (429).",
+      "description": "Actual cash flow by expense type and source; purchases use procurement.\n\nNo purchase commitment/allocation reporting. Same inclusive month window,\ntimezone boundaries, signed refunds, access, no-FX and no-dedup semantics.\nAll finance reads share 30 requests/minute per user, or per IP for API keys.\nInvalid queries return invalid_query (400); exhausted budgets return rate_limited (429).\nIf the rate-limit store is unavailable the budget fails closed: service_unavailable (503) with Retry-After.",
       "tags": [
         "Analytics"
       ],
@@ -8365,6 +8365,58 @@
               "request_id": "string"
             }
           }
+        },
+        "503": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
         }
       }
     },
@@ -8373,7 +8425,7 @@
       "method": "GET",
       "operation_id": "labs_analytics_finance_monthly_trends_retrieve",
       "summary": "Get Analytics Finance Monthly Trends",
-      "description": "Monthly actual cash-flow series, zero-filled, with separate source totals.\n\nSame currency, access, signed-refund and timezone rules as finance summary.\nInclusive calendar-month window is bounded to 24 months; no deduplication/FX.\nAll finance reads share 30 requests/minute per user, or per IP for API keys.\nInvalid queries return invalid_query (400); exhausted budgets return rate_limited (429).",
+      "description": "Monthly actual cash-flow series, zero-filled, with separate source totals.\n\nSame currency, access, signed-refund and timezone rules as finance summary.\nInclusive calendar-month window is bounded to 24 months; no deduplication/FX.\nAll finance reads share 30 requests/minute per user, or per IP for API keys.\nInvalid queries return invalid_query (400); exhausted budgets return rate_limited (429).\nIf the rate-limit store is unavailable the budget fails closed: service_unavailable (503) with Retry-After.",
       "tags": [
         "Analytics"
       ],
@@ -8737,6 +8789,58 @@
               "request_id": "string"
             }
           }
+        },
+        "503": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
         }
       }
     },
@@ -8745,7 +8849,7 @@
       "method": "GET",
       "operation_id": "labs_analytics_finance_summary_retrieve",
       "summary": "Get Analytics Finance Summary",
-      "description": "Actual cash flow, no commitments, allocations, FX or deduplication.\n\nCalendar months are inclusive; the next month's local midnight is exclusive.\nDate-only expense payments retain their calendar date. Procurement instants\nare bucketed in the requested zone. Refunds are signed and net is not clamped.\nAccess: authenticated user or valid API key, as with existing finance reads.\nAll finance reads share 30 requests/minute per user, or per IP for API keys.\nInvalid queries return invalid_query (400); exhausted budgets return rate_limited (429).",
+      "description": "Actual cash flow, no commitments, allocations, FX or deduplication.\n\nCalendar months are inclusive; the next month's local midnight is exclusive.\nDate-only expense payments retain their calendar date. Procurement instants\nare bucketed in the requested zone. Refunds are signed and net is not clamped.\nAccess: authenticated user or valid API key, as with existing finance reads.\nAll finance reads share 30 requests/minute per user, or per IP for API keys.\nInvalid queries return invalid_query (400); exhausted budgets return rate_limited (429).\nIf the rate-limit store is unavailable the budget fails closed: service_unavailable (503) with Retry-After.",
       "tags": [
         "Analytics"
       ],
@@ -9047,6 +9151,58 @@
           }
         },
         "429": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "503": {
           "description": "",
           "content_type": "application/json",
           "schema": {

@@ -8,10 +8,11 @@ from drf_spectacular.generators import SchemaGenerator
 from jsonschema import validate
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.test import APIRequestFactory, force_authenticate
-from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from core.agents.api.views import AgentInfoAPIView
+from core.common.api.throttling import ResilientAnonRateThrottle as AnonRateThrottle
+from core.common.api.throttling import ResilientUserRateThrottle as UserRateThrottle
 
 
 def document():

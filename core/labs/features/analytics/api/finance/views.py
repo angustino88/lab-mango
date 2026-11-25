@@ -74,6 +74,7 @@ class FinanceSummaryAPIView(_FinanceAPIView):
     Access: authenticated user or valid API key, as with existing finance reads.
     All finance reads share 30 requests/minute per user, or per IP for API keys.
     Invalid queries return invalid_query (400); exhausted budgets return rate_limited (429).
+    If the rate-limit store is unavailable the budget fails closed: service_unavailable (503) with Retry-After.
     """
 
     query = staticmethod(get_finance_summary)
@@ -84,6 +85,7 @@ class FinanceSummaryAPIView(_FinanceAPIView):
         unauthorized=ResponseContract.problem(401, FinanceProblemResponseSerializer),
         forbidden=ResponseContract.problem(403, FinanceProblemResponseSerializer),
         rate_limited=ResponseContract.problem(429, FinanceProblemResponseSerializer),
+        service_unavailable=ResponseContract.problem(503, FinanceProblemResponseSerializer),
     )
 
 
@@ -94,6 +96,7 @@ class FinanceMonthlyTrendsAPIView(_FinanceAPIView):
     Inclusive calendar-month window is bounded to 24 months; no deduplication/FX.
     All finance reads share 30 requests/minute per user, or per IP for API keys.
     Invalid queries return invalid_query (400); exhausted budgets return rate_limited (429).
+    If the rate-limit store is unavailable the budget fails closed: service_unavailable (503) with Retry-After.
     """
 
     query = staticmethod(get_finance_monthly_trends)
@@ -104,6 +107,7 @@ class FinanceMonthlyTrendsAPIView(_FinanceAPIView):
         unauthorized=ResponseContract.problem(401, FinanceProblemResponseSerializer),
         forbidden=ResponseContract.problem(403, FinanceProblemResponseSerializer),
         rate_limited=ResponseContract.problem(429, FinanceProblemResponseSerializer),
+        service_unavailable=ResponseContract.problem(503, FinanceProblemResponseSerializer),
     )
 
 
@@ -114,6 +118,7 @@ class FinanceBreakdownAPIView(_FinanceAPIView):
     timezone boundaries, signed refunds, access, no-FX and no-dedup semantics.
     All finance reads share 30 requests/minute per user, or per IP for API keys.
     Invalid queries return invalid_query (400); exhausted budgets return rate_limited (429).
+    If the rate-limit store is unavailable the budget fails closed: service_unavailable (503) with Retry-After.
     """
 
     query = staticmethod(get_finance_breakdown)
@@ -124,6 +129,7 @@ class FinanceBreakdownAPIView(_FinanceAPIView):
         unauthorized=ResponseContract.problem(401, FinanceProblemResponseSerializer),
         forbidden=ResponseContract.problem(403, FinanceProblemResponseSerializer),
         rate_limited=ResponseContract.problem(429, FinanceProblemResponseSerializer),
+        service_unavailable=ResponseContract.problem(503, FinanceProblemResponseSerializer),
     )
 
 

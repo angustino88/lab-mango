@@ -7,10 +7,11 @@ from unittest.mock import patch
 import pytest
 from django.core.cache import cache
 from rest_framework.settings import api_settings
-from rest_framework.throttling import AnonRateThrottle, ScopedRateThrottle, UserRateThrottle
+from rest_framework.throttling import ScopedRateThrottle
 
 from config.settings import base
 from core.common.api.api_views import AppAPIView
+from core.common.api.throttling import ResilientAnonRateThrottle, ResilientUserRateThrottle
 from core.users.features.auth.login.api import UserLoginView
 
 
@@ -33,8 +34,8 @@ def test_global_rates_have_defaults_and_environment_overrides(overrides, expecte
         configured = runpy.run_path(base.__file__, run_name="config.settings._throttle_test")["REST_FRAMEWORK"]
 
     assert configured["DEFAULT_THROTTLE_CLASSES"] == (
-        "rest_framework.throttling.AnonRateThrottle",
-        "rest_framework.throttling.UserRateThrottle",
+        "core.common.api.throttling.ResilientAnonRateThrottle",
+        "core.common.api.throttling.ResilientUserRateThrottle",
     )
     assert configured["DEFAULT_THROTTLE_RATES"] == {
         **expected,
@@ -45,7 +46,7 @@ def test_global_rates_have_defaults_and_environment_overrides(overrides, expecte
 
 
 def test_all_enabled_global_throttles_initialize():
-    assert api_settings.DEFAULT_THROTTLE_CLASSES == [AnonRateThrottle, UserRateThrottle]
+    assert api_settings.DEFAULT_THROTTLE_CLASSES == [ResilientAnonRateThrottle, ResilientUserRateThrottle]
     throttles = AppAPIView().get_throttles()
 
     assert len(throttles) == len(api_settings.DEFAULT_THROTTLE_CLASSES)
