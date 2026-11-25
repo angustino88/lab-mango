@@ -6,14 +6,14 @@ DJANGO_SETTINGS_MODULE=config.settings.local
 DJANGO_READ_DOT_ENV_FILE=False
 DJANGO_DEBUG=True
 DJANGO_SECRET_KEY=local-development-only-change-me
-USE_DOCKER=True
+# Only the value "yes" enables the Docker debug-toolbar IP handling (config/settings/local.py).
+USE_DOCKER=yes
 UVICORN_PORT=8000
 
 # Web access
 # ------------------------------------------------------------------------------
 ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
 CSRF_TRUSTED_ORIGINS=http://localhost:8000,http://127.0.0.1:8000,http://localhost:5173
-SITE_URL=http://localhost:5173
 
 # Redis and Celery (service names from docker-compose.dev.yml)
 # ------------------------------------------------------------------------------
@@ -23,7 +23,6 @@ CELERY_TASK_DEFAULT_EXCHANGE=labmango_backend
 CELERY_TASK_DEFAULT_ROUTING_KEY=labmango_backend
 CELERY_BEAT_SCHEDULER=django_celery_beat.schedulers:DatabaseScheduler
 REDIS_URL=redis://redis:6379/1
-REDIS_HOST=redis
 CACHE_URL=redis://redis:6379/1
 LOCAL_USE_REDIS_CACHE=True
 
@@ -37,8 +36,10 @@ DEFAULT_FROM_EMAIL=noreply@localhost
 LDAP_AUTH_URL=
 LDAP_AUTH_SEARCH_BASE=
 LDAP_AUTH_WHITELIST=admin,adminlab
-AAD_AUDIENCE=
-AAD_JWKS_URL=
+# Empty values override the defaults and fail system check users.E013; set them only to test
+# against another Entra app.
+# AAD_AUDIENCE=
+# AAD_JWKS_URL=
 
 # Optional proxy
 # ------------------------------------------------------------------------------
@@ -48,12 +49,7 @@ NO_PROXY=localhost,127.0.0.1,postgres,redis
 
 # Optional integrations
 # ------------------------------------------------------------------------------
-JIRA_ACCESS_TOKEN=
 OTP_PA_API=
-MONITORING_PA_API=
-BOOKING_PA_API=
-EQUIPMENT_PA_API=
-BOOKING_APPROVAL_PA_API=
 URS_API_URL=
 URS_API_VERIFY_SSL=False
 

@@ -11,7 +11,6 @@ DJANGO_SECRET_KEY=replace-with-a-long-random-secret
 DJANGO_ALLOWED_HOSTS=replace-with-backend-hostname,localhost,127.0.0.1
 DJANGO_CSRF_TRUSTED_ORIGINS=https://replace-with-frontend-hostname
 DJANGO_CORS_ALLOWED_ORIGINS=https://replace-with-frontend-hostname
-SITE_URL=https://replace-with-frontend-hostname
 # TLS is terminated by nginx (or the router) and forwarded with X-Forwarded-Proto.
 DJANGO_SECURE_SSL_REDIRECT=True
 
@@ -57,15 +56,10 @@ HTTP_PROXY=
 HTTPS_PROXY=
 NO_PROXY=localhost,127.0.0.1
 
-# Integrations
+# Integrations (OTP_PA_API is not needed: production is Entra SSO only, OTP login is off)
 # ------------------------------------------------------------------------------
-JIRA_ACCESS_TOKEN=
-OTP_PA_API=
-MONITORING_PA_API=
-BOOKING_PA_API=
-EQUIPMENT_PA_API=
-BOOKING_APPROVAL_PA_API=
-URS_API_URL=
+# Leave URS_API_URL commented out to use the default endpoint; an empty value disables the sync.
+# URS_API_URL=
 URS_ACCESS_TOKEN=
 URS_API_VERIFY_SSL=True
 

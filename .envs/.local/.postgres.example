@@ -1,6 +1,4 @@
 # Local Docker PostgreSQL (docker-compose.dev.yml). Copy to .envs/.local/.postgres.
-POSTGRES_HOST=postgres
-POSTGRES_PORT=5432
 POSTGRES_DB=labmango_local
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=debug
