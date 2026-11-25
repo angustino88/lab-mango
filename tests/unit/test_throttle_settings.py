@@ -63,12 +63,36 @@ def test_login_uses_atomic_auth_throttles_and_existing_auth_rates():
     assert PasswordLoginUsernameThrottle.scope == "auth_login"
     for scope, variable, default in (
         ("auth_login", "THROTTLE_AUTH_LOGIN", "10/min"),
-        ("auth_sso_login", "THROTTLE_AUTH_SSO_LOGIN", "10/min"),
         ("auth_otp", "THROTTLE_AUTH_OTP", "5/min"),
         ("auth_refresh", "THROTTLE_AUTH_REFRESH", "30/min"),
         ("auth_ip", "THROTTLE_AUTH_IP", "300/min"),
     ):
         assert api_settings.DEFAULT_THROTTLE_RATES[scope] == base.env(variable, default=default)
+    assert api_settings.DEFAULT_THROTTLE_RATES["auth_sso_login"] == base.env(
+        "THROTTLE_AUTH_SSO_LOGIN", default=base.env("THROTTLE_AUTH_LOGIN", default="10/min")
+    )
+
+
+@pytest.mark.parametrize(
+    ("environment", "expected"),
+    [
+        ({}, "10/min"),
+        ({"THROTTLE_AUTH_LOGIN": "600/min"}, "600/min"),
+        ({"THROTTLE_AUTH_LOGIN": "600/min", "THROTTLE_AUTH_SSO_LOGIN": "20/min"}, "20/min"),
+    ],
+)
+def test_sso_login_rate_keeps_honoring_the_previous_login_variable(environment, expected):
+    """aad-login used to read THROTTLE_AUTH_LOGIN; existing overrides (e.g. tools/stubs/entra.py) must still apply."""
+    required = {
+        "DJANGO_READ_DOT_ENV_FILE": "False",
+        "DATABASE_URL": "postgres://localhost/synthetic_throttle_tests",
+        "PROD_DATABASE_URL": "postgres://localhost/synthetic_throttle_tests",
+        "CELERY_BROKER_URL": "memory://",
+    }
+    with patch.dict(os.environ, {**required, **environment}, clear=True):
+        configured = runpy.run_path(base.__file__, run_name="config.settings._throttle_test")["REST_FRAMEWORK"]
+
+    assert configured["DEFAULT_THROTTLE_RATES"]["auth_sso_login"] == expected
 
 
 @pytest.mark.django_db

@@ -75,7 +75,8 @@ per-IP backstop ([throttles.py](../throttles.py)):
   applies per worker process. Password login and OTP (non-SSO only) fail closed: `503 service_unavailable`
   with `Retry-After: 30`, never reaching the credential check.
 - Rates are configurable with `THROTTLE_AUTH_SSO_LOGIN`, `THROTTLE_AUTH_REFRESH`, `THROTTLE_AUTH_LOGIN`,
-  `THROTTLE_AUTH_OTP` and `THROTTLE_AUTH_IP`.
+  `THROTTLE_AUTH_OTP` and `THROTTLE_AUTH_IP`. When `THROTTLE_AUTH_SSO_LOGIN` is unset, `auth_sso_login`
+  takes `THROTTLE_AUTH_LOGIN` (the variable aad-login read before), so existing overrides keep working.
 
 ---
 

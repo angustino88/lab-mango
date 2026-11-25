@@ -469,7 +469,9 @@ REST_FRAMEWORK = {
         "anon": env("THROTTLE_ANON", default="60/min"),
         "user": env("THROTTLE_USER", default="300/min"),
         "auth_login": env("THROTTLE_AUTH_LOGIN", default="10/min"),  # per username (non-SSO login)
-        "auth_sso_login": env("THROTTLE_AUTH_SSO_LOGIN", default="10/min"),  # per client IP (unchanged rate)
+        # per client IP (unchanged rate). aad-login used to read THROTTLE_AUTH_LOGIN, so an existing override of
+        # that variable still applies until THROTTLE_AUTH_SSO_LOGIN is set.
+        "auth_sso_login": env("THROTTLE_AUTH_SSO_LOGIN", default=env("THROTTLE_AUTH_LOGIN", default="10/min")),
         "auth_otp": env("THROTTLE_AUTH_OTP", default="5/min"),  # per caller
         "auth_refresh": env("THROTTLE_AUTH_REFRESH", default="30/min"),  # per user
         "auth_ip": env("THROTTLE_AUTH_IP", default="300/min"),  # per client IP, login + refresh backstop

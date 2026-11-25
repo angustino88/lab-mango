@@ -78,8 +78,9 @@ Tests: `core/common/tests/test_redis_outage_resilience.py`,
   `auth_ip`). With SSO-only production this buys an attacker request volume, not access (tokens are signed).
   Setting it too low would put every user behind the router into one bucket, so confirm the hop count with
   `labmango-router` first.
-- **Behavior changes:** aad-login keeps 10/min per IP but reads `THROTTLE_AUTH_SSO_LOGIN` instead of
-  `THROTTLE_AUTH_LOGIN` (deployments that override `THROTTLE_AUTH_LOGIN` must set both). Its per-IP budget can
+- **Behavior changes:** aad-login keeps 10/min per IP and now reads `THROTTLE_AUTH_SSO_LOGIN`. When that is
+  unset it falls back to `THROTTLE_AUTH_LOGIN`, the variable it read before, so existing overrides (such as
+  the 600/min in `tools/stubs/entra.py`) keep applying without a deploy change. Its per-IP budget can
   still be shared by an office behind one address; raise it from access logs if needed. Refresh moves from per IP to per user plus a per-IP backstop.
   Cache outages return 503 instead of 500.
 - **Fail-open window:** while Redis is down, general API throttling is off (only per-worker semaphores bound
