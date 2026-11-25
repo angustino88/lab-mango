@@ -58,9 +58,10 @@ the application commands; reads use the same policy as the room mapping endpoint
 
 ## Uploads
 
-GLB v2 only, at most 15 MiB (rejected while streaming), with embedded buffers and textures. Unsupported
-required extensions are rejected so the renderer never downloads external decoders. CAD conversion
-happens before upload. No third-party assets are bundled.
+GLB v2 only, at most 15 MiB (rejected while streaming), with embedded buffers and textures. Compressed
+geometry (Draco, Meshopt, mesh quantization) and KTX2/Basis or WebP textures are accepted: the dashboard
+bundles their decoders, so the browser never downloads decoder code from a CDN. Other required extensions
+are rejected. CAD conversion happens before upload. No third-party assets are bundled.
 
 ## Deployment
 
