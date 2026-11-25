@@ -2,6 +2,7 @@
 
 import os
 import runpy
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -93,6 +94,28 @@ def test_sso_login_rate_keeps_honoring_the_previous_login_variable(environment, 
         configured = runpy.run_path(base.__file__, run_name="config.settings._throttle_test")["REST_FRAMEWORK"]
 
     assert configured["DEFAULT_THROTTLE_RATES"]["auth_sso_login"] == expected
+
+
+@pytest.mark.parametrize(("environment", "expected"), [({}, 1), ({"DJANGO_NUM_PROXIES": "2"}, 2)])
+def test_production_trusts_one_router_hop_for_client_ip(environment, expected):
+    """Production sits behind the labmango-router Nginx only; DJANGO_NUM_PROXIES overrides the hop count."""
+    required = {
+        "DJANGO_READ_DOT_ENV_FILE": "False",
+        "DJANGO_SECRET_KEY": "synthetic-production-settings-test-key",
+        "DATABASE_URL": "postgres://localhost/synthetic_throttle_tests",
+        "PROD_DATABASE_URL": "postgres://localhost/synthetic_throttle_tests",
+        "CELERY_BROKER_URL": "memory://",
+        "REDIS_URL": "redis://localhost:6379/1",
+    }
+    production = Path(base.__file__).with_name("production.py")
+    with patch.dict(os.environ, {**required, **environment}, clear=True):
+        configured = runpy.run_path(str(production), run_name="config.settings._production_test")["REST_FRAMEWORK"]
+
+    assert configured["NUM_PROXIES"] == expected
+
+
+def test_base_settings_leave_num_proxies_unset_outside_production():
+    assert base.REST_FRAMEWORK["NUM_PROXIES"] == base.env.int("DJANGO_NUM_PROXIES", default=None)
 
 
 @pytest.mark.django_db

@@ -67,9 +67,10 @@ per-IP backstop ([throttles.py](../throttles.py)):
 | `POST /api/login` (non-SSO only) | `auth_login` (10/min) per submitted username | `auth_ip` (300/min) |
 | `POST /api/send-otp` (non-SSO only) | `auth_otp` (5/min) per caller | — |
 
-- The client IP comes from `REST_FRAMEWORK["NUM_PROXIES"]` (optional `DJANGO_NUM_PROXIES`). Unset keeps
-  DRF's default, which keys on the whole `X-Forwarded-For` value and can be spoofed; set it to the
-  `labmango-router` hop count to make per-IP budgets spoof-proof.
+- The client IP comes from `REST_FRAMEWORK["NUM_PROXIES"]` (`DJANGO_NUM_PROXIES`). Production defaults to 1,
+  the `labmango-router` Nginx, so the last `X-Forwarded-For` entry is the caller and per-IP budgets cannot be
+  reset by a client-supplied header. Other settings leave it unset (DRF's default, which keys on the whole
+  `X-Forwarded-For` value).
 - Cache outage policy: SSO sign-in and refresh keep counting in a process-local fixed window
   (`local_fallback_on_outage`), so users can still sign in and refresh while Redis is down; the limit then
   applies per worker process. Password login and OTP (non-SSO only) fail closed: `503 service_unavailable`

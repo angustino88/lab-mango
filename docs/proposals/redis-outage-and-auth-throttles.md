@@ -40,7 +40,7 @@ against signed tokens. The real risks are:
 | Auth outage policy | SSO sign-in (`SSOLoginIPThrottle`) and refresh (`RefreshUserThrottle`, `RefreshIPThrottle`) use the local fallback, so users can still sign in and refresh while Redis is down. Password login and OTP (non-SSO) still fail closed (503). | `core/users/features/auth/throttles.py`, `core/users/features/auth/refresh_token/api.py` |
 | Auth identities | aad-login: per IP `auth_sso_login` 10/min (same rate as before, own env variable). refresh: per **verified** user `auth_refresh` 30/min plus per-IP `auth_ip` 300/min. Password login (non-SSO): per username plus `auth_ip`. OTP (non-SSO): per caller. | `core/users/features/auth/throttles.py`, auth views |
 | Local dev cache | `LOCAL_USE_REDIS_CACHE=True` with Redis unreachable at startup warns and falls back to `LocMemCache` (local settings only; production unchanged). | `config/settings/local.py` |
-| Trusted client IP | Optional `DJANGO_NUM_PROXIES` → `REST_FRAMEWORK["NUM_PROXIES"]`. Unset keeps DRF's current behavior (no deploy change); setting it makes per-IP budgets spoof-proof. | `config/settings/base.py`, `.env.example` |
+| Trusted client IP | `DJANGO_NUM_PROXIES` → `REST_FRAMEWORK["NUM_PROXIES"]`. Production defaults to **1**: clients reach the backend only through the `labmango-router` Nginx (`docs/agent-platform/routing-sync.md`, "never in the data path" for the router service), so the last `X-Forwarded-For` entry is the caller. Other settings keep it unset (DRF default). | `config/settings/production.py`, `config/settings/base.py`, `.env.example` |
 
 Alternatives considered:
 - A token bucket / GCRA in Lua for every endpoint: not needed for this fix. The general API budget (300/min)
@@ -62,7 +62,7 @@ Tests: `core/common/tests/test_redis_outage_resilience.py`,
 | 5 requests, Redis answers after 0.2 s then fails | `[500]*5`, each waits | `[200]*5`, only the first waits |
 | Cache-dependent handler during outage | 500 | 503 + `Retry-After: 30` |
 | 20 parallel logins against a 5/min limit | **20 of 20** reached the credential check | exactly 5 (15 × 429) |
-| aad-login with a new spoofed `X-Forwarded-For` each time, 2/min | `[401, 401, 401]` (never limited) | `[401, 401, 429]` **only with `NUM_PROXIES` configured**; unset behaves as before |
+| aad-login with a new spoofed `X-Forwarded-For` each time, 2/min | `[401, 401, 401]` (never limited) | `[401, 401, 429]` with `NUM_PROXIES` set (production default 1) |
 | 6 colleagues refresh from one IP, 3/min | users 4–6 got 429 | none throttled |
 | `TimeoutError` from application code (not the cache) | 500 | 500 `internal_error` (not reported as a cache outage) |
 | Password login during outage stays fail-closed (503, no credential check) | pass | pass |
@@ -73,11 +73,13 @@ Tests: `core/common/tests/test_redis_outage_resilience.py`,
 
 ## 4. Deployment and residual risks
 
-- **Spoofing is fixed only by configuration:** `DJANGO_NUM_PROXIES` is optional so deploys are not blocked.
-  While unset, a client can still vary `X-Forwarded-For` to get fresh per-IP budgets (`auth_sso_login`,
-  `auth_ip`). With SSO-only production this buys an attacker request volume, not access (tokens are signed).
-  Setting it too low would put every user behind the router into one bucket, so confirm the hop count with
-  `labmango-router` first.
+- **Trusted hop count (owner decision 2026-11-25: one router hop):** production trusts one proxy
+  (`NUM_PROXIES=1`). This is correct only while (a) the router Nginx appends the caller address to
+  `X-Forwarded-For` (`proxy_add_x_forwarded_for` or `$remote_addr`), (b) nothing else that appends to the
+  header sits in front of it, and (c) the application server is not reachable without the router. If a load
+  balancer is added in front, set `DJANGO_NUM_PROXIES=2`; a value that is too low puts every user into the
+  load balancer's bucket, and one that is too high lets clients choose their key again. The router
+  configuration lives in `labmango-router` (not verified from this repository).
 - **Behavior changes:** aad-login keeps 10/min per IP and now reads `THROTTLE_AUTH_SSO_LOGIN`. When that is
   unset it falls back to `THROTTLE_AUTH_LOGIN`, the variable it read before, so existing overrides (such as
   the 600/min in `tools/stubs/entra.py`) keep applying without a deploy change. Its per-IP budget can

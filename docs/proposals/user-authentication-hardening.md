@@ -100,8 +100,9 @@ older than `ENTRA_BIND_DORMANT_WARNING_DAYS` is logged as a warning.
   repository and is out of scope here. The backend must not hard-code assumptions about it.
 - **Proposal:**
   - [ ] Make the trusted proxy depth an explicit, required production setting (`NUM_PROXIES` from the
-    environment), with a startup check that fails when it is unset. (Partly: `DJANGO_NUM_PROXIES` exists
-    but is optional; unset keeps the spoofable DRF default. Owner chose not to block deploys, 2026-11-24.)
+    environment), with a startup check that fails when it is unset. (Partly: `DJANGO_NUM_PROXIES` exists;
+    owner chose not to block deploys, 2026-11-24. Owner confirmed one router hop, 2026-11-25: production
+    now defaults to `NUM_PROXIES=1`, overridable by `DJANGO_NUM_PROXIES`.)
   - [ ] Record in the router contract which forwarded headers the backend trusts and how many hops add them.
   - [x] Add a test that two requests with different spoofed `X-Forwarded-For` prefixes share one counter
     when `NUM_PROXIES` is configured. (`core/users/tests/features/auth/test_auth_throttle_integrity.py`)
