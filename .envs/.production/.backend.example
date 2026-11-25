@@ -19,4 +19,4 @@ NGINX_HTTPS_PORT=8443
 POSTGRES_PORT=5432
 
 # Optional image overrides, e.g. a registry mirror reachable from this server
-# POSTGRES_IMAGE=postgres:15.3-alpine
+# POSTGRES_IMAGE=postgres:18.7-alpine

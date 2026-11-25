@@ -46,7 +46,7 @@ services:
 
   nginx:
     profiles: ["nginx"]
-    image: nginx:1.27.3
+    image: nginx:1.30.8
     container_name: labmango-${BACKEND_NAME}-nginx
     restart: unless-stopped
     network_mode: host
@@ -63,7 +63,7 @@ services:
       - django
 
   redis:
-    image: redis:7-alpine
+    image: redis:7.4.12-alpine
     container_name: labmango-${BACKEND_NAME}-redis
     restart: unless-stopped
     ports:
@@ -71,11 +71,12 @@ services:
 
   postgres:
     profiles: ["postgres"]
-    image: ${POSTGRES_IMAGE:-postgres:15.3-alpine}
+    image: ${POSTGRES_IMAGE:-postgres:18.7-alpine}
     container_name: labmango-${BACKEND_NAME}-postgres
     restart: unless-stopped
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # PostgreSQL 18+ keeps its data in /var/lib/postgresql/<major>/docker: mount the parent.
+      - postgres_data:/var/lib/postgresql
       - postgres_data_backups:/backups
     env_file:
       - ${LABMANGO_STATE_DIR}/.postgres

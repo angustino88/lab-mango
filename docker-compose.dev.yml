@@ -29,10 +29,11 @@ services:
     command: /start
 
   postgres:
-    image: postgres:15-alpine
+    image: postgres:18.7-alpine
     container_name: labmango-local-postgres
     volumes:
-      - labmango_local_postgres_data:/var/lib/postgresql/data
+      # PostgreSQL 18+ keeps its data in /var/lib/postgresql/<major>/docker: mount the parent.
+      - labmango_local_postgres_data:/var/lib/postgresql
       - labmango_local_postgres_data_backups:/backups
     env_file:
       - ./.envs/.local/.postgres
@@ -40,7 +41,7 @@ services:
       - "127.0.0.1:5432:5432"
 
   redis:
-    image: redis:7-alpine
+    image: redis:7.4.12-alpine
     container_name: labmango-local-redis
     volumes:
       - labmango_local_redis_data:/data
