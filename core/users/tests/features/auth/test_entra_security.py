@@ -234,8 +234,14 @@ def test_cookie_endpoints_require_csrf(path):
 
 @pytest.mark.django_db
 def test_entra_login_is_throttled():
+    from unittest.mock import patch
+
+    from core.users.features.auth.throttling import AuthRateThrottle
+
     client = Client()
-    responses = [client.post("/api/aad-login", {}, content_type="application/json") for _ in range(11)]
+    rates = {**AuthRateThrottle.THROTTLE_RATES, "auth_login_ip": "10/min"}
+    with patch.object(AuthRateThrottle, "THROTTLE_RATES", rates):
+        responses = [client.post("/api/aad-login", {}, content_type="application/json") for _ in range(11)]
     assert responses[-1].status_code == 429
     assert responses[-1].json()["error"]["code"] == "rate_limited"
     assert "Retry-After" in responses[-1]

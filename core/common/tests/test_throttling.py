@@ -6,7 +6,8 @@ Scenarios:
 * circuit breaker open: the backend is not contacted at all;
 * normal throttling (429) is unchanged while the backend is healthy;
 * non-backend exceptions are not swallowed;
-* end to end with the cache mocked down and with a real django-redis client on a dead port.
+* end to end with the cache mocked down and with a real django-redis client on a dead port
+  (authentication endpoints: core/users/tests/features/auth/test_cache_outage.py).
 """
 
 from __future__ import annotations
@@ -33,6 +34,7 @@ from core.common.api.throttling import (
     ThrottleBackendUnavailable,
 )
 from core.common.cache import cache_available, reset_cache_circuit_breaker
+from core.users.features.auth.login.service import AuthenticationError
 
 BACKEND_ERRORS = [
     RedisConnectionError("connection refused"),
@@ -176,7 +178,7 @@ def _cache_down():
 
 @pytest.mark.django_db
 @override_settings(API_READ_CACHE_ENABLED=True, API_AUTH_CACHE_ENABLED=True)
-def test_signed_in_users_keep_working_while_login_fails_closed():
+def test_signed_in_users_and_sign_in_keep_working_during_outage():
     from tests.factories import UserFactory
 
     user: Any = UserFactory(username="outage-user", is_staff=True, is_superuser=True)
@@ -188,13 +190,18 @@ def test_signed_in_users_keep_working_while_login_fails_closed():
         listing = client.get("/api/labs/equipment")
         anonymous = APIClient().get("/api/labs/equipment")
         refresh = APIClient().post("/api/refresh-token", {}, format="json")
+        with override_settings(AUTH_THROTTLE_OUTAGE_MODE="deny"):
+            refused = APIClient().post("/api/refresh-token", {}, format="json")
 
     assert listing.status_code == 200
     assert listing["X-Cache"] == "BYPASS"
     assert anonymous.status_code == 401  # authentication still enforced, not a 500
-    assert refresh.status_code == 503  # auth endpoints keep failing closed
-    assert refresh.json()["error"]["code"] == "service_unavailable"
-    assert refresh["Retry-After"] == "30"
+    # Auth endpoints fall back to per-process limits: the request reaches the view (no refresh cookie).
+    assert refresh.status_code == 401
+    # "deny" mode keeps the previous fail-closed behaviour.
+    assert refused.status_code == 503
+    assert refused.json()["error"]["code"] == "service_unavailable"
+    assert refused["Retry-After"] == "30"
 
 
 @pytest.mark.django_db
@@ -222,11 +229,12 @@ def test_real_django_redis_outage_end_to_end():
     client.force_authenticate(user=user)
 
     listing = client.get("/api/labs/equipment")
-    login = APIClient().post("/api/login", {"username": "x", "password": "y"}, format="json")
+    with patch("core.users.features.auth.login.api.do_login", side_effect=AuthenticationError("bad")) as do_login:
+        login = APIClient().post("/api/login", {"username": "x", "password": "y"}, format="json")
 
     assert listing.status_code == 200
-    assert login.status_code == 503
-    assert login.json()["error"]["code"] == "service_unavailable"
+    assert login.status_code == 401  # rate limit fell back to this process; credentials were checked
+    do_login.assert_called_once()
 
 
 def test_finance_budget_fails_closed_with_documented_503():
