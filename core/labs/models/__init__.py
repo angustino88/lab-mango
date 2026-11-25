@@ -132,7 +132,10 @@ from .telemetry import (
     TelemetryTarget,
 )
 
+from .visual_models import VisualModel
+
 __all__ = [
+    "VisualModel",
     "ActiveLaboratoryObservation",
     "ActiveUserObservation",
     "AgentReportedModel",

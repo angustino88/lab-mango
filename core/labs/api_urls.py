@@ -2,6 +2,7 @@
 from django.urls import include, path
 
 urlpatterns = [
+    path("labs/", include("core.labs.features.visual_models.urls")),
     path("labs/", include("core.labs.features.equipment.urls")),
     path("labs/", include("core.labs.features.licenses.urls")),
     path("labs/", include("core.labs.features.license_checks.urls")),

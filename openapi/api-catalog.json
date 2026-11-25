@@ -1,8 +1,8 @@
 {
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
-  "total_endpoints": 525,
-  "generated_at": "2026-11-24",
+  "total_endpoints": 528,
+  "generated_at": "2026-11-25",
   "endpoints": [
     {
       "endpoint": "/agent/bookings/actions/check-in",
@@ -126591,6 +126591,959 @@
           }
         },
         "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/visual-models",
+      "method": "GET",
+      "operation_id": "labs_visual_models_retrieve",
+      "summary": "Get Visual Models",
+      "description": "Cross-feature API foundation without domain-specific behavior.",
+      "tags": [
+        "Visual Models"
+      ],
+      "parameters": [
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 1
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "meta": {
+                "type": "object",
+                "properties": {
+                  "pagination": {
+                    "type": "object",
+                    "properties": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "required": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  }
+                },
+                "required": [
+                  "pagination"
+                ]
+              },
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "scope": {
+                      "type": "string",
+                      "maxLength": 24
+                    },
+                    "target_key": {
+                      "type": "string",
+                      "maxLength": 80
+                    },
+                    "name": {
+                      "type": "string",
+                      "maxLength": 160
+                    },
+                    "url": {
+                      "type": "string",
+                      "readOnly": true
+                    },
+                    "rotation": {
+                      "type": "number",
+                      "format": "double"
+                    },
+                    "scale": {
+                      "type": "number",
+                      "format": "double"
+                    },
+                    "surface": {
+                      "type": "number",
+                      "format": "double"
+                    },
+                    "source_url": {
+                      "type": "string",
+                      "readOnly": true
+                    },
+                    "license": {
+                      "type": "string",
+                      "maxLength": 255
+                    },
+                    "offset_x": {
+                      "type": "number",
+                      "format": "double"
+                    },
+                    "offset_y": {
+                      "type": "number",
+                      "format": "double"
+                    },
+                    "offset_z": {
+                      "type": "number",
+                      "format": "double"
+                    },
+                    "version": {
+                      "type": "integer",
+                      "maximum": 2147483647,
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "scope",
+                    "source_url",
+                    "target_key",
+                    "url"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "data",
+              "meta"
+            ]
+          },
+          "example_payload": {
+            "meta": {
+              "pagination": {
+                "type": null,
+                "description": null
+              }
+            },
+            "data": [
+              {
+                "scope": "string",
+                "target_key": "string",
+                "name": "string",
+                "url": "string",
+                "rotation": 0.0,
+                "scale": 0.0,
+                "surface": 0.0,
+                "source_url": "string",
+                "license": "string",
+                "offset_x": 0.0,
+                "offset_y": 0.0,
+                "offset_z": 0.0,
+                "version": 1
+              }
+            ]
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "404": {
+          "description": "The requested page does not exist (page beyond the last page).",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/visual-models/{scope}/{target_key}",
+      "method": "PUT",
+      "operation_id": "labs_visual_models_update_by_scope_target_key",
+      "summary": "Update Visual Models by Scope Target Key",
+      "description": "Cross-feature API foundation without domain-specific behavior.",
+      "tags": [
+        "Visual Models"
+      ],
+      "parameters": [
+        {
+          "name": "scope",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "target_key",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "request_body": {
+        "content_type": "multipart/form-data",
+        "supported_content_types": [
+          "multipart/form-data"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "file": {
+              "type": "string",
+              "format": "binary"
+            },
+            "name": {
+              "type": "string",
+              "maxLength": 160
+            },
+            "rotation": {
+              "type": "number",
+              "format": "double",
+              "maximum": 360,
+              "minimum": -360,
+              "default": 0.0
+            },
+            "scale": {
+              "type": "number",
+              "format": "double",
+              "maximum": 2,
+              "minimum": 0.01,
+              "default": 1.0
+            },
+            "offset_x": {
+              "type": "number",
+              "format": "double",
+              "maximum": 1,
+              "minimum": -1,
+              "default": 0.0
+            },
+            "offset_y": {
+              "type": "number",
+              "format": "double",
+              "maximum": 1,
+              "minimum": -1,
+              "default": 0.0
+            },
+            "offset_z": {
+              "type": "number",
+              "format": "double",
+              "maximum": 1,
+              "minimum": -1,
+              "default": 0.0
+            },
+            "surface": {
+              "type": "number",
+              "format": "double",
+              "maximum": 1,
+              "minimum": 0,
+              "default": 1.0
+            },
+            "source_url": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "format": "uri"
+                },
+                {
+                  "type": "string",
+                  "maxLength": 0
+                }
+              ]
+            },
+            "license": {
+              "type": "string",
+              "default": "",
+              "maxLength": 255
+            }
+          },
+          "required": [
+            "name"
+          ]
+        },
+        "example_payload": {
+          "file": "string",
+          "name": "string",
+          "rotation": 0.0,
+          "scale": 1.0,
+          "offset_x": 0.0,
+          "offset_y": 0.0,
+          "offset_z": 0.0,
+          "surface": 1.0,
+          "source_url": "https://example.com/resource",
+          "license": ""
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "scope": {
+                    "type": "string",
+                    "maxLength": 24
+                  },
+                  "target_key": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 160
+                  },
+                  "url": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "rotation": {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  "scale": {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  "surface": {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  "source_url": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "license": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "offset_x": {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  "offset_y": {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  "offset_z": {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  "version": {
+                    "type": "integer",
+                    "maximum": 2147483647,
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "name",
+                  "scope",
+                  "source_url",
+                  "target_key",
+                  "url"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "scope": "string",
+              "target_key": "string",
+              "name": "string",
+              "url": "string",
+              "rotation": 0.0,
+              "scale": 0.0,
+              "surface": 0.0,
+              "source_url": "string",
+              "license": "string",
+              "offset_x": 0.0,
+              "offset_y": 0.0,
+              "offset_z": 0.0,
+              "version": 1
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "413": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "412": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "428": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/visual-models/{scope}/{target_key}",
+      "method": "DELETE",
+      "operation_id": "labs_visual_models_destroy_by_scope_target_key",
+      "summary": "Delete Visual Models by Scope Target Key",
+      "description": "Cross-feature API foundation without domain-specific behavior.",
+      "tags": [
+        "Visual Models"
+      ],
+      "parameters": [
+        {
+          "name": "scope",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "target_key",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "204": {
+          "description": "No response body",
+          "content_type": null,
+          "schema": null,
+          "example_payload": null
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "412": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "428": {
           "description": "",
           "content_type": "application/json",
           "schema": {

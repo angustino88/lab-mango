@@ -102,6 +102,7 @@ class MappingEquipmentSerializer(serializers.Serializer):
     sku = serializers.CharField()
     name = serializers.CharField(allow_blank=True)
     category = MappingEquipmentCategorySerializer(allow_null=True)
+    product_model = MappingEquipmentCategorySerializer(allow_null=True, required=False)
     bench_id = serializers.IntegerField(allow_null=True)
     bench_assignment = MappingEquipmentAssignmentSerializer(allow_null=True)
 

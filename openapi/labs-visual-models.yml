@@ -1,0 +1,354 @@
+openapi: 3.0.3
+info:
+  title: LabMango API
+  version: 1.0.0
+  description: LabMango Backend REST API
+paths:
+  /api/labs/visual-models:
+    get:
+      operationId: labs_visual_models_retrieve
+      description: Cross-feature API foundation without domain-specific behavior.
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      tags:
+      - Visual Models
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisualModelListSerializersModelPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
+      summary: Get Visual Models
+  /api/labs/visual-models/{scope}/{target_key}:
+    put:
+      operationId: labs_visual_models_update_by_scope_target_key
+      description: Cross-feature API foundation without domain-specific behavior.
+      parameters:
+      - in: path
+        name: scope
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: target_key
+        schema:
+          type: string
+        required: true
+      tags:
+      - Visual Models
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ModelWrite'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisualModelSerializersModelDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '412':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '428':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Update Visual Models by Scope Target Key
+    delete:
+      operationId: labs_visual_models_destroy_by_scope_target_key
+      description: Cross-feature API foundation without domain-specific behavior.
+      parameters:
+      - in: path
+        name: scope
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: target_key
+        schema:
+          type: string
+        required: true
+      tags:
+      - Visual Models
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '412':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '428':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Delete Visual Models by Scope Target Key
+components:
+  schemas:
+    Model:
+      type: object
+      properties:
+        scope:
+          type: string
+          maxLength: 24
+        target_key:
+          type: string
+          maxLength: 80
+        name:
+          type: string
+          maxLength: 160
+        url:
+          type: string
+          readOnly: true
+        rotation:
+          type: number
+          format: double
+        scale:
+          type: number
+          format: double
+        surface:
+          type: number
+          format: double
+        source_url:
+          type: string
+          readOnly: true
+        license:
+          type: string
+          maxLength: 255
+        offset_x:
+          type: number
+          format: double
+        offset_y:
+          type: number
+          format: double
+        offset_z:
+          type: number
+          format: double
+        version:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+      required:
+      - name
+      - scope
+      - source_url
+      - target_key
+      - url
+    ModelWrite:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+        name:
+          type: string
+          maxLength: 160
+        rotation:
+          type: number
+          format: double
+          maximum: 360
+          minimum: -360
+          default: 0.0
+        scale:
+          type: number
+          format: double
+          maximum: 2
+          minimum: 0.01
+          default: 1.0
+        offset_x:
+          type: number
+          format: double
+          maximum: 1
+          minimum: -1
+          default: 0.0
+        offset_y:
+          type: number
+          format: double
+          maximum: 1
+          minimum: -1
+          default: 0.0
+        offset_z:
+          type: number
+          format: double
+          maximum: 1
+          minimum: -1
+          default: 0.0
+        surface:
+          type: number
+          format: double
+          maximum: 1
+          minimum: 0
+          default: 1.0
+        source_url:
+          oneOf:
+          - type: string
+            format: uri
+          - type: string
+            maxLength: 0
+        license:
+          type: string
+          default: ''
+          maxLength: 255
+      required:
+      - name
+    ProblemDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    ProblemResponseEnvelope:
+      type: object
+      description: Document the envelope emitted by ResponseContract.respond_problem().
+      properties:
+        error:
+          $ref: '#/components/schemas/ProblemDetail'
+      required:
+      - error
+    VisualModelListSerializersModelPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/VisualModelListSerializersModelPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Model'
+      required:
+      - data
+      - meta
+    VisualModelListSerializersModelPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    VisualModelListSerializersModelPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/VisualModelListSerializersModelPagination'
+      required:
+      - pagination
+    VisualModelSerializersModelDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Model'
+      required:
+      - data
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+- url: ''
+  description: Local Development Server
+tags:
+- name: Visual Models
+  description: Visual Models endpoints

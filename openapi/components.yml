@@ -14003,6 +14003,10 @@ components:
           allOf:
           - $ref: '#/components/schemas/MappingEquipmentCategory'
           nullable: true
+        product_model:
+          allOf:
+          - $ref: '#/components/schemas/MappingEquipmentCategory'
+          nullable: true
         bench_id:
           type: integer
           nullable: true
@@ -14393,6 +14397,112 @@ components:
       description: '* `delta` - delta
 
         * `reset` - reset'
+    Model:
+      type: object
+      properties:
+        scope:
+          type: string
+          maxLength: 24
+        target_key:
+          type: string
+          maxLength: 80
+        name:
+          type: string
+          maxLength: 160
+        url:
+          type: string
+          readOnly: true
+        rotation:
+          type: number
+          format: double
+        scale:
+          type: number
+          format: double
+        surface:
+          type: number
+          format: double
+        source_url:
+          type: string
+          readOnly: true
+        license:
+          type: string
+          maxLength: 255
+        offset_x:
+          type: number
+          format: double
+        offset_y:
+          type: number
+          format: double
+        offset_z:
+          type: number
+          format: double
+        version:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+      required:
+      - name
+      - scope
+      - source_url
+      - target_key
+      - url
+    ModelWrite:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+        name:
+          type: string
+          maxLength: 160
+        rotation:
+          type: number
+          format: double
+          maximum: 360
+          minimum: -360
+          default: 0.0
+        scale:
+          type: number
+          format: double
+          maximum: 2
+          minimum: 0.01
+          default: 1.0
+        offset_x:
+          type: number
+          format: double
+          maximum: 1
+          minimum: -1
+          default: 0.0
+        offset_y:
+          type: number
+          format: double
+          maximum: 1
+          minimum: -1
+          default: 0.0
+        offset_z:
+          type: number
+          format: double
+          maximum: 1
+          minimum: -1
+          default: 0.0
+        surface:
+          type: number
+          format: double
+          maximum: 1
+          minimum: 0
+          default: 1.0
+        source_url:
+          oneOf:
+          - type: string
+            format: uri
+          - type: string
+            maxLength: 0
+        license:
+          type: string
+          default: ''
+          maxLength: 255
+      required:
+      - name
     Money:
       type: object
       description: 'FMT-2 money: ``amount`` is a decimal string, ``currency`` is ISO
@@ -23358,6 +23468,58 @@ components:
       description: '* `public` - public
 
         * `internal` - internal'
+    VisualModelListSerializersModelPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/VisualModelListSerializersModelPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Model'
+      required:
+      - data
+      - meta
+    VisualModelListSerializersModelPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    VisualModelListSerializersModelPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/VisualModelListSerializersModelPagination'
+      required:
+      - pagination
+    VisualModelSerializersModelDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Model'
+      required:
+      - data
     Watcher:
       type: object
       properties:

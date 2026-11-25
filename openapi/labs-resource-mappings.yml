@@ -543,6 +543,10 @@ components:
           allOf:
           - $ref: '#/components/schemas/MappingEquipmentCategory'
           nullable: true
+        product_model:
+          allOf:
+          - $ref: '#/components/schemas/MappingEquipmentCategory'
+          nullable: true
         bench_id:
           type: integer
           nullable: true

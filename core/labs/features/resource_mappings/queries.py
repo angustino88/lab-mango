@@ -352,6 +352,12 @@ def _shape_row(collection: str, row: Any) -> dict[str, Any]:
             "sku": row["sku"],
             "name": row["name"],
             "category": {"id": row["kind__category_id"], "name": row["kind__category__name"]},
+            "product_model": (
+                {"id": row["product_model_id"], "name": " ".join(filter(None, [
+                    row["product_model__manufacturer__name"], row["product_model__name"],
+                ]))}
+                if row["product_model_id"] is not None else None
+            ),
             "bench_id": row["mapping_bench_id"],
             "bench_assignment": (
                 {
