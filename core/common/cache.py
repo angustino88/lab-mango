@@ -77,6 +77,36 @@ class _CircuitBreaker:
 _BREAKER = _CircuitBreaker()
 
 
+def _backend_error_types() -> tuple[type[BaseException], ...]:
+    types: list[type[BaseException]] = [OSError]  # socket errors, builtin ConnectionError / TimeoutError
+    try:
+        from redis.exceptions import RedisError
+
+        types.append(RedisError)
+    except ImportError:  # pragma: no cover - redis is a production dependency
+        pass
+    try:
+        from django_redis.exceptions import ConnectionInterrupted
+
+        types.append(ConnectionInterrupted)
+    except ImportError:  # pragma: no cover
+        pass
+    return tuple(types)
+
+
+CACHE_BACKEND_ERRORS: tuple[type[BaseException], ...] = _backend_error_types()
+
+
+def is_cache_backend_error(exc: BaseException) -> bool:
+    """Whether ``exc`` means the cache backend is unreachable or failing (not a programming error)."""
+    return isinstance(exc, CACHE_BACKEND_ERRORS)
+
+
+def record_cache_failure() -> None:
+    """Open the circuit breaker after a cache failure observed outside these helpers."""
+    _BREAKER.record_failure()
+
+
 def cache_available() -> bool:
     """Whether optional cache calls are currently attempted (circuit breaker closed)."""
     return _BREAKER.allow()
@@ -649,13 +679,16 @@ __all__ = [
     "asingleflight_fetch",
     "bump_namespace_version",
     "bump_namespace_version_on_commit",
+    "CACHE_BACKEND_ERRORS",
     "cache_available",
     "canonical_request_hash",
     "compute_body_etag",
     "compute_strong_etag",
     "etag_matches",
     "get_namespace_version",
+    "is_cache_backend_error",
     "namespace_version_memo",
+    "record_cache_failure",
     "release_cache_lock",
     "reset_cache_circuit_breaker",
     "safe_cache_add",

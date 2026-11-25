@@ -173,7 +173,10 @@ paths:
         All finance reads share 30 requests/minute per user, or per IP for API keys.
 
         Invalid queries return invalid_query (400); exhausted budgets return rate_limited
-        (429).'
+        (429).
+
+        If the rate-limit store is unavailable the budget fails closed: service_unavailable
+        (503) with Retry-After.'
       parameters:
       - in: query
         name: currency
@@ -244,6 +247,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/FinanceProblemResponse'
           description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceProblemResponse'
+          description: ''
       summary: Get Analytics Finance Expense Type Breakdown
   /api/labs/analytics/finance/monthly-trends:
     get:
@@ -259,7 +268,10 @@ paths:
         All finance reads share 30 requests/minute per user, or per IP for API keys.
 
         Invalid queries return invalid_query (400); exhausted budgets return rate_limited
-        (429).'
+        (429).
+
+        If the rate-limit store is unavailable the budget fails closed: service_unavailable
+        (503) with Retry-After.'
       parameters:
       - in: query
         name: currency
@@ -330,6 +342,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/FinanceProblemResponse'
           description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceProblemResponse'
+          description: ''
       summary: Get Analytics Finance Monthly Trends
   /api/labs/analytics/finance/summary:
     get:
@@ -348,7 +366,10 @@ paths:
         All finance reads share 30 requests/minute per user, or per IP for API keys.
 
         Invalid queries return invalid_query (400); exhausted budgets return rate_limited
-        (429).'
+        (429).
+
+        If the rate-limit store is unavailable the budget fails closed: service_unavailable
+        (503) with Retry-After.'
       parameters:
       - in: query
         name: currency
@@ -414,6 +435,12 @@ paths:
                 $ref: '#/components/schemas/FinanceProblemResponse'
           description: ''
         '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceProblemResponse'
+          description: ''
+        '503':
           content:
             application/json:
               schema:
