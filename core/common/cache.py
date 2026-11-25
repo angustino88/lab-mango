@@ -91,11 +91,29 @@ def reset_cache_circuit_breaker() -> None:
 # Errors the cache backend raises when Redis is unreachable or too slow. django-redis re-raises the
 # underlying redis/socket error when IGNORE_EXCEPTIONS is off (config/settings/production.py).
 CACHE_OUTAGE_ERRORS: tuple[type[BaseException], ...] = (RedisError, TimeoutError)
+_CACHE_CLIENT_PACKAGES = frozenset({"redis", "django_redis"})
+
+
+def _raised_by_cache_client(exc: BaseException) -> bool:
+    tb = exc.__traceback__
+    while tb is not None:
+        module = tb.tb_frame.f_globals.get("__name__", "")
+        if module.partition(".")[0] in _CACHE_CLIENT_PACKAGES:
+            return True
+        tb = tb.tb_next
+    return False
 
 
 def is_cache_outage(exc: BaseException) -> bool:
-    """Return True when ``exc`` means the cache backend is unavailable."""
-    return isinstance(exc, CACHE_OUTAGE_ERRORS)
+    """Return True when ``exc`` means the cache backend is unavailable.
+
+    Every ``RedisError`` counts. A built-in ``TimeoutError`` counts only when the Redis client raised it:
+    ``asyncio.wait_for`` and ``concurrent.futures`` raise the same type for unrelated timeouts, which must
+    not be reported as a cache outage.
+    """
+    if isinstance(exc, RedisError):
+        return True
+    return isinstance(exc, TimeoutError) and _raised_by_cache_client(exc)
 
 
 def record_cache_failure() -> None:

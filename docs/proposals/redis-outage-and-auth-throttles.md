@@ -1,6 +1,6 @@
 # Redis outage resilience and auth throttle integrity
 
-> Status: implemented on branch `fix/redis-outage-and-auth-throttles`. Tier **T2** (authn, infra/config):
+> Status: implemented, awaiting review. Tier **T2** (authn, infra/config):
 > needs security + QA review and human approval before merge. No new required setting.
 
 ## 1. Problems
@@ -35,7 +35,7 @@ against signed tokens. The real risks are:
 |---|---|---|
 | Cache circuit | Uses the process-local breaker from `main` (`CACHE_CIRCUIT_BREAKER_SECONDS`, default 5 s): after a cache failure, optional cache calls skip Redis; invalidation bumps always try. This branch adds `is_cache_outage()` and `record_cache_failure()` so throttles share the same breaker. | `core/common/cache.py` |
 | Default throttles | `FailOpenAnonRateThrottle` / `FailOpenUserRateThrottle`: same sliding-log semantics and rates. On a cache outage they allow the request, log, and trip the circuit. | `core/common/api/throttling.py`, `config/settings/base.py` |
-| Error mapping | Any cache outage error that reaches a view is `503 service_unavailable` + `Retry-After: 30`, not 500. Other unhandled errors are now logged before the 500 envelope. | `core/common/api/exceptions.py`, `core/users/features/auth/api.py` |
+| Error mapping | Any cache outage error that reaches a view is `503 service_unavailable` + `Retry-After: 30`, not 500. A cache outage is any `RedisError`, or a built-in `TimeoutError` raised inside the redis client; timeouts from other code (`asyncio.wait_for`, futures) stay 500. Other unhandled errors are now logged before the 500 envelope. | `core/common/api/exceptions.py`, `core/users/features/auth/api.py` |
 | Atomic auth throttle | `AtomicRateThrottle`: fixed window with cache `add` + `incr` (atomic in Redis via django-redis Lua, and in LocMem). Fails closed by default; subclasses with `local_fallback_on_outage = True` count in a process-local fixed window (`LocalWindowCounter`, bounded to 10 000 keys) while the cache is down. | `core/common/api/throttling.py` |
 | Auth outage policy | SSO sign-in (`SSOLoginIPThrottle`) and refresh (`RefreshUserThrottle`, `RefreshIPThrottle`) use the local fallback, so users can still sign in and refresh while Redis is down. Password login and OTP (non-SSO) still fail closed (503). | `core/users/features/auth/throttles.py`, `core/users/features/auth/refresh_token/api.py` |
 | Auth identities | aad-login: per IP `auth_sso_login` 10/min (same rate as before, own env variable). refresh: per **verified** user `auth_refresh` 30/min plus per-IP `auth_ip` 300/min. Password login (non-SSO): per username plus `auth_ip`. OTP (non-SSO): per caller. | `core/users/features/auth/throttles.py`, auth views |
@@ -64,6 +64,7 @@ Tests: `core/common/tests/test_redis_outage_resilience.py`,
 | 20 parallel logins against a 5/min limit | **20 of 20** reached the credential check | exactly 5 (15 × 429) |
 | aad-login with a new spoofed `X-Forwarded-For` each time, 2/min | `[401, 401, 401]` (never limited) | `[401, 401, 429]` **only with `NUM_PROXIES` configured**; unset behaves as before |
 | 6 colleagues refresh from one IP, 3/min | users 4–6 got 429 | none throttled |
+| `TimeoutError` from application code (not the cache) | 500 | 500 `internal_error` (not reported as a cache outage) |
 | Password login during outage stays fail-closed (503, no credential check) | pass | pass |
 | aad-login while Redis is down | 500 (503 with the earlier fail-closed throttle) | reaches the Entra check (401 with a synthetic token) |
 | aad-login while Redis is down, 2/min, 3 requests | `[500, 500, 500]` | `[401, 401, 429]` (per worker) |

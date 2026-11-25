@@ -148,3 +148,34 @@ def test_login_stays_fail_closed_during_outage():
     assert response.status_code == 503
     assert response.json()["error"]["code"] == "service_unavailable"
     authenticate.assert_not_called()
+
+
+class _UnrelatedTimeoutProbeView(AppAPIView):
+    """Endpoint whose handler times out on something other than the cache (e.g. asyncio.wait_for)."""
+
+    def handle_get(self, request, *args, **kwargs):
+        raise TimeoutError("synthetic upstream timeout")
+
+
+def test_timeout_raised_by_the_redis_client_is_a_cache_outage():
+    """A built-in TimeoutError whose traceback passes through the redis client is an outage."""
+    from core.common.cache import is_cache_outage
+
+    redis_frame_globals = {"__name__": "redis.connection"}
+    with pytest.raises(TimeoutError) as raised:
+        exec(compile("raise TimeoutError('synthetic socket timeout')", "<redis>", "exec"), redis_frame_globals)
+
+    assert is_cache_outage(raised.value)
+
+
+def test_timeout_unrelated_to_the_cache_is_not_reported_as_a_cache_outage():
+    """A built-in TimeoutError from application code stays an unexpected 500, not a cache 503."""
+    from core.common.cache import is_cache_outage
+
+    assert not is_cache_outage(TimeoutError("synthetic upstream timeout"))
+
+    response = _get(_UnrelatedTimeoutProbeView)
+
+    assert response.status_code == 500
+    assert response.data["error"]["code"] == "internal_error"
+    assert "Retry-After" not in response
