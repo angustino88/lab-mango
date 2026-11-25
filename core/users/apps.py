@@ -11,6 +11,7 @@ class UsersConfig(AppConfig):
         from importlib.util import find_spec
 
         from . import checks  # noqa: F401
+        from .features.auth import throttling  # noqa: F401  (registers the auth rate-limit system check)
 
         if find_spec("core.users.signals") is not None:
             import core.users.signals  # noqa: F401

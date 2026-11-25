@@ -26,9 +26,21 @@ Load testing the `computing_table` weighted scenario (`GET /api/labs/equipment`,
 |---|---|---|
 | Global `anon` / `user` limits (`ResilientAnonRateThrottle`, `ResilientUserRateThrottle`) | **allow** — request proceeds unthrottled, one `WARNING` per breaker window | Fair-use limits; refusing would turn a cache outage into a full API outage although JWT verification and authorization (PostgreSQL) still work. `API_THROTTLE_FAIL_OPEN=False` switches them to deny. |
 | Finance analytics budget (`FinanceCallerThrottle`) | **deny** — `503 service_unavailable`, `Retry-After: 30` (documented in OpenAPI) | Bounds expensive queries; previously a `500`. |
-| Login / AAD login / refresh / OTP (`ScopedRateThrottle`) | **deny** — `503 service_unavailable`, `Retry-After: 30` (unchanged) | Brute-force protection outranks availability. |
+| Login / AAD login / refresh / OTP (`AuthRateThrottle`, `core/users/features/auth/throttling.py`) | **local fallback** — count per worker process; sign-in keeps working. `AUTH_THROTTLE_OUTAGE_MODE=deny` restores `503` + `Retry-After: 30` | Sign-in stays available; limits keep applying, per process (effective limit = limit × worker processes) until Redis returns. |
 
-  Only cache-backend errors (`redis.RedisError`, django-redis `ConnectionInterrupted`, socket `OSError`) trigger a policy; other exceptions propagate. While the circuit breaker is open, throttles apply their policy without contacting Redis. Effect of a Redis outage: signed-in users keep working until their access token expires (10 min); new logins and token refreshes return `503` until Redis returns.
+  Only cache-backend errors (`redis.RedisError`, django-redis `ConnectionInterrupted`, socket `OSError`) trigger a policy; other exceptions propagate. While the circuit breaker is open, throttles apply their policy without contacting Redis. Effect of a Redis outage: signed-in users keep working, and new sign-ins and token refreshes keep working under per-process limits.
+
+- **Authentication rate limits** (`AuthRateThrottle` on `core/common/ratelimit.py`). Two limits per request, counted with atomic `add` + `incr` on a sliding window (no read-modify-write race; identities hashed in keys):
+
+| Endpoint | Per client IP (generous, office NAT) | Per account (strict, brute force) |
+|---|---|---|
+| `POST /api/login` | `auth_login_ip` `60/min` | `auth_login` `10/min` by normalised `username` |
+| `POST /api/aad-login` | `auth_login_ip` `60/min` | none: the Entra token is verified by signature |
+| `POST /api/refresh-token` | `auth_refresh_ip` `300/min` | `auth_refresh` `30/min` per refresh-token cookie (hashed) |
+| `POST /api/otp` | `auth_otp_ip` `30/min` | `auth_otp` `5/min` by `username` |
+
+  Measured with real Redis, 20 concurrent sign-ins: same office IP 20/20 reach the credential check (before: 3–6 of them got 429); 20 guesses on one account from 20 IPs are cut at exactly 10 (before: no per-account limit, and the per-IP limit let 14–20 of 20 through); with Redis down, 20/20 sign in and the per-account limit still holds.
+- **Trusted proxy**: `REST_FRAMEWORK["NUM_PROXIES"]` = `TRUSTED_PROXY_COUNT` (default `1`, one nginx). The client IP is the entry nginx appended to `X-Forwarded-For`; a client-sent header no longer changes its identity (before: the raw header was the identity, so a random value per request bypassed every IP limit). Requirements: the app is reachable only through nginx, and nginx sets `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;`. System check `users.W901` warns when `NUM_PROXIES` is unset; `users.E901`/`E902` reject an invalid outage mode or rate at startup.
 
 ### Phase 2 — Resilient Caching, Singleflight, Auth Cache & Post-Commit Invalidation
 - **Technical Cache Primitives** (`core/common/cache.py` — zero business imports):

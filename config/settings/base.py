@@ -470,8 +470,21 @@ REST_FRAMEWORK = {
         "auth_login": env("THROTTLE_AUTH_LOGIN", default="10/min"),
         "auth_otp": env("THROTTLE_AUTH_OTP", default="5/min"),
         "auth_refresh": env("THROTTLE_AUTH_REFRESH", default="30/min"),
+        # Auth endpoints count per account (rates above) and per client IP (rates below; generous
+        # so everyone behind one office NAT can sign in at once). core/users/features/auth/throttling.py
+        "auth_login_ip": env("THROTTLE_AUTH_LOGIN_IP", default="60/min"),
+        "auth_otp_ip": env("THROTTLE_AUTH_OTP_IP", default="30/min"),
+        "auth_refresh_ip": env("THROTTLE_AUTH_REFRESH_IP", default="300/min"),
     },
+    # Reverse proxies in front of the app (production: one nginx). get_ident() then takes the client
+    # IP that the trusted proxy appended to X-Forwarded-For, never a value the client chose. The app
+    # must only be reachable through those proxies, and nginx must set
+    # "proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;" (or $remote_addr).
+    "NUM_PROXIES": env.int("TRUSTED_PROXY_COUNT", default=1),
 }
+# When Redis is unreachable, auth endpoint limits count per worker process ("local", sign-in keeps
+# working) or refuse with 503 ("deny").
+AUTH_THROTTLE_OUTAGE_MODE = env.str("AUTH_THROTTLE_OUTAGE_MODE", default="local")
 
 CORS_URLS_REGEX = r"^/api/.*$"
 CORS_ALLOW_CREDENTIALS = True

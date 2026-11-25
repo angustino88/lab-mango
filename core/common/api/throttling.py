@@ -12,8 +12,8 @@ or written (``outage_policy``):
 * ``"deny"`` — fail closed with ``503 service_unavailable`` and ``Retry-After``. For limits that
   protect something more valuable than availability (an expensive budget, abuse controls).
 
-Authentication endpoints (login, refresh, OTP) keep DRF's ``ScopedRateThrottle`` and their own
-fail-closed 503 handler (``core/users/features/auth/api.py``); they are not relaxed here.
+Authentication endpoints (login, AAD login, refresh, OTP) use their own limiter,
+``core/users/features/auth/throttling.py`` (per IP + per account, local fallback during an outage).
 
 While the cache circuit breaker is open (``CACHE_CIRCUIT_BREAKER_SECONDS`` after a failure in this
 process), throttles apply their policy without contacting the backend, so a hung Redis costs at most
@@ -119,11 +119,14 @@ class ResilientUserRateThrottle(OutageAwareThrottleMixin, UserRateThrottle):
     outage_policy: OutagePolicy = "allow"
 
 
-def throttle_outage_policy(throttle_class: type[SimpleRateThrottle] | type[Any]) -> OutagePolicy | None:
-    """The declared outage policy of ``throttle_class`` (``None`` when it declares none)."""
-    if isinstance(throttle_class, type) and issubclass(throttle_class, OutageAwareThrottleMixin):
-        return throttle_class.outage_policy
-    return None
+def throttle_outage_policy(throttle_class: type[SimpleRateThrottle] | type[Any]) -> str | None:
+    """The declared outage policy of ``throttle_class`` (``None`` when it declares none).
+
+    ``"allow"`` / ``"deny"`` for ``OutageAwareThrottleMixin`` throttles; other throttles may declare
+    their own handling (e.g. ``"local_fallback"`` for the authentication limiter).
+    """
+    policy = getattr(throttle_class, "outage_policy", None) if isinstance(throttle_class, type) else None
+    return policy if isinstance(policy, str) and policy else None
 
 
 __all__ = [

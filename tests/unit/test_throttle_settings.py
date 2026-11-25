@@ -7,12 +7,12 @@ from unittest.mock import patch
 import pytest
 from django.core.cache import cache
 from rest_framework.settings import api_settings
-from rest_framework.throttling import ScopedRateThrottle
 
 from config.settings import base
 from core.common.api.api_views import AppAPIView
 from core.common.api.throttling import ResilientAnonRateThrottle, ResilientUserRateThrottle
 from core.users.features.auth.login.api import UserLoginView
+from core.users.features.auth.throttling import AuthRateThrottle
 
 
 @pytest.mark.parametrize(
@@ -42,7 +42,11 @@ def test_global_rates_have_defaults_and_environment_overrides(overrides, expecte
         "auth_login": "10/min",
         "auth_otp": "5/min",
         "auth_refresh": "30/min",
+        "auth_login_ip": "60/min",
+        "auth_otp_ip": "30/min",
+        "auth_refresh_ip": "300/min",
     }
+    assert configured["NUM_PROXIES"] == 1
 
 
 def test_all_enabled_global_throttles_initialize():
@@ -56,9 +60,10 @@ def test_all_enabled_global_throttles_initialize():
         assert throttle.duration > 0
 
 
-def test_login_keeps_scoped_throttling_and_existing_auth_rates():
-    assert UserLoginView.throttle_classes == [ScopedRateThrottle]
+def test_login_uses_auth_throttling_and_existing_auth_rates():
+    assert UserLoginView.throttle_classes == [AuthRateThrottle]
     assert UserLoginView.throttle_scope == "auth_login"
+    assert UserLoginView.throttle_account_field == "username"
     for scope, variable, default in (
         ("auth_login", "THROTTLE_AUTH_LOGIN", "10/min"),
         ("auth_otp", "THROTTLE_AUTH_OTP", "5/min"),
