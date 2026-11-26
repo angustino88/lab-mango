@@ -303,21 +303,23 @@ def test_freshness_considers_collection_time_as_well_as_server_receipt(command):
 @pytest.mark.parametrize(
     "change",
     [
-        {"sequence": 0},
-        {"sequence": 9007199254740992},
-        {"collected_at": timezone.now() + timedelta(minutes=10)},
-        {"devices": tuple(DeviceObservation(str(index), "USB", "connected") for index in range(201))},
-        {
+        lambda: {"sequence": 0},
+        lambda: {"sequence": 9007199254740992},
+        # Built when the test runs: a value computed at collection time is in the past by then on a long run.
+        lambda: {"collected_at": timezone.now() + timedelta(minutes=10)},
+        lambda: {"devices": tuple(DeviceObservation(str(index), "USB", "connected") for index in range(201))},
+        lambda: {
             "devices": (
                 DeviceObservation("duplicate", "USB", "connected"),
                 DeviceObservation("duplicate", "USB", "connected"),
             )
         },
     ],
+    ids=["sequence-zero", "sequence-too-large", "collected-in-future", "too-many-devices", "duplicate-key"],
 )
 def test_invalid_snapshot_is_rejected_before_any_persistent_writes(command, change):
     with pytest.raises(ValidationFailed):
-        observe_devices(replace(command, **change))
+        observe_devices(replace(command, **change()))
     assert not DeviceConnection.objects.exists()
     assert not DeviceObservationBatch.objects.exists()
     assert not DeviceObservationCursor.objects.exists()

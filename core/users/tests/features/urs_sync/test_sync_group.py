@@ -206,10 +206,12 @@ def test_sync_urs_group_skips_when_api_url_is_blank(db, settings):
 
 
 @pytest.mark.django_db
-def test_scan_urs_group_task_calls_sync(db):
+def test_scan_urs_group_task_calls_sync(db, settings):
     """Celery task scan_urs_group should call sync with active URS groups."""
     from core.users.tasks import scan_urs_group
 
+    # A local .env copied from .env.example sets URS_API_URL empty, which makes the sync skip.
+    settings.URS_API_URL = "https://urs.example.test/service/info"
     URSGroupFactory(active=True)
     URSGroupFactory(active=False)
 
