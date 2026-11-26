@@ -95,3 +95,12 @@ class TestSlotWatchAPI:
         own = owner_client.post(f"/api/labs/bench-bookings/{booking.pk}/actions/follow")
         assert own.status_code == 422 and own.json()["error"]["code"] == "slot_watch_own_booking"
         assert follower.post("/api/labs/bench-bookings/999999/actions/follow").status_code == 404
+
+    def test_list_recently_notified(self, api_client, bench, now):
+        watch_id = api_client.post(URL, _payload(bench, now), format="json").json()["data"]["id"]
+        BenchSlotWatch.objects.filter(pk=watch_id).update(status="fulfilled")
+        recent = api_client.get(URL, {"status": "fulfilled", "updated_after": (now - H).isoformat()})
+        assert [row["id"] for row in recent.json()["data"]] == [watch_id]
+        assert (
+            api_client.get(URL, {"status": "fulfilled", "updated_after": (now + H).isoformat()}).json()["data"] == []
+        )

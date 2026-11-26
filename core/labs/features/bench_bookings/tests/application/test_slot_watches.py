@@ -279,7 +279,8 @@ class TestDelivery:
         assert email.call_args.kwargs["recipient"] == "watcher@example.invalid"
         teams.assert_called_once()
         web = Notification.objects.get(target_user=watcher)
-        assert web.message.startswith("A bench you are watching frees up soon")
+        assert web.message.startswith("Bench 01 frees up at ")
+        assert web.action_path.startswith("/booking-calendar?action=create&bench_ids=")
         assert set(BenchSlotNotification.objects.values_list("state", flat=True)) == {"sent"}
 
     def test_slot_taken_before_send_expires_without_sending(self, queued, make_booking):
@@ -337,8 +338,55 @@ def test_email_renders_slot_details(enabled):
         recipient="watcher@example.invalid", kind="slot_freed", snapshot=snapshot, event_id=uuid.uuid4()
     )
     assert outcome.state == "sent"
-    assert "Bench 01" in mail.outbox[0].body
-    assert "not held for you" in mail.outbox[0].body
+    assert mail.outbox[0].subject == "Bench 01 is available now · Lab Mango"
+    assert "not reserved for you" in mail.outbox[0].body
+    assert "Book this slot" not in mail.outbox[0].body  # no app URL configured: no dead link
+
+
+@pytest.mark.django_db
+def test_messages_link_to_a_prefilled_booking(enabled):
+    from urllib.parse import parse_qs, urlsplit
+
+    from django.core import mail
+
+    from core.labs.features.bench_bookings.integrations.slot_watch_transport import (
+        booking_path,
+        send_slot_email,
+        slot_text,
+        web_message,
+    )
+
+    enabled.BOOKING_SLOT_WATCH_APP_URL = "https://labmango.example"
+    now = timezone.now()
+    snapshot = {
+        "bench_name": "Bench 07",
+        "bench_id": 7,
+        "free_from": (now + 10 * M).isoformat(),
+        "free_until": (now + 5 * H).isoformat(),
+        "range_start": now.isoformat(),
+        "range_end": (now + 6 * H).isoformat(),
+        "is_follow": False,
+    }
+    query = parse_qs(urlsplit(booking_path(snapshot=snapshot, now=now)).query)
+    assert query["action"] == ["create"] and query["bench_ids"] == ["7"]
+    # Suggests two hours, never past the free window.
+    from datetime import datetime
+
+    span = datetime.fromisoformat(query["ends_at"][0]) - datetime.fromisoformat(query["starts_at"][0])
+    assert span == 2 * H
+
+    title, details, path = web_message(kind="slot_ending_soon", snapshot=snapshot)
+    assert title.startswith("Bench 07 frees up at ") and details.startswith("Available Today ")
+    assert path.startswith("/booking-calendar?")
+    text = slot_text(kind="slot_ending_soon", snapshot=snapshot)
+    assert "https://labmango.example/booking-calendar?action=create&bench_ids=7&" in text
+    assert "&amp;" not in text and "&#x27;" not in text  # Teams gets plain text, not HTML
+
+    import uuid
+
+    send_slot_email(recipient="w@example.invalid", kind="slot_ending_soon", snapshot=snapshot, event_id=uuid.uuid4())
+    assert 'href="https://labmango.example/booking-calendar?' in mail.outbox[0].body
+    assert "Book this slot" in mail.outbox[0].body
 
 
 def test_enable_with_only_slot_watch_flag_enables_only_slot_schedules(settings):
@@ -472,6 +520,4 @@ class TestFollowBooking:
         ):
             counts = deliver_slot_watch_notifications()
         assert counts["sent"] == 2 and counts["skipped"] == 1  # Teams identity not provisioned
-        assert Notification.objects.get(target_user=watcher).message.startswith(
-            "The booking you're following ends soon"
-        )
+        assert " frees up at " in Notification.objects.get(target_user=watcher).message

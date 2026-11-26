@@ -56,6 +56,8 @@ BOOKING_NOTIFICATIONS_QUEUE=booking_notifications
 # Bench slot watches (notify when a bench frees up). Web needs only this flag; email/Teams also need the switches above.
 BOOKING_SLOT_WATCH_ENABLED=False
 BOOKING_SLOT_WATCH_LEAD_MINUTES=15
+# Lab Mango web address for "Book now" links in slot alert emails and Teams messages.
+BOOKING_SLOT_WATCH_APP_URL=
 
 # Entra ID (production is SSO-only)
 # ------------------------------------------------------------------------------

@@ -1,60 +1,61 @@
 <!doctype html>
 <html lang="en">
-  <body style="margin:0;background:#f3f4f6;color:#0f172a;font-family:Arial,Helvetica,sans-serif;">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ title }}</title>
+  </head>
+  <body style="margin:0;background:#f4f5f7;color:#111827;font-family:'Segoe UI',Arial,Helvetica,sans-serif;">
+    <div style="display:none;max-height:0;overflow:hidden;">Available {{ window }}. Not reserved for you — book now to secure it.</div>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:32px 12px;">
       <tr>
         <td align="center">
-          <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="max-width:640px;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;">
+          <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;">
             <tr>
-              <td style="height:5px;background:#16a34a;border-radius:12px 12px 0 0;"></td>
-            </tr>
-            <tr>
-              <td style="padding:28px 32px 12px;">
-                <div style="font-size:13px;font-weight:700;color:#64748b;">Lab Mango</div>
-                <h1 style="margin:14px 0 8px;font-size:23px;line-height:1.3;color:#14532d;">{{ heading }}</h1>
-                <p style="margin:0;color:#475569;font-size:14px;line-height:1.6;">
-                  {% if is_follow %}The booking you asked us to follow is ending, so the bench is opening up.{% else %}Time has opened up on a bench inside the range you asked us to watch.{% endif %}
-                </p>
+              <td style="padding:24px 32px 0;">
+                <span style="font-size:13px;font-weight:700;color:#6b7280;letter-spacing:.02em;">Lab Mango</span>
+                <span style="float:right;font-size:12px;font-weight:600;color:#15803d;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:999px;padding:2px 10px;">Slot alert</span>
               </td>
             </tr>
             <tr>
-              <td style="padding:12px 32px 28px;">
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">
+              <td style="padding:20px 32px 8px;">
+                <h1 style="margin:0 0 8px;font-size:22px;line-height:1.3;color:#111827;font-weight:700;">{{ title }}</h1>
+                <p style="margin:0;color:#4b5563;font-size:15px;line-height:1.6;">{{ intro }}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:16px 32px 4px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;">
                   <tr>
-                    <td style="padding:18px 20px;">
-                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;line-height:1.6;">
-                        <tr>
-                          <td style="padding:5px 12px 5px 0;color:#64748b;">Bench</td>
-                          <td style="padding:5px 0;font-weight:700;">{{ bench_name }}</td>
-                        </tr>
-                        <tr>
-                          <td style="padding:5px 12px 5px 0;color:#64748b;">Free from</td>
-                          <td style="padding:5px 0;font-weight:700;">{{ free_from|date:"Y-m-d H:i" }}</td>
-                        </tr>
-                        {% if free_until %}
-                        <tr>
-                          <td style="padding:5px 12px 5px 0;color:#64748b;">Free until</td>
-                          <td style="padding:5px 0;font-weight:700;">{{ free_until|date:"Y-m-d H:i" }}</td>
-                        </tr>
-                        {% endif %}
-                        {% if not is_follow %}
-                        <tr>
-                          <td style="padding:5px 12px 5px 0;color:#64748b;">Your watched range</td>
-                          <td style="padding:5px 0;">{{ range_start|date:"Y-m-d H:i" }} – {{ range_end|date:"Y-m-d H:i" }}</td>
-                        </tr>
-                        {% endif %}
-                      </table>
-                      <p style="margin:8px 0 0;color:#64748b;font-size:12px;">Times are in {{ time_zone }}.</p>
+                    <td style="padding:16px 20px;font-size:14px;line-height:1.7;">
+                      <div style="color:#6b7280;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Bench</div>
+                      <div style="font-weight:700;color:#111827;margin-bottom:10px;">{{ bench_name }}</div>
+                      <div style="color:#6b7280;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Available</div>
+                      <div style="font-weight:700;color:#111827;">{{ window }} <span style="font-weight:400;color:#6b7280;">({{ time_zone }})</span></div>
+                      {% if watched %}
+                      <div style="color:#6b7280;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-top:10px;">Your alert</div>
+                      <div style="color:#374151;">{{ watched }}</div>
+                      {% endif %}
                     </td>
                   </tr>
                 </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:20px 32px 8px;">
                 {% if booking_url %}
-                <p style="margin:20px 0 0;">
-                  <a href="{{ booking_url }}" style="display:inline-block;background:#16a34a;color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;padding:10px 18px;border-radius:8px;">Book this slot</a>
-                </p>
+                <a href="{{ booking_url }}" style="display:inline-block;background:#6d28d9;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:12px 22px;border-radius:8px;">Book this slot</a>
+                {% else %}
+                <p style="margin:0;color:#111827;font-size:14px;font-weight:600;">Open Lab Mango to book this slot.</p>
                 {% endif %}
-                <p style="margin:18px 0 0;color:#64748b;font-size:12px;line-height:1.5;">
-                  The slot is not held for you. Whoever books it first gets it.
+                <p style="margin:12px 0 0;color:#6b7280;font-size:13px;line-height:1.5;">The slot is not reserved for you. The first person to book it gets it.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:20px 32px 24px;border-top:1px solid #f3f4f6;">
+                <p style="margin:12px 0 0;color:#9ca3af;font-size:12px;line-height:1.5;">
+                  You're receiving this because you set up a slot alert in Lab Mango.
+                  {% if alerts_url %}<a href="{{ alerts_url }}" style="color:#6b7280;">Manage your alerts</a>{% else %}Manage your alerts on the Lab Mango dashboard.{% endif %}
                 </p>
               </td>
             </tr>

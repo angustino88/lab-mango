@@ -220,6 +220,10 @@ class BenchSlotWatchCreateSerializer(serializers.Serializer):
 
 class BenchSlotWatchListQuerySerializer(PageNumberQuerySerializer):
     status = serializers.ChoiceField(choices=SlotWatchStatus.choices, required=False)
+    updated_after = serializers.DateTimeField(
+        required=False,
+        help_text="Only alerts changed at or after this time, e.g. recently notified follows (status=fulfilled).",
+    )
 
 
 class BenchSlotWatchSerializer(AppModelSerializer):

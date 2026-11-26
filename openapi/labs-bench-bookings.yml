@@ -830,6 +830,13 @@ paths:
           * `expired` - Expired
 
           * `fulfilled` - Notified'
+      - in: query
+        name: updated_after
+        schema:
+          type: string
+          format: date-time
+        description: Only alerts changed at or after this time, e.g. recently notified
+          follows (status=fulfilled).
       tags:
       - Bench Bookings
       security:

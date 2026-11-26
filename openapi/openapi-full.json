@@ -5649,6 +5649,15 @@
               "minLength": 1
             },
             "description": "* `active` - Active\n* `cancelled` - Cancelled\n* `expired` - Expired\n* `fulfilled` - Notified"
+          },
+          {
+            "in": "query",
+            "name": "updated_after",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Only alerts changed at or after this time, e.g. recently notified follows (status=fulfilled)."
           }
         ],
         "tags": [
@@ -66321,6 +66330,10 @@
             "format": "date-time",
             "readOnly": true
           },
+          "action_path": {
+            "type": "string",
+            "readOnly": true
+          },
           "target_user": {
             "allOf": [
               {
@@ -66342,6 +66355,7 @@
           }
         },
         "required": [
+          "action_path",
           "created_at",
           "details",
           "expires_at",

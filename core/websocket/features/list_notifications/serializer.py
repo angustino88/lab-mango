@@ -23,6 +23,7 @@ class NotificationSerializer(serializers.ModelSerializer):
             "details",
             "message_type",
             "expires_at",
+            "action_path",
             "target_user",
             "created_at",
             "updated_at",

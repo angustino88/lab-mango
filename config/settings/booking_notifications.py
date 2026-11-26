@@ -79,7 +79,14 @@ def slot_watch_settings(env) -> dict:
         raise ImproperlyConfigured("Slot watch lead time must be a whole number of minutes.") from None
     if not 1 <= lead <= 120:
         raise ImproperlyConfigured("Slot watch lead time must be between 1 and 120 minutes.")
+    app_url = str(env("BOOKING_SLOT_WATCH_APP_URL", default="") or "").strip().rstrip("/")
+    if app_url:
+        parts = urlsplit(app_url)
+        if parts.scheme not in ("https", "http") or not parts.hostname or parts.query or parts.fragment:
+            raise ImproperlyConfigured("Slot watch app URL must be the Lab Mango web address, e.g. https://host.")
     return {
         "BOOKING_SLOT_WATCH_ENABLED": env.bool("BOOKING_SLOT_WATCH_ENABLED", default=False),
         "BOOKING_SLOT_WATCH_LEAD_MINUTES": lead,
+        # Public web address of the frontend, used for "Book now" links in email and Teams.
+        "BOOKING_SLOT_WATCH_APP_URL": app_url,
     }

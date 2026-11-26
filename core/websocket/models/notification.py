@@ -32,6 +32,9 @@ class Notification(TimeStampedModel, UserStampedModel):
         choices=MESSAGE_TYPES,
     )
     expiry_date = models.DateTimeField()
+    # Optional in-app destination for the notification's primary action, e.g. "/booking-calendar?...".
+    # Always a path inside this app (starts with "/"), never an external URL.
+    action_path = models.CharField(max_length=500, blank=True, default="")
     # Optional: target user for per-user notifications (null = broadcast)
     target_user = models.ForeignKey(
         "users.User",
@@ -49,11 +52,20 @@ class Notification(TimeStampedModel, UserStampedModel):
             models.Index(fields=["expiry_date"]),
             models.Index(fields=["target_user", "created"]),
         ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(action_path="")
+                | (models.Q(action_path__startswith="/") & ~models.Q(action_path__startswith="//")),
+                name="notification_action_path_internal",
+            ),
+        ]
 
     def clean(self) -> None:
         super().clean()
         if self.expiry_date and self.expiry_date <= timezone.now():
             raise ValidationError({"expiry_date": _("Expiry date must be in the future.")})
+        if self.action_path and (not self.action_path.startswith("/") or self.action_path.startswith("//")):
+            raise ValidationError({"action_path": _("Must be a path inside the app.")})
 
     def __str__(self) -> str:
         return self.message

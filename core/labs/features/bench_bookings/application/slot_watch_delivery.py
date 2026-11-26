@@ -98,7 +98,7 @@ def _complete(row: BenchSlotNotification, result: DeliveryOutcome, now: datetime
 def _deliver_web(row: BenchSlotNotification) -> bool:
     """Create the feed entry and complete the claim atomically; push after commit."""
     now = timezone.now()
-    message, details = web_message(kind=row.kind, snapshot=row.snapshot)
+    message, details, action_path = web_message(kind=row.kind, snapshot=row.snapshot)
     try:
         with transaction.atomic():
             notification = Notification.objects.create(
@@ -107,6 +107,7 @@ def _deliver_web(row: BenchSlotNotification) -> bool:
                 details=details,
                 message_type=Notification.SUCCESS,
                 expiry_date=web_expiry(snapshot=row.snapshot, now=now),
+                action_path=action_path,
             )
             if not _complete(row, DeliveryOutcome("sent", "accepted"), now):
                 raise _Fenced
@@ -117,6 +118,7 @@ def _deliver_web(row: BenchSlotNotification) -> bool:
                     message_type=Notification.SUCCESS,
                     details=details,
                     notification_id=notification.pk,
+                    action_path=action_path,
                 )
             )
     except _Fenced:

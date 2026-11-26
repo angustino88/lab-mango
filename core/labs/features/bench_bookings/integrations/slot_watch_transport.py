@@ -1,9 +1,13 @@
 """Slot watch messages over email, Teams (private chat workflow) and the web notification feed.
 
+Every message leads with the outcome ("Bench 07 is available from 14:00"), gives the free window, and
+offers one action: book that slot, opened in Lab Mango with bench and times prefilled.
+
 Same sanitization rules as booking notifications: never log URLs, recipients, bodies or raw errors.
 """
 
 from datetime import datetime, timedelta
+from urllib.parse import urlencode
 from uuid import UUID
 
 from django.conf import settings
@@ -17,11 +21,16 @@ from core.users.public import VerifiedTeamsRecipient
 
 from .notification_transport import _teams_delivery_outcome, protect_workflow_logs, teams_notification_payload
 
-HEADINGS = {
-    "slot_ending_soon": "A bench you are watching frees up soon",
-    "slot_freed": "A bench you are watching is now free",
-    "booking_ending_soon": "The booking you're following ends soon",
-    "booking_released": "The booking you're following has ended",
+# The booking form opens with this much time selected; users adjust before booking.
+SUGGESTED_BOOKING = timedelta(hours=2)
+
+ENDING_SOON_KINDS = frozenset({"slot_ending_soon", "booking_ending_soon"})
+
+INTROS = {
+    "slot_ending_soon": "A booking in the time you're watching is about to end.",
+    "slot_freed": "A booking in the time you're watching was cancelled or finished early.",
+    "booking_ending_soon": "The booking you're following is about to end.",
+    "booking_released": "The booking you're following has ended.",
 }
 
 
@@ -29,17 +38,71 @@ def _local(value: str) -> datetime:
     return timezone.localtime(datetime.fromisoformat(value))
 
 
-def message_context(*, kind: str, snapshot: dict) -> dict:
+def _day(value: datetime, now: datetime) -> str:
+    delta = (value.date() - timezone.localtime(now).date()).days
+    if delta == 0:
+        return "Today"
+    if delta == 1:
+        return "Tomorrow"
+    return f"{value:%a %d %b}"
+
+
+def describe_window(free_from: datetime, free_until: datetime | None, now: datetime) -> str:
+    """ "Today 14:00 – 16:00", "Tomorrow from 09:30", "Thu 27 Nov 22:00 – Fri 28 Nov 02:00"."""
+    start = f"{_day(free_from, now)} {free_from:%H:%M}"
+    if free_until is None:
+        return f"{_day(free_from, now)} from {free_from:%H:%M}"
+    if free_until.date() == free_from.date():
+        return f"{start} – {free_until:%H:%M}"
+    return f"{start} – {_day(free_until, now)} {free_until:%H:%M}"
+
+
+def booking_path(*, snapshot: dict, now: datetime) -> str:
+    """In-app link that opens the booking form for this bench and free time."""
+    free_from = max(datetime.fromisoformat(snapshot["free_from"]), now)
+    ends = free_from + SUGGESTED_BOOKING
+    if snapshot.get("free_until"):
+        ends = min(ends, datetime.fromisoformat(snapshot["free_until"]))
+    if not snapshot.get("is_follow") and snapshot.get("range_end"):
+        ends = min(ends, datetime.fromisoformat(snapshot["range_end"]))
+    if ends <= free_from:
+        ends = free_from + timedelta(minutes=30)
+    query = urlencode(
+        {
+            "action": "create",
+            "bench_ids": snapshot["bench_id"],
+            "starts_at": free_from.replace(second=0, microsecond=0).isoformat(),
+            "ends_at": ends.replace(second=0, microsecond=0).isoformat(),
+        }
+    )
+    return f"/booking-calendar?{query}"
+
+
+def message_context(*, kind: str, snapshot: dict, now: datetime | None = None) -> dict:
+    now = now or timezone.now()
+    bench = snapshot.get("bench_name") or "The bench"
+    free_from = _local(snapshot["free_from"])
+    free_until = _local(snapshot["free_until"]) if snapshot.get("free_until") else None
+    if kind in ENDING_SOON_KINDS and free_from > now:
+        title = f"{bench} frees up at {free_from:%H:%M}"
+    else:
+        title = f"{bench} is available now" if free_from <= now + timedelta(minutes=1) else f"{bench} is available"
+    app_url = getattr(settings, "BOOKING_SLOT_WATCH_APP_URL", "")
+    path = booking_path(snapshot=snapshot, now=now)
+    is_follow = bool(snapshot.get("is_follow"))
     return {
-        "heading": HEADINGS[kind],
-        "bench_name": snapshot.get("bench_name") or "Bench",
-        "free_from": _local(snapshot["free_from"]),
-        "free_until": _local(snapshot["free_until"]) if snapshot.get("free_until") else None,
-        "is_follow": bool(snapshot.get("is_follow")),
-        "range_start": _local(snapshot["range_start"]),
-        "range_end": _local(snapshot["range_end"]),
+        "title": title,
+        "intro": INTROS[kind],
+        "bench_name": bench,
+        "window": describe_window(free_from, free_until, now),
         "time_zone": settings.TIME_ZONE,
-        "booking_url": getattr(settings, "BOOKING_SLOT_WATCH_BOOKING_URL", ""),
+        "is_follow": is_follow,
+        "watched": (
+            None if is_follow else describe_window(_local(snapshot["range_start"]), _local(snapshot["range_end"]), now)
+        ),
+        "action_path": path,
+        "booking_url": f"{app_url}{path}" if app_url else "",
+        "alerts_url": f"{app_url}/dashboard" if app_url else "",
     }
 
 
@@ -49,15 +112,11 @@ def slot_text(*, kind: str, snapshot: dict) -> str:
     ).strip()
 
 
-def web_message(*, kind: str, snapshot: dict) -> tuple[str, str]:
-    """(message, details) for the persisted web notification; both fit 255 characters."""
+def web_message(*, kind: str, snapshot: dict) -> tuple[str, str, str]:
+    """(title, details, action_path) for the web notification; text fits the 255-character fields."""
     context = message_context(kind=kind, snapshot=snapshot)
-    message = f"{context['heading']}: {context['bench_name']}"[:255]
-    window = f"Free from {context['free_from']:%Y-%m-%d %H:%M}"
-    if context["free_until"]:
-        window += f" until {context['free_until']:%H:%M}"
-    details = f"{window} ({context['time_zone']}). Book it before someone else does."[:255]
-    return message, details
+    details = f"Available {context['window']}. Not reserved for you — book now to secure it."
+    return context["title"][:255], details[:255], context["action_path"]
 
 
 def web_expiry(*, snapshot: dict, now: datetime) -> datetime:
@@ -69,7 +128,7 @@ def web_expiry(*, snapshot: dict, now: datetime) -> datetime:
 def send_slot_email(*, recipient: str, kind: str, snapshot: dict, event_id: UUID) -> DeliveryOutcome:
     context = message_context(kind=kind, snapshot=snapshot) | {"event_id": str(event_id)}
     sent = send_email(
-        subject=f"Lab Mango: {context['heading']}",
+        subject=f"{context['title']} · Lab Mango",
         context=context,
         template="emails/slot_available.html",
         receivers=[recipient],

@@ -429,7 +429,12 @@ class BenchSlotWatchListCreateAPIView(AppListAPIView, BenchSlotWatchAPIView):
         filters, error = self.validate_query()
         if error is not None:
             return error
-        return self.list_response_sync(list_slot_watches(actor=request.user, status=(filters or {}).get("status")))
+        filters = filters or {}
+        return self.list_response_sync(
+            list_slot_watches(
+                actor=request.user, status=filters.get("status"), updated_after=filters.get("updated_after")
+            )
+        )
 
     def handle_post(self, request, **kwargs):
         serializer, error = self.validate_request()

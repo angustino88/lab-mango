@@ -134,6 +134,7 @@ def publish_user_notification(
     message_type: str = "info",
     details: str = "",
     notification_id: int | None = None,
+    action_path: str = "",
 ) -> None:
     """Publish a notification to one user's channel only (never broadcast)."""
     from django.utils import timezone
@@ -146,6 +147,7 @@ def publish_user_notification(
             "message": message,
             "details": details,
             "message_type": message_type,
+            "action_path": action_path,
             "created": timezone.now().isoformat(),
         },
     )

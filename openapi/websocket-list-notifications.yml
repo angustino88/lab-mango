@@ -154,6 +154,9 @@ components:
           type: string
           format: date-time
           readOnly: true
+        action_path:
+          type: string
+          readOnly: true
         target_user:
           allOf:
           - $ref: '#/components/schemas/UserReference'
@@ -168,6 +171,7 @@ components:
           format: date-time
           readOnly: true
       required:
+      - action_path
       - created_at
       - details
       - expires_at

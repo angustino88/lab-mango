@@ -69,12 +69,28 @@ exactly once (the websocket push after commit is best effort). Email/Teams are a
 notifications. Each send revalidates: watch still active, recipient active, and a
 free gap still exists — otherwise the row expires with `slot_taken` / is skipped.
 
+## Messages and the "Book now" link
+
+Every alert leads with the outcome ("Bench 07 frees up at 14:00" / "Bench 07 is available now"), states the free
+window ("Today 14:00 – 16:00", local time), says the slot is not reserved, and offers one action: book it. The link
+opens the booking form with bench and times prefilled:
+`/booking-calendar?action=create&bench_ids=<id>&starts_at=<free from>&ends_at=<min(free from + 2 h, free until)>`.
+
+* Web: the notification carries `action_path` (new `websocket.Notification` field, additive migration
+  `websocket.0002`); the banner shows **Book now**. A database check (`notification_action_path_internal`) only
+  allows in-app paths (`/…`, never `//…` or a URL). The field is not editable in the admin.
+* Email and Teams: absolute links need `BOOKING_SLOT_WATCH_APP_URL` (the Lab Mango web address). Without it the
+  messages say "Open Lab Mango to book" and contain no dead link. Teams text is plain text (no HTML escaping).
+* The Dashboard card also shows alerts sent in the last 12 hours as **Notified** (`GET
+  /bench-slot-watches?status=fulfilled&updated_after=…`), with Book and dismiss (dismissal is per device).
+
 ## Configuration and rollout
 
 * `BOOKING_SLOT_WATCH_ENABLED` (default false) — master switch; alone it enables web delivery.
 * Email/Teams additionally require `BOOKING_NOTIFICATIONS_ENABLED` and the matching
   `BOOKING_NOTIFICATIONS_{EMAIL,TEAMS}_ENABLED` (Teams endpoint/tenant validation is reused unchanged).
 * `BOOKING_SLOT_WATCH_LEAD_MINUTES` (1–120, default 15).
+* `BOOKING_SLOT_WATCH_APP_URL` (optional) — public web address of the frontend for email/Teams links.
 * Jobs (queue `BOOKING_NOTIFICATIONS_QUEUE`): `labs.bench_bookings.collect_slot_watch_notifications` every 60 s
   (100 watches per page, keyset continuation; also expires finished watches) and
   `labs.bench_bookings.deliver_slot_watch_notifications` every 15 s (≤ 10 rows per run).

@@ -18995,6 +18995,16 @@
             "type": "string",
             "minLength": 1
           }
+        },
+        {
+          "name": "updated_after",
+          "in": "query",
+          "required": false,
+          "description": "Only alerts changed at or after this time, e.g. recently notified follows (status=fulfilled).",
+          "schema": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       ],
       "request_body": null,
@@ -135932,6 +135942,10 @@
                       "format": "date-time",
                       "readOnly": true
                     },
+                    "action_path": {
+                      "type": "string",
+                      "readOnly": true
+                    },
                     "target_user": {
                       "allOf": [
                         {
@@ -135954,6 +135968,7 @@
                     }
                   },
                   "required": [
+                    "action_path",
                     "created_at",
                     "details",
                     "expires_at",
@@ -135985,6 +136000,7 @@
                 "details": "string",
                 "message_type": {},
                 "expires_at": "2026-10-20T12:00:00Z",
+                "action_path": "string",
                 "target_user": {},
                 "created_at": "2026-10-20T12:00:00Z",
                 "updated_at": "2026-10-20T12:00:00Z"
@@ -136198,6 +136214,10 @@
                     "format": "date-time",
                     "readOnly": true
                   },
+                  "action_path": {
+                    "type": "string",
+                    "readOnly": true
+                  },
                   "target_user": {
                     "allOf": [
                       {
@@ -136220,6 +136240,7 @@
                   }
                 },
                 "required": [
+                  "action_path",
                   "created_at",
                   "details",
                   "expires_at",
@@ -136242,6 +136263,7 @@
               "details": "string",
               "message_type": {},
               "expires_at": "2026-10-20T12:00:00Z",
+              "action_path": "string",
               "target_user": {},
               "created_at": "2026-10-20T12:00:00Z",
               "updated_at": "2026-10-20T12:00:00Z"
