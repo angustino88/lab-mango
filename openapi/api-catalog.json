@@ -1,8 +1,8 @@
 {
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
-  "total_endpoints": 553,
-  "generated_at": "2026-11-26",
+  "total_endpoints": 556,
+  "generated_at": "2026-11-27",
   "endpoints": [
     {
       "endpoint": "/agent/bookings/actions/check-in",
@@ -135871,6 +135871,15 @@
           }
         },
         {
+          "name": "unread",
+          "in": "query",
+          "required": false,
+          "description": "true: only notifications the caller has not read; false: only read ones.",
+          "schema": {
+            "type": "boolean"
+          }
+        },
+        {
           "name": "user_id",
           "in": "query",
           "required": false,
@@ -135946,6 +135955,11 @@
                       "type": "string",
                       "readOnly": true
                     },
+                    "is_read": {
+                      "type": "boolean",
+                      "readOnly": true,
+                      "description": "Whether the caller has read this notification."
+                    },
                     "target_user": {
                       "allOf": [
                         {
@@ -135973,6 +135987,7 @@
                     "details",
                     "expires_at",
                     "id",
+                    "is_read",
                     "message",
                     "message_type",
                     "target_user",
@@ -136001,6 +136016,7 @@
                 "message_type": {},
                 "expires_at": "2026-10-20T12:00:00Z",
                 "action_path": "string",
+                "is_read": true,
                 "target_user": {},
                 "created_at": "2026-10-20T12:00:00Z",
                 "updated_at": "2026-10-20T12:00:00Z"
@@ -136218,6 +136234,11 @@
                     "type": "string",
                     "readOnly": true
                   },
+                  "is_read": {
+                    "type": "boolean",
+                    "readOnly": true,
+                    "description": "Whether the caller has read this notification."
+                  },
                   "target_user": {
                     "allOf": [
                       {
@@ -136245,6 +136266,7 @@
                   "details",
                   "expires_at",
                   "id",
+                  "is_read",
                   "message",
                   "message_type",
                   "target_user",
@@ -136264,6 +136286,7 @@
               "message_type": {},
               "expires_at": "2026-10-20T12:00:00Z",
               "action_path": "string",
+              "is_read": true,
               "target_user": {},
               "created_at": "2026-10-20T12:00:00Z",
               "updated_at": "2026-10-20T12:00:00Z"
@@ -136271,6 +136294,272 @@
           }
         },
         "401": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/notifications/actions/mark-all-read",
+      "method": "POST",
+      "operation_id": "notifications_actions_mark_all_read_create",
+      "summary": "Mark All Read Notifications",
+      "description": "Mark the caller's visible unread notifications as read (up to 500 per call).",
+      "tags": [
+        "Websocket Notifications"
+      ],
+      "parameters": [],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "marked_count": {
+                    "type": "integer",
+                    "description": "Notifications newly marked as read."
+                  }
+                },
+                "required": [
+                  "marked_count"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "marked_count": 1
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/notifications/unread-count",
+      "method": "GET",
+      "operation_id": "notifications_unread_count_retrieve",
+      "summary": "Get Notifications Unread Count",
+      "description": "Number of unread, unexpired notifications for the caller (for the header bell).",
+      "tags": [
+        "Websocket Notifications"
+      ],
+      "parameters": [],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "unread_count": {
+                    "type": "integer",
+                    "description": "Unread, unexpired notifications for the caller, capped at 100."
+                  }
+                },
+                "required": [
+                  "unread_count"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "unread_count": 1
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/notifications/{notification_id}/actions/mark-read",
+      "method": "POST",
+      "operation_id": "notifications_actions_mark_read_create_by_notification_id",
+      "summary": "Mark Read Notifications by Notification ID",
+      "description": "Mark one visible notification as read. Repeating is a no-op. Others' notifications return 404.",
+      "tags": [
+        "Websocket Notifications"
+      ],
+      "parameters": [
+        {
+          "name": "notification_id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "description": "Read shape (RW-1, ENU-1, NAM-3, REL-3).",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "message": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "details": {
+                    "type": "string",
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "message_type": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "expires_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  },
+                  "action_path": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "is_read": {
+                    "type": "boolean",
+                    "readOnly": true,
+                    "description": "Whether the caller has read this notification."
+                  },
+                  "target_user": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  },
+                  "updated_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  }
+                },
+                "required": [
+                  "action_path",
+                  "created_at",
+                  "details",
+                  "expires_at",
+                  "id",
+                  "is_read",
+                  "message",
+                  "message_type",
+                  "target_user",
+                  "updated_at"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "id": 1,
+              "message": "string",
+              "details": "string",
+              "message_type": {},
+              "expires_at": "2026-10-20T12:00:00Z",
+              "action_path": "string",
+              "is_read": true,
+              "target_user": {},
+              "created_at": "2026-10-20T12:00:00Z",
+              "updated_at": "2026-10-20T12:00:00Z"
+            }
+          }
+        },
+        "404": {
           "description": "",
           "content_type": "application/json",
           "schema": {

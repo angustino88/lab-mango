@@ -690,6 +690,12 @@ paths:
     $ref: ./users-auth-logout.yml#/paths/~1api~1logout
   /api/notifications:
     $ref: ./websocket-list-notifications.yml#/paths/~1api~1notifications
+  /api/notifications/{notification_id}/actions/mark-read:
+    $ref: ./websocket-list-notifications.yml#/paths/~1api~1notifications~1{notification_id}~1actions~1mark-read
+  /api/notifications/actions/mark-all-read:
+    $ref: ./websocket-list-notifications.yml#/paths/~1api~1notifications~1actions~1mark-all-read
+  /api/notifications/unread-count:
+    $ref: ./websocket-list-notifications.yml#/paths/~1api~1notifications~1unread-count
   /api/refresh-token:
     $ref: ./users-auth-refresh-token.yml#/paths/~1api~1refresh-token
   /api/schema/:

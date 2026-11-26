@@ -1,3 +1,3 @@
-from core.websocket.models.notification import Notification
+from core.websocket.models.notification import Notification, NotificationRead
 
-__all__ = ["Notification"]
+__all__ = ["Notification", "NotificationRead"]

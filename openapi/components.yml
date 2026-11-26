@@ -14709,6 +14709,14 @@ components:
       - slot_code
       - station_id
       x-embedded-resource: true
+    MarkAllRead:
+      type: object
+      properties:
+        marked_count:
+          type: integer
+          description: Notifications newly marked as read.
+      required:
+      - marked_count
     MaterialCatalogCreate:
       type: object
       properties:
@@ -15224,6 +15232,10 @@ components:
         action_path:
           type: string
           readOnly: true
+        is_read:
+          type: boolean
+          readOnly: true
+          description: Whether the caller has read this notification.
         target_user:
           allOf:
           - $ref: '#/components/schemas/UserReference'
@@ -15243,10 +15255,27 @@ components:
       - details
       - expires_at
       - id
+      - is_read
       - message
       - message_type
       - target_user
       - updated_at
+    NotificationMarkAllReadInboxMarkAllReadDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/MarkAllRead'
+      required:
+      - data
+    NotificationMarkReadSerializerNotificationDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Notification'
+      required:
+      - data
     NotificationSerializerNotificationDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -15299,6 +15328,14 @@ components:
           $ref: '#/components/schemas/NotificationSerializerNotificationPagination'
       required:
       - pagination
+    NotificationUnreadCountInboxUnreadCountDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/UnreadCount'
+      required:
+      - data
     NotificationWrite:
       type: object
       description: Write shape (RW-1); the target user is not writable here.
@@ -23606,6 +23643,14 @@ components:
           $ref: '#/components/schemas/TypedResourceAuditListSerializersResourceAuditItemPagination'
       required:
       - pagination
+    UnreadCount:
+      type: object
+      properties:
+        unread_count:
+          type: integer
+          description: Unread, unexpired notifications for the caller, capped at 100.
+      required:
+      - unread_count
     UrgencyEnum:
       enum:
       - '1'

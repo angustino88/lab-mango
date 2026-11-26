@@ -69,3 +69,22 @@ class Notification(TimeStampedModel, UserStampedModel):
 
     def __str__(self) -> str:
         return self.message
+
+
+class NotificationRead(models.Model):
+    """One user has read one notification (targeted or broadcast). Drives the bell's unread count.
+
+    Race guard: the unique (user, notification) constraint makes marking read idempotent.
+    """
+
+    user = models.ForeignKey("users.User", on_delete=models.CASCADE, related_name="notification_reads")
+    notification = models.ForeignKey(Notification, on_delete=models.CASCADE, related_name="reads")
+    read_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=("user", "notification"), name="notification_read_unique"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user_id} read {self.notification_id}"

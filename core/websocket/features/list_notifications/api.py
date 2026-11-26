@@ -1,6 +1,6 @@
 """REST API: list + create notifications (hybrid reliability fallback)."""
 
-from django.db.models import Q
+from django.db.models import Exists, OuterRef, Q
 from django.utils import timezone
 from drf_api_contracts import ResponseContract, ResponseSchemaFactory
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_serializer, extend_schema_view
@@ -10,7 +10,7 @@ from rest_framework.response import Response
 
 from core.common.api.correlation import get_request_id
 from core.common.api.pagination import ResultsSetPagination
-from core.websocket.models import Notification
+from core.websocket.models import Notification, NotificationRead
 
 from .serializer import NotificationSerializer, NotificationWriteSerializer
 
@@ -42,6 +42,13 @@ from .serializer import NotificationSerializer, NotificationWriteSerializer
                     "Reconnection cursor: return only notifications whose id is greater than this value. "
                     "Pass the highest id already received."
                 ),
+            ),
+            OpenApiParameter(
+                "unread",
+                {"type": "boolean"},
+                OpenApiParameter.QUERY,
+                required=False,
+                description="true: only notifications the caller has not read; false: only read ones.",
             ),
             OpenApiParameter(
                 "user_id",
@@ -80,6 +87,7 @@ from .serializer import NotificationSerializer, NotificationWriteSerializer
 )
 class NotificationListCreateView(generics.ListCreateAPIView):
     """List unread notifications or publish a real-time event notification."""
+
     serializer_class = NotificationSerializer
     pagination_class = ResultsSetPagination
 
@@ -100,9 +108,10 @@ class NotificationListCreateView(generics.ListCreateAPIView):
         return Response({"data": data}, status=status.HTTP_201_CREATED, headers=self.get_success_headers(data))
 
     def get_queryset(self):
-        qs = Notification.objects.filter(expiry_date__gte=timezone.now()).filter(
-            Q(target_user__isnull=True) | Q(target_user=self.request.user)
-        )
+        qs = visible_notifications(self.request.user)
+        unread = self.request.query_params.get("unread")
+        if unread is not None:
+            qs = qs.filter(is_read=unread == "false")
         # Support ?since=<id> for reconnecting clients (hybrid reliability)
         since = self.request.query_params.get("since")
         if since is not None:
@@ -116,7 +125,17 @@ class NotificationListCreateView(generics.ListCreateAPIView):
         return qs
 
 
-QUERY_PARAMS = frozenset({"page", "page_size", "since", "user_id"})
+def visible_notifications(user):
+    """Unexpired broadcasts plus the user's own notifications, newest first, with ``is_read`` for this user."""
+    return (
+        Notification.objects.filter(expiry_date__gte=timezone.now())
+        .filter(Q(target_user__isnull=True) | Q(target_user=user))
+        .annotate(is_read=Exists(NotificationRead.objects.filter(user=user, notification=OuterRef("pk"))))
+        .order_by("-created", "-pk")
+    )
+
+
+QUERY_PARAMS = frozenset({"page", "page_size", "since", "unread", "user_id"})
 ID_PARAMS = ("since", "user_id")
 MAX_ID = 2**63 - 1  # BigAutoField upper bound
 
@@ -132,6 +151,9 @@ def _query_error(request):
             errors[key] = [ErrorDetail("Unknown query parameter.", code="invalid_query")]
         elif len(request.query_params.getlist(key)) > 1:
             errors[key] = [ErrorDetail("This parameter must not be repeated.", code="invalid_query")]
+    unread = request.query_params.get("unread")
+    if unread is not None and "unread" not in errors and unread not in ("true", "false"):
+        errors["unread"] = [ErrorDetail("Use true or false.", code="invalid_query")]
     for key in ID_PARAMS:
         raw = request.query_params.get(key)
         if raw is None or key in errors:

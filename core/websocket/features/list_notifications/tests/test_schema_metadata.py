@@ -164,8 +164,11 @@ def test_post_runtime_returns_201_envelope_and_preserves_writable_fields_and_hea
 
 @pytest.mark.parametrize(
     "body,status,code",
-    [('{', 400, "malformed_request"), ('{}', 422, "validation_failed"),
-     ('{"message": "Synthetic", "expires_at": "not-a-date"}', 422, "validation_failed")],
+    [
+        ("{", 400, "malformed_request"),
+        ("{}", 422, "validation_failed"),
+        ('{"message": "Synthetic", "expires_at": "not-a-date"}', 422, "validation_failed"),
+    ],
 )
 def test_post_errors_remain_unwrapped_and_do_not_create(monkeypatch, body, status, code):
     def unexpected_create(*args, **kwargs):
