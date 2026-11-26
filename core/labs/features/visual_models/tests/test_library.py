@@ -73,12 +73,20 @@ def client(operator):
         b"not a glb",
         glb(buffers=[{"uri": "https://example.com/data.bin"}]),
         glb(images=[{"uri": "../texture.png"}]),
-        glb(extensionsRequired=["KHR_draco_mesh_compression"]),
+        glb(extensionsRequired=["EXT_unknown_decoder"]),
     ],
 )
 def test_rejects_invalid_or_external_models(content):
     with pytest.raises(InvalidModel):
         validate_glb(content)
+
+
+@pytest.mark.parametrize(
+    "extension",
+    ["KHR_draco_mesh_compression", "EXT_meshopt_compression", "KHR_mesh_quantization", "KHR_texture_basisu"],
+)
+def test_accepts_compressed_models_the_dashboard_can_decode(extension):
+    validate_glb(glb(extensionsUsed=[extension], extensionsRequired=[extension]))
 
 
 @pytest.mark.django_db

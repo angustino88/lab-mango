@@ -58,9 +58,24 @@ the application commands; reads use the same policy as the room mapping endpoint
 
 ## Uploads
 
-GLB v2 only, at most 15 MiB (rejected while streaming), with embedded buffers and textures. Unsupported
-required extensions are rejected so the renderer never downloads external decoders. CAD conversion
-happens before upload. No third-party assets are bundled.
+GLB v2 only, at most 15 MiB (rejected while streaming), with embedded buffers and textures. Compressed
+geometry (Draco, Meshopt, mesh quantization) and KTX2/Basis or WebP textures are accepted: the dashboard
+bundles their decoders, so the browser never downloads decoder code from a CDN. Other required extensions
+are rejected. CAD conversion happens before upload. No third-party assets are bundled.
+
+## Reference models
+
+`reference_models.py` builds seven original GLB models in code (no third-party content, no binary files in
+the repository): server rack 42U, lab workbench, storage cabinet, storage shelving, benchtop instrument,
+desktop computer and monitor. The bytes are deterministic, so the sha256 identifies them.
+
+`python manage.py seed_reference_models` adds them to the library and sets them as the default of station
+types and equipment categories that have no model yet, matched by name words (rack, workbench/table/bench,
+cabinet, shelving; computing, display, instrument/debugging/laboratory/power). It never replaces a model
+someone chose and is safe to rerun. `--library-only` skips the defaults. Anyone can replace a default from
+Spaces → 3D models.
+
+The dashboard draws mounted rack units over any rack model, and bench contents on any work-table model.
 
 ## Deployment
 

@@ -32,8 +32,16 @@ class RoomSlot(TimeStampedModel, UserStampedModel):
     slot_code = models.CharField(max_length=16)
     slot_type = models.CharField(max_length=16, choices=SLOT_TYPES, default="station")
     status = models.CharField(max_length=16, choices=STATUSES, default="usable")
-    x_mm = models.IntegerField(null=True, blank=True)
-    y_mm = models.IntegerField(null=True, blank=True)
+    x_mm = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text="Slot centre from the room's back-left corner, across the room's width (mm).",
+    )
+    y_mm = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text="Slot centre from the room's back-left corner, along the room's length (mm).",
+    )
     width_mm = models.PositiveIntegerField(null=True, blank=True)
     depth_mm = models.PositiveIntegerField(null=True, blank=True)
     orientation_degrees = models.PositiveSmallIntegerField(

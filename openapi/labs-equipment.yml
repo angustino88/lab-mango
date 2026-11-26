@@ -5967,6 +5967,9 @@ paths:
       summary: Get Groups Options
 components:
   schemas:
+    BlankEnum:
+      enum:
+      - ''
     CatalogOption:
       type: object
       description: 'Standard selector dropdown item: exactly {id, sku, name} (OPT-2,
@@ -8666,6 +8669,18 @@ components:
         position:
           type: integer
           readOnly: true
+        rack_unit:
+          type: integer
+          readOnly: true
+          nullable: true
+          description: Lowest rack unit (1 = bottom).
+        rack_unit_height:
+          type: integer
+          readOnly: true
+          nullable: true
+        rack_face:
+          type: string
+          readOnly: true
         placed_at:
           type: string
           format: date-time
@@ -8676,6 +8691,9 @@ components:
       - location_note
       - placed_at
       - position
+      - rack_face
+      - rack_unit
+      - rack_unit_height
       - role
       - room
       - station
@@ -8728,6 +8746,22 @@ components:
           type: integer
           minimum: 0
           default: 0
+        rack_unit:
+          type: integer
+          maximum: 60
+          minimum: 1
+          nullable: true
+          description: 'Station placements in a rack: lowest occupied unit (1 = bottom).'
+        rack_unit_height:
+          type: integer
+          maximum: 60
+          minimum: 1
+          nullable: true
+        rack_face:
+          default: ''
+          oneOf:
+          - $ref: '#/components/schemas/RackFaceEnum'
+          - $ref: '#/components/schemas/BlankEnum'
     EquipmentProductModel:
       type: object
       description: Bundle item; ``manufacturer_id`` points to a manufacturer of the
@@ -10528,6 +10562,14 @@ components:
           $ref: '#/components/schemas/ProductModelSpecificationReferenceListSerializersProductModelSpecificationCatalogRecordPagination'
       required:
       - pagination
+    RackFaceEnum:
+      enum:
+      - front
+      - rear
+      type: string
+      description: '* `front` - front
+
+        * `rear` - rear'
     RegisterHardwareIdRequest:
       type: object
       properties:

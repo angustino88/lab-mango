@@ -19,6 +19,12 @@ SUPPORTED_EXTENSIONS = frozenset(
         "KHR_materials_emissive_strength",
         "KHR_texture_transform",
         "KHR_lights_punctual",
+        # Compressed geometry and textures: the dashboard bundles these decoders (no CDN downloads).
+        "KHR_draco_mesh_compression",
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization",
+        "KHR_texture_basisu",
+        "EXT_texture_webp",
     ]
 )
 
@@ -39,7 +45,10 @@ def validate_glb(content: bytes) -> None:
         if not isinstance(data, dict) or data.get("asset", {}).get("version") != "2.0":
             raise ValueError
         if set(data.get("extensionsRequired", [])) - SUPPORTED_EXTENSIONS:
-            raise InvalidModel("Export uncompressed geometry with embedded PNG/JPEG textures.")
+            raise InvalidModel(
+                "Use only supported glTF extensions: standard materials, Draco or Meshopt geometry, "
+                "and PNG, JPEG, WebP or KTX2 textures."
+            )
         for entry in [*data.get("buffers", []), *data.get("images", [])]:
             if entry.get("uri") and not entry["uri"].startswith("data:"):
                 raise InvalidModel("Embed all textures and buffers in the GLB.")

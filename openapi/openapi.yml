@@ -30,6 +30,8 @@ paths:
     $ref: ./agents.yml#/paths/~1agent~1monitoring-policy
   /agent/session-logs:
     $ref: ./agents.yml#/paths/~1agent~1session-logs
+  /agent/telemetry/samples/bulk:
+    $ref: ./agents.yml#/paths/~1agent~1telemetry~1samples~1bulk
   /api/agents:
     $ref: ./agents.yml#/paths/~1api~1agents
   /api/agents/{id}:

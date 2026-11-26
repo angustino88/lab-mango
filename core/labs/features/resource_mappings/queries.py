@@ -17,6 +17,8 @@ from core.labs.features.benches.public import (
 from core.labs.features.equipment.public import (
     equipment_mapping_rows,
     get_equipment_for_mapping,
+    rack_mounted_rows,
+    station_installed_totals,
 )
 from core.labs.features.licenses.public import active_license_assignment_mapping_rows, license_mapping_rows
 from core.labs.features.locations.public import (
@@ -27,6 +29,7 @@ from core.labs.features.locations.public import (
     station_mapping_rows,
     station_slot_mapping_rows,
 )
+from core.labs.features.telemetry.public import current_conditions
 from core.labs.features.visual_models.public import effective_visual_models
 
 COLLECTIONS = (
@@ -329,11 +332,66 @@ def _attach_visual_models(data: dict[str, list[dict[str, Any]]]) -> None:
         shown = effective_visual_models(collection, [row["id"] for row in data[collection]])
         for row in data[collection]:
             row["visual_model_id"] = shown.get(row["id"])
+    _attach_dcim(data)
+
+
+def _conditions(value) -> dict[str, Any] | None:
+    if value is None:
+        return None
+    return {
+        "temperature_c": value.temperature_c,
+        "humidity_percent": value.humidity_percent,
+        "power_w": value.power_w,
+        "observed_at": value.observed_at,
+        "channel_count": value.channel_count,
+    }
+
+
+def _attach_dcim(data: dict[str, list[dict[str, Any]]]) -> None:
+    """Live conditions per room and station, and installed load and rack contents per station.
+
+    Fixed cost: telemetry rollup (2-6 queries) plus two equipment queries, whatever the page size.
+    """
+    station_ids = [row["id"] for row in data["stations"]]
+    conditions = current_conditions(room_ids=[row["id"] for row in data["rooms"]], station_ids=station_ids)
+    for row in data["rooms"]:
+        row["conditions"] = _conditions(conditions["rooms"].get(row["id"]))
+    if not station_ids:
+        return
+    installed = station_installed_totals(station_ids=station_ids)
+    rack_items: dict[int, list[dict[str, Any]]] = {}
+    for item in rack_mounted_rows(station_ids=station_ids):
+        rack_items.setdefault(item["station_id"], []).append(
+            {
+                "equipment_id": item["equipment_id"],
+                "sku": item["equipment__sku"],
+                "name": item["equipment__name"],
+                "category": item["equipment__kind__category__name"],
+                "power_draw_w": item["equipment__power_draw_w"],
+                "rack_unit": item["rack_unit"],
+                "rack_unit_height": item["rack_unit_height"],
+                "rack_face": item["rack_face"],
+            }
+        )
+    for row in data["stations"]:
+        totals = installed.get(row["id"], {})
+        items = rack_items.get(row["id"], [])
+        row["conditions"] = _conditions(conditions["stations"].get(row["id"]))
+        row["capacity"].update(
+            power_installed_w=round(totals.get("power_w", 0.0), 1),
+            load_installed_kg=round(totals.get("weight_kg", 0.0), 2),
+            installed_units=totals.get("units", 0),
+            rack_units_used=sum(item["rack_unit_height"] for item in items),
+        )
+        row["rack"] = items
 
 
 def _shape_row(collection: str, row: Any) -> dict[str, Any]:
     if collection == "rooms":
-        return {key: row[key] for key in ("id", "uid", "sku", "name", "layout_rows", "layout_columns")}
+        return {
+            key: row[key]
+            for key in ("id", "uid", "sku", "name", "layout_rows", "layout_columns", "length_m", "width_m")
+        }
     if collection == "room_slots":
         return {
             key: row[key]
@@ -348,12 +406,25 @@ def _shape_row(collection: str, row: Any) -> dict[str, Any]:
                 "width_mm",
                 "depth_mm",
                 "orientation_degrees",
+                "slot_type",
+                "status",
             )
         }
     if collection == "stations":
-        return {key: row[key] for key in ("id", "uid", "sku", "name", "room_id", "slot_id")}
+        shaped = {key: row[key] for key in ("id", "uid", "sku", "name", "room_id", "slot_id")}
+        shaped["layout"] = {
+            key: row[key] for key in ("width_mm", "depth_mm", "height_mm", "orientation_degrees")
+        }
+        shaped["capacity"] = {
+            key: row[key]
+            for key in (
+                "bench_capacity", "rack_units", "power_capacity_w", "power_reserved_w", "max_load_kg",
+                "network_port_capacity",
+            )
+        }
+        return shaped
     if collection == "station_slots":
-        return {key: row[key] for key in ("id", "station_id", "position_index", "slot_code", "label")}
+        return {key: row[key] for key in ("id", "station_id", "position_index", "slot_code", "label", "width_mm")}
     if collection == "benches":
         return {key: row[key] for key in ("id", "uid", "sku", "name", "setup_location_id", "station_slot_id")}
     if collection == "equipment":

@@ -48,6 +48,11 @@ def upload_asset(
 ) -> tuple[VisualModelAsset, bool]:
     """Add a GLB to the library. Returns ``(asset, created)``; identical bytes reuse the existing asset."""
     ensure_editor(actor)
+    return store_asset(content, details, storage=storage)
+
+
+def store_asset(content: bytes, details: AssetDetails, *, storage: ModelStorage) -> tuple[VisualModelAsset, bool]:
+    """``upload_asset`` without the permission check, for trusted callers such as management commands."""
     _check_details(details)
     validate_glb(content)
     digest = hashlib.sha256(content).hexdigest()

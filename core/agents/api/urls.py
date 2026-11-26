@@ -4,6 +4,7 @@ from django.urls import path
 
 from .license_checks import AgentLicenseCheckReportAPIView, AgentLicenseChecksAPIView
 from .observations import AgentDeviceObservationsAPIView, AgentMonitoringPolicyAPIView
+from .telemetry import AgentTelemetrySamplesAPIView
 from .views import (
     AgentActivityAPIView,
     AgentBookingCheckInAPIView,
@@ -24,6 +25,7 @@ from .views import (
 
 urlpatterns = [
     path("agent/monitoring-policy", AgentMonitoringPolicyAPIView.as_view(), name="agent-monitoring-policy"),
+    path("agent/telemetry/samples/bulk", AgentTelemetrySamplesAPIView.as_view(), name="agent-telemetry-samples"),
     path(
         "agent/device-observations/actions/report",
         AgentDeviceObservationsAPIView.as_view(),
