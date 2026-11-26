@@ -2691,6 +2691,145 @@ components:
       - position
       - role
       x-embedded-resource: true
+    BenchSlotWatch:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        bench:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          readOnly: true
+        starts_at:
+          type: string
+          format: date-time
+          readOnly: true
+        ends_at:
+          type: string
+          format: date-time
+          readOnly: true
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - bench
+      - channels
+      - created_at
+      - ends_at
+      - id
+      - starts_at
+      - status
+      - updated_at
+    BenchSlotWatchCancelActionSerializersBenchSlotWatchDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchSlotWatch'
+      required:
+      - data
+    BenchSlotWatchCreate:
+      type: object
+      description: Watch one bench for free time inside [starts_at, ends_at). Notify-only;
+        nothing is held.
+      properties:
+        bench_id:
+          type: integer
+          minimum: 1
+        starts_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChannelsEnum'
+          description: 'Where to notify: email, teams, in_app (web). Defaults to all
+            three.'
+          maxItems: 3
+      required:
+      - bench_id
+      - ends_at
+      - starts_at
+    BenchSlotWatchCreateSerializersBenchSlotWatchDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchSlotWatch'
+      required:
+      - data
+    BenchSlotWatchDetailSerializersBenchSlotWatchDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchSlotWatch'
+      required:
+      - data
+    BenchSlotWatchListSerializersBenchSlotWatchPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/BenchSlotWatchListSerializersBenchSlotWatchPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchSlotWatch'
+      required:
+      - data
+      - meta
+    BenchSlotWatchListSerializersBenchSlotWatchPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    BenchSlotWatchListSerializersBenchSlotWatchPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/BenchSlotWatchListSerializersBenchSlotWatchPagination'
+      required:
+      - pagination
     BenchStationReference:
       type: object
       properties:
@@ -3572,6 +3711,17 @@ components:
       - unit
       - unit_id
       - updated_at
+    ChannelsEnum:
+      enum:
+      - email
+      - teams
+      - in_app
+      type: string
+      description: '* `email` - Email
+
+        * `teams` - Teams
+
+        * `in_app` - Web'
     ChannelsFromProfile:
       type: object
       properties:

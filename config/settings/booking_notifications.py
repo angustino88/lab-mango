@@ -66,4 +66,20 @@ def notification_settings(env) -> dict:
         "BOOKING_NOTIFICATIONS_TEAMS_WORKFLOW_URL": endpoint,
         "BOOKING_NOTIFICATIONS_TEAMS_EXPECTED_TENANT_ID": tenant,
         "BOOKING_NOTIFICATIONS_QUEUE": env("BOOKING_NOTIFICATIONS_QUEUE", default="booking_notifications"),
+        **slot_watch_settings(env),
+    }
+
+
+def slot_watch_settings(env) -> dict:
+    """Bench slot watches. Web delivery needs only this flag; email and Teams also need the
+    booking notification master switch and their channel switch (validated above)."""
+    try:
+        lead = int(env("BOOKING_SLOT_WATCH_LEAD_MINUTES", default="15"))
+    except (TypeError, ValueError):
+        raise ImproperlyConfigured("Slot watch lead time must be a whole number of minutes.") from None
+    if not 1 <= lead <= 120:
+        raise ImproperlyConfigured("Slot watch lead time must be between 1 and 120 minutes.")
+    return {
+        "BOOKING_SLOT_WATCH_ENABLED": env.bool("BOOKING_SLOT_WATCH_ENABLED", default=False),
+        "BOOKING_SLOT_WATCH_LEAD_MINUTES": lead,
     }

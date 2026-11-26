@@ -116,6 +116,12 @@ paths:
     $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1reference-data~1projects
   /api/labs/bench-bookings/reference-data/projects/{reference_id}:
     $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1reference-data~1projects~1{reference_id}
+  /api/labs/bench-slot-watches:
+    $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-slot-watches
+  /api/labs/bench-slot-watches/{watch_id}:
+    $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-slot-watches~1{watch_id}
+  /api/labs/bench-slot-watches/{watch_id}/actions/cancel:
+    $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-slot-watches~1{watch_id}~1actions~1cancel
   /api/labs/lab-projects:
     $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1lab-projects
   /api/labs/lab-projects/{project_id}:

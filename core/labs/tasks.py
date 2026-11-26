@@ -13,7 +13,9 @@ from core.labs.features.analytics.application.tasks import (
 # Bench booking tasks
 from core.labs.features.bench_bookings.tasks import (
     collect_booking_notifications_task,
+    collect_slot_watch_notifications_task,
     deliver_booking_notifications_task,
+    deliver_slot_watch_notifications_task,
     reconcile_bench_booking_statuses_task,
 )
 
@@ -37,6 +39,8 @@ from core.labs.features.monitoring.tasks import purge_device_observation_history
 
 __all__ = [
     "collect_overdue_reminders_task",
+    "collect_slot_watch_notifications_task",
+    "deliver_slot_watch_notifications_task",
     "deliver_overdue_reminders_task",
     "expire_uncollected_reservations_task",
     "collect_booking_notifications_task",

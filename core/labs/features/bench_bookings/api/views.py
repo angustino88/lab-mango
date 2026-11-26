@@ -30,6 +30,11 @@ from core.labs.features.bench_bookings.application import (
     decide_bench_booking_approval,
     update_bench_booking,
 )
+from core.labs.features.bench_bookings.application.slot_watches import (
+    CreateSlotWatchInput,
+    cancel_slot_watch,
+    create_slot_watch,
+)
 from core.labs.features.bench_bookings.queries import (
     get_bench_booking,
     get_bench_booking_by_code,
@@ -40,6 +45,7 @@ from core.labs.features.bench_bookings.queries import (
     list_lab_projects,
 )
 from core.labs.features.bench_bookings.queries.lab_projects import list_lab_project_options
+from core.labs.features.bench_bookings.queries.slot_watches import get_slot_watch, list_slot_watches
 from core.labs.models import BookingStatus
 
 from .serializers import (
@@ -49,6 +55,9 @@ from .serializers import (
     BenchBookingRejectActionSerializer,
     BenchBookingSerializer,
     BenchBookingUpdateSerializer,
+    BenchSlotWatchCreateSerializer,
+    BenchSlotWatchListQuerySerializer,
+    BenchSlotWatchSerializer,
     LabProjectOptionsQuerySerializer,
     LabProjectQuerySerializer,
     LabProjectSerializer,
@@ -392,3 +401,54 @@ class BenchBookingCompleteActionAPIView(BenchBookingAPIView):
             lambda: update_bench_booking(actor=request.user, data=command_input),
             project=True,
         )
+
+
+class BenchSlotWatchAPIView(CommandAPIView):
+    """Slot watches: the caller's own requests to hear when a bench frees up (email, Teams, web)."""
+
+    permission_classes = BENCH_BOOKING_ACCESS
+    schema_tags = ("Bench Bookings",)
+
+
+class BenchSlotWatchListCreateAPIView(AppListAPIView, BenchSlotWatchAPIView):
+    get_contract = OperationContract(
+        query=BenchSlotWatchListQuerySerializer,
+        success=ResponseContract.paginated("BenchSlotWatchList", BenchSlotWatchSerializer),
+        bad_request=ResponseContract.bad_request(),
+    )
+    post_contract = operation(
+        "BenchSlotWatchCreate",
+        BenchSlotWatchSerializer,
+        request=BenchSlotWatchCreateSerializer,
+        created=True,
+        forbidden=True,
+    )
+
+    def handle_get(self, request, **kwargs):
+        filters, error = self.validate_query()
+        if error is not None:
+            return error
+        return self.list_response_sync(list_slot_watches(actor=request.user, status=(filters or {}).get("status")))
+
+    def handle_post(self, request, **kwargs):
+        serializer, error = self.validate_request()
+        if error is not None:
+            return error
+        command_input = CreateSlotWatchInput(**serializer.to_command_kwargs())
+        return self._execute(
+            lambda: create_slot_watch(actor=self.acting_user, data=command_input)
+        )
+
+
+class BenchSlotWatchDetailAPIView(BenchSlotWatchAPIView):
+    get_contract = operation("BenchSlotWatchDetail", BenchSlotWatchSerializer)
+
+    def handle_get(self, request, watch_id, **kwargs):
+        return self._execute(lambda: get_slot_watch(actor=request.user, watch_id=watch_id))
+
+
+class BenchSlotWatchCancelActionAPIView(BenchSlotWatchAPIView):
+    post_contract = operation("BenchSlotWatchCancelAction", BenchSlotWatchSerializer, forbidden=True)
+
+    def handle_post(self, request, watch_id, **kwargs):
+        return self._execute(lambda: cancel_slot_watch(actor=self.acting_user, watch_id=watch_id))

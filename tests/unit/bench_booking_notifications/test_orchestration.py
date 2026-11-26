@@ -178,9 +178,12 @@ def test_beat_provision_disabled_and_idempotent_keys():
         command.stdout = MagicMock()
         command.handle(enable=False)
         command.handle(enable=False)
-        assert tasks.call_count == 4
+        per_run = len(schedules.SCHEDULES) + len(schedules.SLOT_WATCH_SCHEDULES)
+        assert tasks.call_count == 2 * per_run
         assert all(not call.kwargs["defaults"]["enabled"] for call in tasks.call_args_list)
-        assert [call.kwargs["name"] for call in tasks.call_args_list[:2]] == [row[0] for row in schedules.SCHEDULES]
+        assert [call.kwargs["name"] for call in tasks.call_args_list[:per_run]] == [
+            row[0] for row in (*schedules.SCHEDULES, *schedules.SLOT_WATCH_SCHEDULES)
+        ]
 
 
 def test_migration_graph_matches_current_booking_notification_model_without_connection():

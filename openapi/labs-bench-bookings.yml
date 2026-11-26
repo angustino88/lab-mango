@@ -754,6 +754,199 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Get Bench Bookings Reference Data Projects by Reference ID
+  /api/labs/bench-slot-watches:
+    get:
+      operationId: labs_bench_slot_watches_retrieve
+      description: 'Slot watches: the caller''s own requests to hear when a bench
+        frees up (email, Teams, web).'
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: status
+        schema:
+          enum:
+          - active
+          - cancelled
+          - expired
+          type: string
+          minLength: 1
+        description: '* `active` - Active
+
+          * `cancelled` - Cancelled
+
+          * `expired` - Expired'
+      tags:
+      - Bench Bookings
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchSlotWatchListSerializersBenchSlotWatchPaginatedResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: The requested page does not exist (page beyond the last page).
+      summary: Get Bench Slot Watches
+    post:
+      operationId: labs_bench_slot_watches_create
+      description: 'Slot watches: the caller''s own requests to hear when a bench
+        frees up (email, Teams, web).'
+      tags:
+      - Bench Bookings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BenchSlotWatchCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BenchSlotWatchCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BenchSlotWatchCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchSlotWatchCreateSerializersBenchSlotWatchDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Bench Slot Watches
+  /api/labs/bench-slot-watches/{watch_id}:
+    get:
+      operationId: labs_bench_slot_watches_retrieve_by_watch_id
+      description: 'Slot watches: the caller''s own requests to hear when a bench
+        frees up (email, Teams, web).'
+      parameters:
+      - in: path
+        name: watch_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Bench Bookings
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchSlotWatchDetailSerializersBenchSlotWatchDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Get Bench Slot Watches by Watch ID
+  /api/labs/bench-slot-watches/{watch_id}/actions/cancel:
+    post:
+      operationId: labs_bench_slot_watches_actions_cancel_create_by_watch_id
+      description: 'Slot watches: the caller''s own requests to hear when a bench
+        frees up (email, Teams, web).'
+      parameters:
+      - in: path
+        name: watch_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Bench Bookings
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchSlotWatchCancelActionSerializersBenchSlotWatchDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Cancel Bench Slot Watches by Watch ID
   /api/labs/lab-projects:
     get:
       operationId: labs_lab_projects_retrieve
@@ -1125,6 +1318,145 @@ components:
           $ref: '#/components/schemas/BenchBooking'
       required:
       - data
+    BenchSlotWatch:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        bench:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          readOnly: true
+        starts_at:
+          type: string
+          format: date-time
+          readOnly: true
+        ends_at:
+          type: string
+          format: date-time
+          readOnly: true
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - bench
+      - channels
+      - created_at
+      - ends_at
+      - id
+      - starts_at
+      - status
+      - updated_at
+    BenchSlotWatchCancelActionSerializersBenchSlotWatchDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchSlotWatch'
+      required:
+      - data
+    BenchSlotWatchCreate:
+      type: object
+      description: Watch one bench for free time inside [starts_at, ends_at). Notify-only;
+        nothing is held.
+      properties:
+        bench_id:
+          type: integer
+          minimum: 1
+        starts_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChannelsEnum'
+          description: 'Where to notify: email, teams, in_app (web). Defaults to all
+            three.'
+          maxItems: 3
+      required:
+      - bench_id
+      - ends_at
+      - starts_at
+    BenchSlotWatchCreateSerializersBenchSlotWatchDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchSlotWatch'
+      required:
+      - data
+    BenchSlotWatchDetailSerializersBenchSlotWatchDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchSlotWatch'
+      required:
+      - data
+    BenchSlotWatchListSerializersBenchSlotWatchPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/BenchSlotWatchListSerializersBenchSlotWatchPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchSlotWatch'
+      required:
+      - data
+      - meta
+    BenchSlotWatchListSerializersBenchSlotWatchPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    BenchSlotWatchListSerializersBenchSlotWatchPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/BenchSlotWatchListSerializersBenchSlotWatchPagination'
+      required:
+      - pagination
     CatalogOption:
       type: object
       description: 'Standard selector dropdown item: exactly {id, sku, name} (OPT-2,
@@ -1155,6 +1487,17 @@ components:
           readOnly: true
       required:
       - data
+    ChannelsEnum:
+      enum:
+      - email
+      - teams
+      - in_app
+      type: string
+      description: '* `email` - Email
+
+        * `teams` - Teams
+
+        * `in_app` - Web'
     LabProject:
       type: object
       properties:

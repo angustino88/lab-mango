@@ -45,6 +45,9 @@ BOOKING_NOTIFICATIONS_TEAMS_WORKFLOW_URL=
 BOOKING_NOTIFICATIONS_TEAMS_ALLOWED_HOSTS=
 BOOKING_NOTIFICATIONS_TEAMS_EXPECTED_TENANT_ID=
 BOOKING_NOTIFICATIONS_QUEUE=booking_notifications
+# Bench slot watches (notify when a bench frees up). Web needs only this flag; email/Teams also need the switches above.
+BOOKING_SLOT_WATCH_ENABLED=False
+BOOKING_SLOT_WATCH_LEAD_MINUTES=15
 
 # Authentication integrations: leave empty unless testing them
 # ------------------------------------------------------------------------------

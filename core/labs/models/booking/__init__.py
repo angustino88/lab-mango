@@ -8,10 +8,13 @@ from .base import (
 from .bench_booking import BenchBooking, BenchBookingDecisionReceipt
 from .equipment_booking import EquipmentBooking
 from .reference_data import LabProject
+from .slot_watch import BenchSlotNotification, BenchSlotWatch, SlotWatchChannel, SlotWatchKind, SlotWatchStatus
 
 __all__ = [
     "BenchBooking",
     "BenchBookingDecisionReceipt",
+    "BenchSlotNotification",
+    "BenchSlotWatch",
     "Booking",
     "BookingApprovalStatus",
     "BookingStatus",
@@ -19,4 +22,7 @@ __all__ = [
     "ensure_booking_status_transition",
     "EquipmentBooking",
     "LabProject",
+    "SlotWatchChannel",
+    "SlotWatchKind",
+    "SlotWatchStatus",
 ]

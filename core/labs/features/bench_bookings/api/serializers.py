@@ -15,7 +15,14 @@ from core.labs.features.base.serializers import (
     UIDNamedReferenceSerializer,
     to_choice_reference,
 )
-from core.labs.models import BenchBooking, BookingStatus, LabProject
+from core.labs.models import (
+    BenchBooking,
+    BenchSlotWatch,
+    BookingStatus,
+    LabProject,
+    SlotWatchChannel,
+    SlotWatchStatus,
+)
 from core.users.public import LabsPermission, has_permission
 
 _ORDERING_HELP = (
@@ -195,3 +202,56 @@ class LabProjectSerializer(serializers.ModelSerializer):
         fields = ("id", "name", "code", "is_active", "start_date", "end_date")
         read_only_fields = fields
         ref_name = "LabProject"
+
+
+class BenchSlotWatchCreateSerializer(serializers.Serializer):
+    """Watch one bench for free time inside [starts_at, ends_at). Notify-only; nothing is held."""
+
+    bench_id = serializers.IntegerField(min_value=1)
+    starts_at = serializers.DateTimeField()
+    ends_at = serializers.DateTimeField()
+    channels = serializers.ListField(
+        child=serializers.ChoiceField(choices=SlotWatchChannel.choices),
+        required=False,
+        allow_empty=False,
+        max_length=3,
+        help_text="Where to notify: email, teams, in_app (web). Defaults to all three.",
+    )
+
+    def to_command_kwargs(self) -> dict:
+        data = self.validated_data
+        channels = set(data.get("channels") or SlotWatchChannel.values)
+        return {
+            "bench_id": data["bench_id"],
+            "range_start": data["starts_at"],
+            "range_end": data["ends_at"],
+            "notify_email": SlotWatchChannel.EMAIL in channels,
+            "notify_teams": SlotWatchChannel.TEAMS in channels,
+            "notify_web": SlotWatchChannel.IN_APP in channels,
+        }
+
+
+class BenchSlotWatchListQuerySerializer(PageNumberQuerySerializer):
+    status = serializers.ChoiceField(choices=SlotWatchStatus.choices, required=False)
+
+
+class BenchSlotWatchSerializer(AppModelSerializer):
+    bench = UIDNamedReferenceSerializer(read_only=True)
+    starts_at = serializers.DateTimeField(source="range_start", read_only=True)
+    ends_at = serializers.DateTimeField(source="range_end", read_only=True)
+    channels = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
+
+    class Meta:
+        model = BenchSlotWatch
+        ref_name = "BenchSlotWatch"
+        fields = ("id", "bench", "starts_at", "ends_at", "channels", "status", "created_at", "updated_at")
+        read_only_fields = fields
+
+    @extend_schema_field(ChoiceReferenceSerializer(many=True))
+    def get_channels(self, obj: BenchSlotWatch) -> list[dict[str, str] | None]:
+        return [to_choice_reference(channel, SlotWatchChannel.choices) for channel in obj.channels()]
+
+    @extend_schema_field(ChoiceReferenceSerializer)
+    def get_status(self, obj: BenchSlotWatch) -> dict[str, str] | None:
+        return to_choice_reference(obj.status, SlotWatchStatus.choices)
