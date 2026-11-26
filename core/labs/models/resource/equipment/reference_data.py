@@ -43,6 +43,14 @@ class EquipmentCategory(ProtectedReferenceMixin, EquipmentBase):
     bookable = models.BooleanField(default=True, help_text="Units can be lent and reserved.")
     placeable_on_bench = models.BooleanField(default=True, help_text="Units can be assigned to a bench.")
     calibratable = models.BooleanField(default=True, help_text="Units may require calibration.")
+    visual_model = models.ForeignKey(
+        "labs.VisualModelAsset",
+        related_name="equipment_categories",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        help_text="3D model from the shared library shown on the 3D dashboard.",
+    )
     monitored = models.BooleanField(
         default=False,
         help_text="Units carry computing columns and may run the monitoring agent (ComputingProfile).",
@@ -167,6 +175,14 @@ class EquipmentProductModel(EquipmentBase):
         null=True,
         blank=True,
         help_text="Copied to new assets of this model when empty.",
+    )
+    visual_model = models.ForeignKey(
+        "labs.VisualModelAsset",
+        related_name="product_models",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        help_text="3D model from the shared library shown on the 3D dashboard.",
     )
 
     class Meta:

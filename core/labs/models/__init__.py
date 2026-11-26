@@ -129,10 +129,13 @@ from .telemetry import (
     ModbusSourceSettings,
     TelemetryChannel,
     TelemetryDevice,
+    TelemetryLatest,
     TelemetryTarget,
 )
+from .visual_models import VisualModelAsset
 
 __all__ = [
+    "VisualModelAsset",
     "ActiveLaboratoryObservation",
     "ActiveUserObservation",
     "AgentReportedModel",
@@ -257,5 +260,6 @@ __all__ = [
     "ModbusSourceSettings",
     "TelemetryChannel",
     "TelemetryDevice",
+    "TelemetryLatest",
     "TelemetryTarget",
 ]

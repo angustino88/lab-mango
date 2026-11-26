@@ -69,6 +69,9 @@ class EquipmentPlacementSerializer(serializers.Serializer):
     location_note = serializers.CharField(read_only=True)
     role = serializers.CharField(read_only=True)
     position = serializers.IntegerField(read_only=True)
+    rack_unit = serializers.IntegerField(read_only=True, allow_null=True, help_text="Lowest rack unit (1 = bottom).")
+    rack_unit_height = serializers.IntegerField(read_only=True, allow_null=True)
+    rack_face = serializers.CharField(read_only=True, allow_blank=True)
     placed_at = serializers.DateTimeField(source="assigned_at", read_only=True)
 
     class Meta:
@@ -682,6 +685,12 @@ class EquipmentPlacementWriteSerializer(ResourceWriteSerializerMixin, serializer
     )
     role = serializers.CharField(max_length=64, required=False, default="default")
     position = serializers.IntegerField(min_value=0, required=False, default=0)
+    rack_unit = serializers.IntegerField(
+        min_value=1, max_value=60, required=False, allow_null=True, default=None,
+        help_text="Station placements in a rack: lowest occupied unit (1 = bottom).",
+    )
+    rack_unit_height = serializers.IntegerField(min_value=1, max_value=60, required=False, allow_null=True, default=None)
+    rack_face = serializers.ChoiceField(choices=("front", "rear"), required=False, allow_blank=True, default="")
 
     def validate(self, attrs):
         attrs = super().validate(attrs)

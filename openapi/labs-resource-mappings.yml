@@ -519,6 +519,10 @@ components:
         station_slot_id:
           type: integer
           nullable: true
+        visual_model_id:
+          type: integer
+          nullable: true
+          description: 3D library model shown for this resource, after catalog defaults.
       required:
       - id
       - name
@@ -527,6 +531,39 @@ components:
       - station_slot_id
       - uid
       x-embedded-resource: true
+    MappingConditions:
+      type: object
+      description: Current conditions from fresh telemetry placed in the room or station;
+        null when nothing reports.
+      properties:
+        temperature_c:
+          type: number
+          format: double
+          nullable: true
+          description: Mean of current temperature channels.
+        humidity_percent:
+          type: number
+          format: double
+          nullable: true
+          description: Mean of current humidity channels.
+        power_w:
+          type: number
+          format: double
+          nullable: true
+          description: Sum of current power channels.
+        observed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Newest reading included.
+        channel_count:
+          type: integer
+      required:
+      - channel_count
+      - humidity_percent
+      - observed_at
+      - power_w
+      - temperature_c
     MappingEquipment:
       type: object
       properties:
@@ -543,6 +580,10 @@ components:
           allOf:
           - $ref: '#/components/schemas/MappingEquipmentCategory'
           nullable: true
+        product_model:
+          allOf:
+          - $ref: '#/components/schemas/MappingEquipmentCategory'
+          nullable: true
         bench_id:
           type: integer
           nullable: true
@@ -550,6 +591,10 @@ components:
           allOf:
           - $ref: '#/components/schemas/MappingEquipmentAssignment'
           nullable: true
+        visual_model_id:
+          type: integer
+          nullable: true
+          description: 3D library model shown for this resource, after catalog defaults.
       required:
       - bench_assignment
       - bench_id
@@ -662,6 +707,36 @@ components:
       - next_cursor
       - page_size
       - previous_cursor
+    MappingRackItem:
+      type: object
+      properties:
+        equipment_id:
+          type: integer
+        sku:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+          nullable: true
+        power_draw_w:
+          type: integer
+          nullable: true
+        rack_unit:
+          type: integer
+        rack_unit_height:
+          type: integer
+        rack_face:
+          type: string
+      required:
+      - category
+      - equipment_id
+      - name
+      - power_draw_w
+      - rack_face
+      - rack_unit
+      - rack_unit_height
+      - sku
     MappingRoom:
       type: object
       properties:
@@ -679,6 +754,20 @@ components:
           nullable: true
         layout_columns:
           type: integer
+          nullable: true
+        length_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+          nullable: true
+        width_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+          nullable: true
+        conditions:
+          allOf:
+          - $ref: '#/components/schemas/MappingConditions'
           nullable: true
       required:
       - id
@@ -715,6 +804,12 @@ components:
           nullable: true
         orientation_degrees:
           type: integer
+        slot_type:
+          type: string
+          description: station, storage, aisle, safety, utility or reserved.
+        status:
+          type: string
+          description: usable, blocked or retired.
       required:
       - col_index
       - depth_mm
@@ -745,6 +840,23 @@ components:
         slot_id:
           type: integer
           nullable: true
+        visual_model_id:
+          type: integer
+          nullable: true
+          description: 3D library model shown for this resource, after catalog defaults.
+        layout:
+          $ref: '#/components/schemas/MappingStationLayout'
+        capacity:
+          $ref: '#/components/schemas/MappingStationCapacity'
+        conditions:
+          allOf:
+          - $ref: '#/components/schemas/MappingConditions'
+          nullable: true
+        rack:
+          type: array
+          items:
+            $ref: '#/components/schemas/MappingRackItem'
+          description: Rack-mounted equipment, bottom unit first.
       required:
       - id
       - name
@@ -753,6 +865,65 @@ components:
       - slot_id
       - uid
       x-embedded-resource: true
+    MappingStationCapacity:
+      type: object
+      properties:
+        bench_capacity:
+          type: integer
+          nullable: true
+        rack_units:
+          type: integer
+          nullable: true
+        rack_units_used:
+          type: integer
+        power_capacity_w:
+          type: integer
+          nullable: true
+        power_reserved_w:
+          type: integer
+          nullable: true
+        power_installed_w:
+          type: number
+          format: double
+          description: Rated draw of equipment installed here.
+        max_load_kg:
+          type: integer
+          nullable: true
+        load_installed_kg:
+          type: number
+          format: double
+        network_port_capacity:
+          type: integer
+          nullable: true
+        installed_units:
+          type: integer
+      required:
+      - bench_capacity
+      - max_load_kg
+      - network_port_capacity
+      - power_capacity_w
+      - power_reserved_w
+      - rack_units
+    MappingStationLayout:
+      type: object
+      properties:
+        width_mm:
+          type: integer
+          nullable: true
+        depth_mm:
+          type: integer
+          nullable: true
+        height_mm:
+          type: integer
+          nullable: true
+        orientation_degrees:
+          type: integer
+          nullable: true
+      required:
+      - depth_mm
+      - height_mm
+      - orientation_degrees
+      - width_mm
     MappingStationSlot:
       type: object
       properties:
@@ -766,6 +937,9 @@ components:
           type: string
         label:
           type: string
+        width_mm:
+          type: integer
+          nullable: true
       required:
       - id
       - label

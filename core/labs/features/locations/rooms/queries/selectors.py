@@ -27,14 +27,14 @@ def get_room_for_mapping(*, room_id):
 
 def room_mapping_rows(*, room_ids):
     return Room.objects.filter(pk__in=room_ids, deleted_at__isnull=True).order_by("pk").values(
-        "id", "uid", "sku", "name", "layout_rows", "layout_columns"
+        "id", "uid", "sku", "name", "layout_rows", "layout_columns", "length_m", "width_m"
     )
 
 
 def room_slot_mapping_rows(*, room_ids):
     return RoomSlot.objects.filter(room_id__in=room_ids, room__deleted_at__isnull=True).order_by("pk").values(
         "id", "room_id", "row_index", "col_index", "slot_code", "x_mm", "y_mm", "width_mm",
-        "depth_mm", "orientation_degrees"
+        "depth_mm", "orientation_degrees", "slot_type", "status"
     )
 
 

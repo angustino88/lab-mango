@@ -12,7 +12,11 @@ from django.core.exceptions import ValidationError
 
 from core.common.db.transactions import apply_fields, atomic_command
 from core.labs.features.base.immutable import drop_unchanged_immutable_fields
-from core.labs.features.equipment.public import close_placements_for_location, summarize_active_placements
+from core.labs.features.equipment.public import (
+    close_placements_for_location,
+    highest_rack_unit,
+    summarize_active_placements,
+)
 from core.labs.features.locations.application.lifecycle import apply_lifecycle, record_initial
 from core.labs.features.locations.exceptions import LocationConflict
 from core.labs.features.locations.stations.application.policies import (
@@ -41,7 +45,7 @@ FORCE_DELETE_REASON_MAX_LENGTH = 500
 STATION_WRITE_FIELDS = (
     "sku", "name", "department_id", "group_id", "owner_id", "remark", "label", "type_id", "room_id", "slot_id",
     "position", "height_mm", "width_mm", "depth_mm", "orientation_degrees", "max_load_kg",
-    "bench_capacity", "max_concurrent_users", "usable_surface_mm2", "power_capacity_w",
+    "bench_capacity", "rack_units", "max_concurrent_users", "usable_surface_mm2", "power_capacity_w",
     "power_reserved_w", "cooling_capacity_w", "network_port_capacity", "utilities",
     "safety_classification",
 )
@@ -132,6 +136,11 @@ def update_station(*, station_id, actor, **data):
     old_room_id = station.room_id
     data = drop_unchanged_immutable_fields(station, data)
     _apply(station, data, STATION_WRITE_FIELDS)
+    if "rack_units" in data:
+        # The station row lock (above) is the one place_equipment takes before mounting a unit.
+        top = highest_rack_unit(station_id=station.pk)
+        if top and (station.rack_units is None or top > station.rack_units):
+            raise ValidationError({"rack_units": f"Mounted equipment reaches unit {top}; unmount it first."})
     if station.room_id is not None and station.room_id != old_room_id:
         _ensure_bookings_fit_new_room(station, rooms[station.room_id])
     return _placement(station, rooms, old_slot_id=old_slot_id, actor=actor)

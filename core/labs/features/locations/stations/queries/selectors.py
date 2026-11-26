@@ -67,6 +67,13 @@ def get_station_for_mapping(*, station_id):
     ).values("id", "uid", "sku", "name", "room_id", "slot_id").first()
 
 
+#: Size, orientation and capacity the floor plan and capacity views draw from.
+STATION_LAYOUT_FIELDS = (
+    "width_mm", "depth_mm", "height_mm", "orientation_degrees", "bench_capacity", "rack_units",
+    "power_capacity_w", "power_reserved_w", "max_load_kg", "network_port_capacity",
+)
+
+
 def station_mapping_rows(*, station_ids=(), room_ids=()):
     queryset = Station.objects.filter(deleted_at__isnull=True)
     if station_ids:
@@ -74,8 +81,8 @@ def station_mapping_rows(*, station_ids=(), room_ids=()):
     elif room_ids:
         queryset = queryset.filter(room_id__in=room_ids)
     else:
-        return queryset.none().values("id", "uid", "sku", "name", "room_id", "slot_id")
-    return queryset.order_by("pk").values("id", "uid", "sku", "name", "room_id", "slot_id")
+        return queryset.none().values("id", "uid", "sku", "name", "room_id", "slot_id", *STATION_LAYOUT_FIELDS)
+    return queryset.order_by("pk").values("id", "uid", "sku", "name", "room_id", "slot_id", *STATION_LAYOUT_FIELDS)
 
 
 def station_slot_mapping_rows(*, station_ids=(), room_ids=()):
@@ -85,8 +92,8 @@ def station_slot_mapping_rows(*, station_ids=(), room_ids=()):
     elif room_ids:
         queryset = queryset.filter(station__room_id__in=room_ids)
     else:
-        return queryset.none().values("id", "station_id", "position_index", "slot_code", "label")
-    return queryset.order_by("pk").values("id", "station_id", "position_index", "slot_code", "label")
+        return queryset.none().values("id", "station_id", "position_index", "slot_code", "label", "width_mm")
+    return queryset.order_by("pk").values("id", "station_id", "position_index", "slot_code", "label", "width_mm")
 
 
 def station_history(*, station_id):
