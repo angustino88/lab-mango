@@ -88,6 +88,12 @@ class Station(ResourceModel, PhysicalLocationNode):
     )
     max_load_kg = models.PositiveIntegerField(null=True, blank=True)
     bench_capacity = models.PositiveSmallIntegerField(null=True, blank=True)
+    rack_units = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(60)],
+        help_text="Usable rack height in units (U) for rack stations, e.g. 42. Empty for non-rack stations.",
+    )
     max_concurrent_users = models.PositiveSmallIntegerField(null=True, blank=True)
     usable_surface_mm2 = models.PositiveBigIntegerField(null=True, blank=True)
     power_capacity_w = models.PositiveIntegerField(null=True, blank=True)

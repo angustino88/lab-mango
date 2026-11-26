@@ -1,8 +1,8 @@
 {
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
-  "total_endpoints": 547,
-  "generated_at": "2026-11-25",
+  "total_endpoints": 548,
+  "generated_at": "2026-11-26",
   "endpoints": [
     {
       "endpoint": "/agent/bookings/actions/check-in",
@@ -4301,6 +4301,478 @@
                     "items": {
                       "type": "object",
                       "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/agent/telemetry/samples/bulk",
+      "method": "POST",
+      "operation_id": "agent_telemetry_samples_bulk_create",
+      "summary": "Create Agent Telemetry Samples Bulk",
+      "description": "Readings from a gateway's sources. Each operation is one source's poll cycle; readings are judged one\nby one and attributed through the channel's binding, never through ids in the body. Replays are safe:\nan already stored `sample_id` reports `duplicate`.",
+      "tags": [
+        "Agents"
+      ],
+      "parameters": [],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json"
+        ],
+        "required": true,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "enum": [
+                "partial"
+              ],
+              "type": "string",
+              "description": "* `partial` - partial"
+            },
+            "operations": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "description": "(max nesting depth reached)"
+                  }
+                },
+                "required": [
+                  "data"
+                ]
+              }
+            }
+          },
+          "required": [
+            "mode",
+            "operations"
+          ]
+        },
+        "example_payload": {
+          "mode": "partial",
+          "operations": [
+            {
+              "data": {}
+            }
+          ]
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "results": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    }
+                  },
+                  "config_version": {
+                    "type": "integer",
+                    "description": "Re-pull the configuration when this is newer."
+                  }
+                },
+                "required": [
+                  "config_version",
+                  "results"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "results": [
+                {}
+              ],
+              "config_version": 1
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "401": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "403": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "413": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "429": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
                     }
                   },
                   "request_id": {
@@ -65642,6 +66114,21 @@
                     "type": "integer",
                     "readOnly": true
                   },
+                  "rack_unit": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "nullable": true,
+                    "description": "Lowest rack unit (1 = bottom)."
+                  },
+                  "rack_unit_height": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "rack_face": {
+                    "type": "string",
+                    "readOnly": true
+                  },
                   "placed_at": {
                     "type": "string",
                     "format": "date-time",
@@ -65654,6 +66141,9 @@
                   "location_note",
                   "placed_at",
                   "position",
+                  "rack_face",
+                  "rack_unit",
+                  "rack_unit_height",
                   "role",
                   "room",
                   "station",
@@ -65676,6 +66166,9 @@
               "location_note": "string",
               "role": "string",
               "position": 1,
+              "rack_unit": 1,
+              "rack_unit_height": 1,
+              "rack_face": "string",
               "placed_at": "2026-10-20T12:00:00Z"
             }
           }
@@ -65798,6 +66291,37 @@
               "type": "integer",
               "minimum": 0,
               "default": 0
+            },
+            "rack_unit": {
+              "type": "integer",
+              "maximum": 60,
+              "minimum": 1,
+              "nullable": true,
+              "description": "Station placements in a rack: lowest occupied unit (1 = bottom)."
+            },
+            "rack_unit_height": {
+              "type": "integer",
+              "maximum": 60,
+              "minimum": 1,
+              "nullable": true
+            },
+            "rack_face": {
+              "default": "",
+              "oneOf": [
+                {
+                  "enum": [
+                    "front",
+                    "rear"
+                  ],
+                  "type": "string",
+                  "description": "* `front` - front\n* `rear` - rear"
+                },
+                {
+                  "enum": [
+                    ""
+                  ]
+                }
+              ]
             }
           }
         },
@@ -65807,7 +66331,10 @@
           "room_id": 1,
           "location_note": "",
           "role": "default",
-          "position": 0
+          "position": 0,
+          "rack_unit": 1,
+          "rack_unit_height": 1,
+          "rack_face": "front"
         }
       },
       "responses": {
@@ -65878,6 +66405,21 @@
                     "type": "integer",
                     "readOnly": true
                   },
+                  "rack_unit": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "nullable": true,
+                    "description": "Lowest rack unit (1 = bottom)."
+                  },
+                  "rack_unit_height": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "rack_face": {
+                    "type": "string",
+                    "readOnly": true
+                  },
                   "placed_at": {
                     "type": "string",
                     "format": "date-time",
@@ -65890,6 +66432,9 @@
                   "location_note",
                   "placed_at",
                   "position",
+                  "rack_face",
+                  "rack_unit",
+                  "rack_unit_height",
                   "role",
                   "room",
                   "station",
@@ -65912,6 +66457,9 @@
               "location_note": "string",
               "role": "string",
               "position": 1,
+              "rack_unit": 1,
+              "rack_unit_height": 1,
+              "rack_face": "string",
               "placed_at": "2026-10-20T12:00:00Z"
             }
           }
@@ -105560,12 +106108,14 @@
                     "x_mm": {
                       "type": "integer",
                       "readOnly": true,
-                      "nullable": true
+                      "nullable": true,
+                      "description": "Slot centre from the room's back-left corner, across the room's width (mm)."
                     },
                     "y_mm": {
                       "type": "integer",
                       "readOnly": true,
-                      "nullable": true
+                      "nullable": true,
+                      "description": "Slot centre from the room's back-left corner, along the room's length (mm)."
                     },
                     "width_mm": {
                       "type": "integer",
@@ -108490,12 +109040,14 @@
                     "x_mm": {
                       "type": "integer",
                       "readOnly": true,
-                      "nullable": true
+                      "nullable": true,
+                      "description": "Slot centre from the room's back-left corner, across the room's width (mm)."
                     },
                     "y_mm": {
                       "type": "integer",
                       "readOnly": true,
-                      "nullable": true
+                      "nullable": true,
+                      "description": "Slot centre from the room's back-left corner, along the room's length (mm)."
                     },
                     "width_mm": {
                       "type": "integer",
@@ -110738,6 +111290,12 @@
                       "readOnly": true,
                       "nullable": true
                     },
+                    "rack_units": {
+                      "type": "integer",
+                      "readOnly": true,
+                      "nullable": true,
+                      "description": "Usable rack height in units (U) for rack stations, e.g. 42. Empty for non-rack stations."
+                    },
                     "max_concurrent_users": {
                       "type": "integer",
                       "readOnly": true,
@@ -110895,6 +111453,7 @@
                     "position",
                     "power_capacity_w",
                     "power_reserved_w",
+                    "rack_units",
                     "remark",
                     "room",
                     "safety_classification",
@@ -110945,6 +111504,7 @@
                 "orientation_degrees": 1,
                 "max_load_kg": 1,
                 "bench_capacity": 1,
+                "rack_units": 1,
                 "max_concurrent_users": 1,
                 "usable_surface_mm2": 1,
                 "power_capacity_w": 1,
@@ -111189,6 +111749,13 @@
               "minimum": 0,
               "nullable": true
             },
+            "rack_units": {
+              "type": "integer",
+              "maximum": 60,
+              "minimum": 1,
+              "nullable": true,
+              "description": "Usable rack height in units (U) for rack stations, e.g. 42. Empty for non-rack stations."
+            },
             "max_concurrent_users": {
               "type": "integer",
               "maximum": 32767,
@@ -111256,6 +111823,7 @@
           "orientation_degrees": 1,
           "max_load_kg": 1,
           "bench_capacity": 1,
+          "rack_units": 1,
           "max_concurrent_users": 1,
           "usable_surface_mm2": 1,
           "power_capacity_w": 1,
@@ -111403,6 +111971,12 @@
                     "type": "integer",
                     "readOnly": true,
                     "nullable": true
+                  },
+                  "rack_units": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "nullable": true,
+                    "description": "Usable rack height in units (U) for rack stations, e.g. 42. Empty for non-rack stations."
                   },
                   "max_concurrent_users": {
                     "type": "integer",
@@ -111561,6 +112135,7 @@
                   "position",
                   "power_capacity_w",
                   "power_reserved_w",
+                  "rack_units",
                   "remark",
                   "room",
                   "safety_classification",
@@ -111602,6 +112177,7 @@
               "orientation_degrees": 1,
               "max_load_kg": 1,
               "bench_capacity": 1,
+              "rack_units": 1,
               "max_concurrent_users": 1,
               "usable_surface_mm2": 1,
               "power_capacity_w": 1,
@@ -113534,6 +114110,12 @@
                     "readOnly": true,
                     "nullable": true
                   },
+                  "rack_units": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "nullable": true,
+                    "description": "Usable rack height in units (U) for rack stations, e.g. 42. Empty for non-rack stations."
+                  },
                   "max_concurrent_users": {
                     "type": "integer",
                     "readOnly": true,
@@ -113691,6 +114273,7 @@
                   "position",
                   "power_capacity_w",
                   "power_reserved_w",
+                  "rack_units",
                   "remark",
                   "room",
                   "safety_classification",
@@ -113732,6 +114315,7 @@
               "orientation_degrees": 1,
               "max_load_kg": 1,
               "bench_capacity": 1,
+              "rack_units": 1,
               "max_concurrent_users": 1,
               "usable_surface_mm2": 1,
               "power_capacity_w": 1,
@@ -113932,6 +114516,13 @@
               "minimum": 0,
               "nullable": true
             },
+            "rack_units": {
+              "type": "integer",
+              "maximum": 60,
+              "minimum": 1,
+              "nullable": true,
+              "description": "Usable rack height in units (U) for rack stations, e.g. 42. Empty for non-rack stations."
+            },
             "max_concurrent_users": {
               "type": "integer",
               "maximum": 32767,
@@ -113999,6 +114590,7 @@
           "orientation_degrees": 1,
           "max_load_kg": 1,
           "bench_capacity": 1,
+          "rack_units": 1,
           "max_concurrent_users": 1,
           "usable_surface_mm2": 1,
           "power_capacity_w": 1,
@@ -114146,6 +114738,12 @@
                     "type": "integer",
                     "readOnly": true,
                     "nullable": true
+                  },
+                  "rack_units": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "nullable": true,
+                    "description": "Usable rack height in units (U) for rack stations, e.g. 42. Empty for non-rack stations."
                   },
                   "max_concurrent_users": {
                     "type": "integer",
@@ -114304,6 +114902,7 @@
                   "position",
                   "power_capacity_w",
                   "power_reserved_w",
+                  "rack_units",
                   "remark",
                   "room",
                   "safety_classification",
@@ -114345,6 +114944,7 @@
               "orientation_degrees": 1,
               "max_load_kg": 1,
               "bench_capacity": 1,
+              "rack_units": 1,
               "max_concurrent_users": 1,
               "usable_surface_mm2": 1,
               "power_capacity_w": 1,
@@ -114704,6 +115304,13 @@
               "minimum": 0,
               "nullable": true
             },
+            "rack_units": {
+              "type": "integer",
+              "maximum": 60,
+              "minimum": 1,
+              "nullable": true,
+              "description": "Usable rack height in units (U) for rack stations, e.g. 42. Empty for non-rack stations."
+            },
             "max_concurrent_users": {
               "type": "integer",
               "maximum": 32767,
@@ -114768,6 +115375,7 @@
           "orientation_degrees": 1,
           "max_load_kg": 1,
           "bench_capacity": 1,
+          "rack_units": 1,
           "max_concurrent_users": 1,
           "usable_surface_mm2": 1,
           "power_capacity_w": 1,
@@ -114915,6 +115523,12 @@
                     "type": "integer",
                     "readOnly": true,
                     "nullable": true
+                  },
+                  "rack_units": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "nullable": true,
+                    "description": "Usable rack height in units (U) for rack stations, e.g. 42. Empty for non-rack stations."
                   },
                   "max_concurrent_users": {
                     "type": "integer",
@@ -115073,6 +115687,7 @@
                   "position",
                   "power_capacity_w",
                   "power_reserved_w",
+                  "rack_units",
                   "remark",
                   "room",
                   "safety_classification",
@@ -115114,6 +115729,7 @@
               "orientation_degrees": 1,
               "max_load_kg": 1,
               "bench_capacity": 1,
+              "rack_units": 1,
               "max_concurrent_users": 1,
               "usable_surface_mm2": 1,
               "power_capacity_w": 1,
@@ -115637,6 +116253,12 @@
                     "readOnly": true,
                     "nullable": true
                   },
+                  "rack_units": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "nullable": true,
+                    "description": "Usable rack height in units (U) for rack stations, e.g. 42. Empty for non-rack stations."
+                  },
                   "max_concurrent_users": {
                     "type": "integer",
                     "readOnly": true,
@@ -115794,6 +116416,7 @@
                   "position",
                   "power_capacity_w",
                   "power_reserved_w",
+                  "rack_units",
                   "remark",
                   "room",
                   "safety_classification",
@@ -115835,6 +116458,7 @@
               "orientation_degrees": 1,
               "max_load_kg": 1,
               "bench_capacity": 1,
+              "rack_units": 1,
               "max_concurrent_users": 1,
               "usable_surface_mm2": 1,
               "power_capacity_w": 1,
@@ -116590,6 +117214,12 @@
                     "readOnly": true,
                     "nullable": true
                   },
+                  "rack_units": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "nullable": true,
+                    "description": "Usable rack height in units (U) for rack stations, e.g. 42. Empty for non-rack stations."
+                  },
                   "max_concurrent_users": {
                     "type": "integer",
                     "readOnly": true,
@@ -116747,6 +117377,7 @@
                   "position",
                   "power_capacity_w",
                   "power_reserved_w",
+                  "rack_units",
                   "remark",
                   "room",
                   "safety_classification",
@@ -116788,6 +117419,7 @@
               "orientation_degrees": 1,
               "max_load_kg": 1,
               "bench_capacity": 1,
+              "rack_units": 1,
               "max_concurrent_users": 1,
               "usable_surface_mm2": 1,
               "power_capacity_w": 1,
@@ -117232,6 +117864,12 @@
                     "readOnly": true,
                     "nullable": true
                   },
+                  "rack_units": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "nullable": true,
+                    "description": "Usable rack height in units (U) for rack stations, e.g. 42. Empty for non-rack stations."
+                  },
                   "max_concurrent_users": {
                     "type": "integer",
                     "readOnly": true,
@@ -117389,6 +118027,7 @@
                   "position",
                   "power_capacity_w",
                   "power_reserved_w",
+                  "rack_units",
                   "remark",
                   "room",
                   "safety_classification",
@@ -117430,6 +118069,7 @@
               "orientation_degrees": 1,
               "max_load_kg": 1,
               "bench_capacity": 1,
+              "rack_units": 1,
               "max_concurrent_users": 1,
               "usable_surface_mm2": 1,
               "power_capacity_w": 1,

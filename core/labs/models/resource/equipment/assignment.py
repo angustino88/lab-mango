@@ -10,6 +10,8 @@ See docs/proposals/equipment-management-redesign.md, step 1.
 
 from typing import ClassVar
 
+from django.contrib.postgres.constraints import ExclusionConstraint
+from django.contrib.postgres.fields import IntegerRangeField, RangeOperators
 from django.db import models
 from django.db.models import F, Q
 from model_utils.models import TimeStampedModel
@@ -17,6 +19,18 @@ from model_utils.models import TimeStampedModel
 from core.common.models import UserStampedModel
 
 LOCATION_NOTE_MAX_LENGTH = 255
+
+
+class RackFace(models.TextChoices):
+    FRONT = "front", "Front"
+    REAR = "rear", "Rear"
+
+
+class Int4Range(models.Func):
+    """SQL ``int4range(lower, upper, '[)')`` for exclusion constraints."""
+
+    function = "INT4RANGE"
+    output_field = IntegerRangeField()
 
 
 class BenchPlacementManager(models.Manager):
@@ -65,6 +79,10 @@ class EquipmentAssignment(TimeStampedModel, UserStampedModel):
         help_text="Display order of this equipment assignment within the bench; lower values appear first.",
     )
     monitor = models.BooleanField(default=False)
+    # Rack-mounted equipment at a station: lowest occupied unit (1 = bottom), height in units, mounting face.
+    rack_unit = models.PositiveSmallIntegerField(null=True, blank=True)
+    rack_unit_height = models.PositiveSmallIntegerField(null=True, blank=True)
+    rack_face = models.CharField(max_length=8, choices=RackFace.choices, blank=True, default="")
     assigned_at = models.DateTimeField()
     unassigned_at = models.DateTimeField(null=True, blank=True)
 
@@ -118,6 +136,29 @@ class EquipmentAssignment(TimeStampedModel, UserStampedModel):
             models.CheckConstraint(
                 condition=(Q(bench__isnull=False) | Q(role="default", position=0, monitor=False)),
                 name="equipment_placement_bench_fields",
+            ),
+            # Rack position: all three fields or none, only for station placements, within 1..60 U.
+            models.CheckConstraint(
+                condition=(
+                    Q(rack_unit__isnull=True, rack_unit_height__isnull=True, rack_face="")
+                    | Q(
+                        station__isnull=False,
+                        rack_unit__gte=1,
+                        rack_unit_height__gte=1,
+                        rack_unit_height__lte=60,
+                        rack_face__in=RackFace.values,
+                    )
+                ),
+                name="equipment_placement_rack_position",
+            ),
+            # Two active rack-mounted units never share a unit of the same station.
+            ExclusionConstraint(
+                name="equipment_placement_rack_no_overlap",
+                expressions=[
+                    ("station", RangeOperators.EQUAL),
+                    (Int4Range("rack_unit", F("rack_unit") + F("rack_unit_height")), RangeOperators.OVERLAPS),
+                ],
+                condition=Q(unassigned_at__isnull=True, rack_unit__isnull=False),
             ),
         ]
         indexes = [

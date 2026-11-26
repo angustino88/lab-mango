@@ -8,6 +8,7 @@ A unit's room is the room of its active room placement; ``Equipment.storage_room
 """
 
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from core.labs.features.equipment.exceptions import EquipmentOnLoan, InvalidEquipmentStatus
@@ -88,9 +89,13 @@ def rest_equipment(
     station: Station | None = None,
     room: Room | None = None,
     location_note: str = "",
+    rack_position: tuple[int, int, str] | None = None,
     actor,
 ) -> EquipmentAssignment:
-    """Place a unit somewhere other than a bench. Idempotent for the same target and note.
+    """Place a unit somewhere other than a bench. Idempotent for the same target, rack position and note.
+
+    Rack race guard: callers hold the station row lock; ``equipment_placement_rack_no_overlap`` is the
+    database guard against two units sharing a rack unit.
 
     Its current placement, including a bench, is closed in the same transaction (a one-call move).
     """
@@ -107,6 +112,8 @@ def rest_equipment(
             current.bench_id is None
             and current.station_id == getattr(station, "pk", None)
             and current.room_id == getattr(room, "pk", None)
+            and (current.rack_unit, current.rack_unit_height, current.rack_face or None)
+            == (rack_position or (None, None, None))
         )
         if same_target:
             if current.location_note != location_note:
@@ -115,13 +122,27 @@ def rest_equipment(
                 current.save(update_fields=("location_note", "last_modified_by", "modified"))
             return current
         close_placement(current, actor=actor)
-    return EquipmentAssignment.all_placements.create(
-        equipment=equipment,
-        station=station,
-        room=room,
-        location_note=location_note,
-        assigned_at=timezone.now(),
-        creator=actor,
-        last_modified_by=actor,
-    )
+    rack_unit, rack_unit_height, rack_face = rack_position or (None, None, "")
+    values = {
+        "equipment": equipment,
+        "station": station,
+        "room": room,
+        "location_note": location_note,
+        "rack_unit": rack_unit,
+        "rack_unit_height": rack_unit_height,
+        "rack_face": rack_face,
+        "assigned_at": timezone.now(),
+        "creator": actor,
+        "last_modified_by": actor,
+    }
+    if rack_position is None:
+        return EquipmentAssignment.all_placements.create(**values)
+    try:
+        # Savepoint only for rack placements: they alone can hit the overlap constraint.
+        with transaction.atomic():
+            return EquipmentAssignment.all_placements.create(**values)
+    except IntegrityError as error:
+        if "equipment_placement_rack_no_overlap" in str(error):
+            raise ValidationError({"rack_unit": "These rack units are already used by other equipment."}) from error
+        raise
 
