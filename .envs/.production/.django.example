@@ -1,0 +1,89 @@
+# Template for one department's Django settings. scripts/deploy/backend.sh init <department> copies it to
+# .envs/.production/<department>/.django; fill in the replace-with-* values, then
+# scripts/deploy/backend.sh encrypt <department> (removes the plaintext) and commit the .enc files.
+# Ports, BACKEND_ID and Redis URLs are NOT set here: they come from the department's .backend.
+# Django
+# ------------------------------------------------------------------------------
+DJANGO_SETTINGS_MODULE=config.settings.production
+DJANGO_READ_DOT_ENV_FILE=False
+DJANGO_DEBUG=False
+DJANGO_SECRET_KEY=replace-with-a-long-random-secret
+DJANGO_ALLOWED_HOSTS=replace-with-backend-hostname,localhost,127.0.0.1
+DJANGO_CSRF_TRUSTED_ORIGINS=https://replace-with-frontend-hostname
+DJANGO_CORS_ALLOWED_ORIGINS=https://replace-with-frontend-hostname
+# TLS is terminated by nginx (or the router) and forwarded with X-Forwarded-Proto.
+DJANGO_SECURE_SSL_REDIRECT=True
+
+# Uvicorn (compose/production/django/start)
+# ------------------------------------------------------------------------------
+# Host networking: bind 127.0.0.1 when only the local nginx should reach Uvicorn;
+# keep 0.0.0.0 when a router on another host proxies to this backend.
+UVICORN_HOST=0.0.0.0
+WEB_CONCURRENCY=2
+FORWARDED_ALLOW_IPS=127.0.0.1
+
+# Celery (CELERY_BROKER_URL and REDIS_URL are derived from REDIS_PORT in .backend)
+# ------------------------------------------------------------------------------
+CELERY_TASK_DEFAULT_QUEUE=labmango_backend
+CELERY_TASK_DEFAULT_EXCHANGE=labmango_backend
+CELERY_TASK_DEFAULT_ROUTING_KEY=labmango_backend
+CELERY_BEAT_SCHEDULER=django_celery_beat.schedulers:DatabaseScheduler
+
+# Email
+# ------------------------------------------------------------------------------
+DJANGO_EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=replace-with-smtp-host
+EMAIL_PORT=25
+EMAIL_HOST_USER=
+EMAIL_HOST_PASSWORD=
+EMAIL_USE_TLS=True
+DJANGO_DEFAULT_FROM_EMAIL=LabMango <replace-with-sender-address>
+
+# Booking notifications: Teams (Power Automate workflow) and email
+# ------------------------------------------------------------------------------
+# Off by default. To enable: set the cutoff (UTC, events before it are never sent), the workflow
+# URL, its exact host and the tenant UUID, deploy, then run
+#   python manage.py provision_booking_notification_schedules --enable
+# Details: core/labs/features/bench_bookings/docs/notifications.md
+BOOKING_NOTIFICATIONS_ENABLED=False
+BOOKING_NOTIFICATIONS_EMAIL_ENABLED=False
+BOOKING_NOTIFICATIONS_TEAMS_ENABLED=False
+BOOKING_NOTIFICATIONS_ENABLEMENT_CUTOFF=
+BOOKING_NOTIFICATIONS_TEAMS_WORKFLOW_URL=
+BOOKING_NOTIFICATIONS_TEAMS_ALLOWED_HOSTS=
+BOOKING_NOTIFICATIONS_TEAMS_EXPECTED_TENANT_ID=
+BOOKING_NOTIFICATIONS_QUEUE=booking_notifications
+
+# Entra ID (production is SSO-only)
+# ------------------------------------------------------------------------------
+AAD_AUDIENCE=replace-with-entra-app-client-id
+AAD_TENANT_ID=replace-with-entra-tenant-id
+AAD_JWKS_URL=replace-with-entra-jwks-url
+ENTRA_FRONTEND_LOGIN_URL=/
+
+# Routing (BACKEND_ID is set from .backend)
+# ------------------------------------------------------------------------------
+ROUTING_SYNC_STATIC_TOKEN_HASHES=
+
+# Proxy
+# ------------------------------------------------------------------------------
+HTTP_PROXY=
+HTTPS_PROXY=
+NO_PROXY=localhost,127.0.0.1
+
+# Integrations (OTP_PA_API is not needed: production is Entra SSO only, OTP login is off)
+# ------------------------------------------------------------------------------
+# Leave URS_API_URL commented out to use the default endpoint; an empty value disables the sync.
+# URS_API_URL=
+URS_ACCESS_TOKEN=
+URS_API_VERIFY_SSL=True
+
+# MinIO
+# ------------------------------------------------------------------------------
+USE_MINIO=False
+MINIO_ENDPOINT=
+MINIO_ACCESS_KEY=
+MINIO_SECRET_KEY=
+MINIO_BUCKET=lab-mango
+MINIO_USE_SSL=True
+MINIO_REGION=us-east-1

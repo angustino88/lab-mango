@@ -19,7 +19,7 @@ jobs:
     timeout-minutes: 30
     services:
       postgres:
-        image: postgres:16
+        image: postgres:18
         env:
           POSTGRES_USER: labmango
           POSTGRES_PASSWORD: labmango
@@ -33,7 +33,7 @@ jobs:
           --health-retries 10
       # Websocket and pub/sub tests publish through Redis.
       redis:
-        image: redis:7
+        image: redis:8.10
         ports:
           - 6379:6379
         options: >-

@@ -1,0 +1,2 @@
+# Container scripts must keep LF line endings on Windows checkouts
+compose/** text eol=lf

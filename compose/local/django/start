@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+python manage.py migrate --noinput
+python manage.py provision_reference_data --database default
+
+# Uvicorn serves HTTP and WebSocket (config/asgi.py) and reloads on code changes.
+exec uvicorn config.asgi:application \
+    --host 0.0.0.0 \
+    --port "${UVICORN_PORT:-8000}" \
+    --reload \
+    --log-level info

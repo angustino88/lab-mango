@@ -1,0 +1,23 @@
+# Copy to .sops.yaml, replace the age public keys, and commit it (public keys are not secret).
+# Each department's files are encrypted to the admins plus that department's server only, so a
+# server can decrypt its own department and nothing else. The first matching rule wins.
+# After changing recipients, re-encrypt with: scripts/deploy/backend.sh updatekeys <department>
+
+keys:
+  # Admins/developers who create and edit configuration (age-keygen -y ~/.config/sops/age/keys.txt)
+  - &admin_1 age1replacewithadmin1publickey
+  # One key per department server (age-keygen on the server, see scripts/deploy/README.md)
+  - &server_dept_a age1replacewithdeptaserverpublickey
+  - &server_dept_b age1replacewithdeptbserverpublickey
+  - &server_dept_c age1replacewithdeptcserverpublickey
+
+creation_rules:
+  - path_regex: \.envs/\.production/dept-a/
+    key_groups:
+      - age: [*admin_1, *server_dept_a]
+  - path_regex: \.envs/\.production/dept-b/
+    key_groups:
+      - age: [*admin_1, *server_dept_b]
+  - path_regex: \.envs/\.production/dept-c/
+    key_groups:
+      - age: [*admin_1, *server_dept_c]

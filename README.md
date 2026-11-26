@@ -27,6 +27,24 @@ pytest
 
 For API response envelopes and OpenAPI contracts, see [the API response contract guide](docs/api/contracts.md).
 
+## Docker
+
+Local development (Django + Uvicorn with auto-reload on port 8000, PostgreSQL, Redis, Celery worker and beat):
+
+```bash
+cp .envs/.local/.django.example .envs/.local/.django
+cp .envs/.local/.postgres.example .envs/.local/.postgres
+docker compose -f docker-compose.dev.yml up --build
+```
+
+Production runs one backend per department from `docker-compose.prod.yml`. Each department's configuration is committed fully SOPS-encrypted in `.envs/.production/<department>/`, and `.sops.yaml` lets each department server decrypt only its own folder. After CI passes on `main`, `.github/workflows/deploy.yml` redeploys every department through a self-hosted runner on its server; the same step by hand is:
+
+```bash
+scripts/deploy/backend.sh deploy <department>
+```
+
+See [the deployment guide](scripts/deploy/README.md) for server and runner setup, editing encrypted values, and the optional nginx (for backends without the router) and PostgreSQL services.
+
 ## Configuration and sensitive files
 
 Use the environment examples and the approved local/production secret-management process. Do not commit credentials, private keys, production environment files, or runtime uploads. TLS certificates are deployment-managed assets; coordinate rotation and deployment before changing certificates used by production Nginx.

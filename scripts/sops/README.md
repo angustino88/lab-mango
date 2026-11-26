@@ -26,7 +26,7 @@ Copy-Item .envs/.local/.django.example .envs/.local/.django
 Copy-Item .envs/.local/.postgres.example .envs/.local/.postgres
 ```
 
-For production, copy both templates to the deployment host and replace every `replace-with-*` value:
+For production backends deployed with `docker-compose.prod.yml`, use the per-department flow in [scripts/deploy/README.md](../deploy/README.md) (`scripts/deploy/backend.sh init|encrypt|edit|deploy <department>`). The single-file production layout below is the older flow:
 
 ```bash
 cp .envs/.production/.django.example .envs/.production/.django

@@ -1,0 +1,24 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+postgres_ready() {
+    python3 -c "
+import os, sys
+try:
+    import psycopg
+    psycopg.connect(conninfo=os.environ['DATABASE_URL']).close()
+except Exception as e:
+    sys.exit(1)
+"
+}
+
+until postgres_ready; do
+  >&2 echo "Waiting for PostgreSQL to become available..."
+  sleep 1
+done
+>&2 echo "PostgreSQL is available"
+
+exec "$@"

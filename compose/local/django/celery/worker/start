@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+# Restart the worker when Python files change. Consumes the default and booking-notification queues.
+queues="${CELERY_TASK_DEFAULT_QUEUE:-labmango_backend},${BOOKING_NOTIFICATIONS_QUEUE:-booking_notifications}"
+exec watchfiles --filter python celery.__main__.main --args "-A config.celery_app worker -l INFO -Q ${queues}"

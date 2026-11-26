@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+# Beat must not run until the django service has applied the django_celery_beat migrations.
+until python manage.py migrate --check >/dev/null 2>&1; do
+  >&2 echo "Waiting for migrations to be applied..."
+  sleep 2
+done
+
+exec celery -A config.celery_app beat -l INFO \
+	--scheduler "${CELERY_BEAT_SCHEDULER:-django_celery_beat.schedulers:DatabaseScheduler}"
