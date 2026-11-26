@@ -49,8 +49,6 @@ def precheck(*, row: BenchSlotNotification, now: datetime) -> DeliveryOutcome | 
     watch = row.watch
     if watch.status != SlotWatchStatus.ACTIVE or watch.user_id != row.recipient_id or watch.range_end <= now:
         return DeliveryOutcome("skipped", "watch_inactive")
-    if row.channel not in watch.channels():
-        return DeliveryOutcome("skipped", "channel_unsubscribed")
     if not row.recipient.is_active:
         return DeliveryOutcome("skipped", "recipient_unavailable")
     if row.channel == NotificationChannel.EMAIL.value and not (row.recipient.email or "").strip():

@@ -59,8 +59,10 @@ def enabled(settings):
 
 @pytest.fixture()
 def watch_for(watcher, bench):
-    def _make(start, end, **channels):
-        data = CreateSlotWatchInput(bench_id=bench.pk, range_start=start, range_end=end, **channels)
+    def _make(start, end, *, web_only=False, settings=None):
+        if web_only:
+            settings.BOOKING_NOTIFICATIONS_ENABLED = False
+        data = CreateSlotWatchInput(bench_id=bench.pk, range_start=start, range_end=end)
         watch = create_slot_watch(actor=watcher, data=data, now=start - H if start > timezone.now() else None)
         # Watches are created "before" the bookings change in these scenarios.
         BenchSlotWatch.objects.filter(pk=watch.pk).update(created=timezone.now() - H)
@@ -102,31 +104,17 @@ class TestCreateAndCancel:
         assert first.pk == again.pk
         assert BenchSlotWatch.objects.count() == 1
 
-    def test_repeat_with_other_channels_updates_preferences(self, watcher, bench, now):
-        data = CreateSlotWatchInput(bench_id=bench.pk, range_start=now + H, range_end=now + 2 * H)
-        create_slot_watch(actor=watcher, data=data)
-        updated = create_slot_watch(
-            actor=watcher,
-            data=CreateSlotWatchInput(
-                bench_id=bench.pk, range_start=now + H, range_end=now + 2 * H, notify_email=False, notify_teams=False
-            ),
-        )
-        assert updated.channels() == ("in_app",)
-
     @pytest.mark.parametrize(
-        ("start", "end", "channels", "field"),
+        ("start", "end", "field"),
         [
-            (2, 1, {}, "range_end"),
-            (-3, -1, {}, "range_end"),
-            (1, 1 + 24 * 8, {}, "range_end"),
-            (24 * 61, 24 * 62, {}, "range_start"),
-            (1, 2, {"notify_email": False, "notify_teams": False, "notify_web": False}, "channels"),
+            (2, 1, "range_end"),
+            (-3, -1, "range_end"),
+            (1, 1 + 24 * 8, "range_end"),
+            (24 * 61, 24 * 62, "range_start"),
         ],
     )
-    def test_invalid_input_is_rejected(self, watcher, bench, now, start, end, channels, field):
-        data = CreateSlotWatchInput(
-            bench_id=bench.pk, range_start=now + start * H, range_end=now + end * H, **channels
-        )
+    def test_invalid_input_is_rejected(self, watcher, bench, now, start, end, field):
+        data = CreateSlotWatchInput(bench_id=bench.pk, range_start=now + start * H, range_end=now + end * H)
         with pytest.raises(SlotWatchInvalid) as error:
             create_slot_watch(actor=watcher, data=data, now=now)
         assert field in error.value.details
@@ -196,7 +184,7 @@ class TestCollection:
         assert collect_slot_watch_notifications(now=now)["created"] == 0
 
     def test_cancelled_booking_frees_the_slot(self, enabled, watch_for, make_booking, now):
-        watch_for(now + H, now + 3 * H, notify_email=False, notify_teams=False)
+        watch_for(now + H, now + 3 * H, web_only=True, settings=enabled)
         booking = make_booking(starts_at=now + H, ends_at=now + 2 * H)
         assert collect_slot_watch_notifications(now=now)["created"] == 0
         _cancel(booking)
@@ -205,7 +193,7 @@ class TestCollection:
         assert row.kind == "slot_freed" and row.channel == "in_app"
 
     def test_early_completion_frees_the_rest_of_the_booking(self, enabled, watch_for, make_booking, now):
-        watch_for(now, now + 2 * H, notify_email=False, notify_teams=False)
+        watch_for(now, now + 2 * H, web_only=True, settings=enabled)
         booking = make_booking(starts_at=now - H, ends_at=now + H, status=BookingStatus.IN_PROGRESS)
         booking.status = BookingStatus.COMPLETED
         booking.completed_at = now
@@ -214,7 +202,7 @@ class TestCollection:
         assert BenchSlotNotification.objects.get().snapshot["free_from"] == now.astimezone(dt_timezone.utc).isoformat()
 
     def test_rejected_pending_booking_frees_the_slot(self, enabled, watch_for, make_booking, now):
-        watch_for(now + H, now + 3 * H, notify_email=False, notify_teams=False)
+        watch_for(now + H, now + 3 * H, web_only=True, settings=enabled)
         booking = make_booking(starts_at=now + H, ends_at=now + 2 * H)
         booking.approval_status = BookingApprovalStatus.REJECTED
         booking.rejection_reason = "not this week"

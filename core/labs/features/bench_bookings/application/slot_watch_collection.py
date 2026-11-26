@@ -29,6 +29,7 @@ from core.labs.models import (
     Booking,
     BookingApprovalStatus,
     BookingStatus,
+    SlotWatchChannel,
     SlotWatchKind,
     SlotWatchStatus,
 )
@@ -184,7 +185,7 @@ def _iso(value: datetime) -> str:
 def record_events(*, watch: BenchSlotWatch, events: list[SlotEvent], now: datetime) -> int:
     created = 0
     for event in events:
-        for channel in watch.channels():
+        for channel in SlotWatchChannel.values:
             if not channel_enabled(channel):
                 continue
             if channel == NotificationChannel.EMAIL.value and not (watch.user.email or "").strip():

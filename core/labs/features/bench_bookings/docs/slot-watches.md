@@ -18,22 +18,24 @@ pending/approved, the same set as the `bench_booking_no_overlap` exclusion const
 suppresses the event. The watcher's own bookings never trigger events. Messages carry the bench name and the free
 window only, never the other user's identity, booking code, project or reason.
 
-Channels: `email`, `teams` (private chat via the existing verified-recipient workflow), `in_app` (persisted
-`websocket.Notification` + per-user websocket push, rendered by the frontend notification feed).
+Channels are decided by the server, never by the user: every alert goes to the web feed (persisted
+`websocket.Notification` + per-user websocket push), to email when email notifications are enabled and the user has
+an address, and to Teams (private chat via the existing verified-recipient workflow) when Teams is enabled and the
+user has a verified Entra identity.
 
 ## API (`/api/labs/bench-slot-watches`, `BENCH_BOOKING_ACCESS`, user-scoped)
 
 | Method & path | Behavior |
 |---|---|
 | `GET /bench-slot-watches?status=` | Paginated list of the caller's own watches. API-key-only callers get an empty list. |
-| `POST /bench-slot-watches` | `{bench_id, starts_at, ends_at, channels?}`; `channels` ⊆ `email, teams, in_app`, default all. Idempotent: the same user/bench/range returns the existing active watch (and updates its channels). 201. Range must end in the future, span ≤ 7 days, start within 60 days; ≤ 20 active watches per user (`422 slot_watch_invalid` / `slot_watch_limit`). Unknown bench → 404. API-key-only caller → 403. |
+| `POST /bench-slot-watches` | `{bench_id, starts_at, ends_at}`. Idempotent: the same user/bench/range returns the existing active watch. 201. Range must end in the future, span ≤ 7 days, start within 60 days; ≤ 20 active watches per user (`422 slot_watch_invalid` / `slot_watch_limit`). Unknown bench → 404. API-key-only caller → 403. |
 | `GET /bench-slot-watches/{id}` | Caller's own watch; anyone else's → 404 (no existence oracle). |
 | `POST /bench-slot-watches/{id}/actions/cancel` | Stop the watch; repeating is a no-op. Others' → 404. |
 
 ## Data and invariants
 
-* `labs.BenchSlotWatch`: user, bench, `range_start/range_end`, three channel booleans, status
-  (`active/cancelled/expired`). DB constraints: range valid, ≥ 1 channel, status allowlist, partial unique
+* `labs.BenchSlotWatch`: user, bench, `range_start/range_end`, status
+  (`active/cancelled/expired`). DB constraints: range valid, status allowlist, partial unique
   `(user, bench, range_start, range_end) WHERE status='active'`.
 * `labs.BenchSlotNotification`: feature-owned outbox on `AbstractOutboxLedger` (lease/state constraints),
   plus channel and kind allowlists. FK `booking` (PROTECT) is the booking whose end/release opened the slot.
@@ -45,7 +47,7 @@ locks the watch row. Collection inserts with `get_or_create` on the unique dedup
 runs insert nothing new. Delivery uses the shared `SKIP LOCKED` lease protocol (120 s lease, 5 attempts,
 backoff); web delivery creates the feed entry in the same transaction as the fenced completion, so it is created
 exactly once (the websocket push after commit is best effort). Email/Teams are at-least-once as for booking
-notifications. Each send revalidates: watch still active and subscribed to the channel, recipient active, and a
+notifications. Each send revalidates: watch still active, recipient active, and a
 free gap still exists — otherwise the row expires with `slot_taken` / is skipped.
 
 ## Configuration and rollout

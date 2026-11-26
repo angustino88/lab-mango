@@ -1338,11 +1338,6 @@ components:
           type: string
           format: date-time
           readOnly: true
-        channels:
-          type: array
-          items:
-            $ref: '#/components/schemas/LabsChoiceReference'
-          readOnly: true
         status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
@@ -1357,7 +1352,6 @@ components:
           readOnly: true
       required:
       - bench
-      - channels
       - created_at
       - ends_at
       - id
@@ -1374,8 +1368,12 @@ components:
       - data
     BenchSlotWatchCreate:
       type: object
-      description: Watch one bench for free time inside [starts_at, ends_at). Notify-only;
+      description: 'Watch one bench for free time inside [starts_at, ends_at). Notify-only;
         nothing is held.
+
+
+        Delivery channels are decided by the server (web always; email and Teams when
+        enabled and reachable).'
       properties:
         bench_id:
           type: integer
@@ -1386,13 +1384,6 @@ components:
         ends_at:
           type: string
           format: date-time
-        channels:
-          type: array
-          items:
-            $ref: '#/components/schemas/ChannelsEnum'
-          description: 'Where to notify: email, teams, in_app (web). Defaults to all
-            three.'
-          maxItems: 3
       required:
       - bench_id
       - ends_at
@@ -1487,17 +1478,6 @@ components:
           readOnly: true
       required:
       - data
-    ChannelsEnum:
-      enum:
-      - email
-      - teams
-      - in_app
-      type: string
-      description: '* `email` - Email
-
-        * `teams` - Teams
-
-        * `in_app` - Web'
     LabProject:
       type: object
       properties:

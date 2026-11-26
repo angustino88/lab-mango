@@ -1,6 +1,7 @@
 """Bench slot watches: a user asks to be told when a bench frees up inside a time range.
 
-A watch never reserves anything. Notifications are an outbox ledger (one row per event, channel
+A watch never reserves anything. Users do not choose channels: the backend delivers on every
+channel that is enabled by configuration and reachable for the user (see ``slot_watch_collection``). Notifications are an outbox ledger (one row per event, channel
 and watcher) delivered by a background job; booking the freed slot is a normal booking request.
 """
 
@@ -40,9 +41,6 @@ class BenchSlotWatch(TimeStampedModel):
     bench = models.ForeignKey("labs.Bench", related_name="slot_watches", on_delete=models.PROTECT)
     range_start = models.DateTimeField()
     range_end = models.DateTimeField()
-    notify_email = models.BooleanField(default=True)
-    notify_teams = models.BooleanField(default=True)
-    notify_web = models.BooleanField(default=True)
     status = models.CharField(
         max_length=16,
         choices=SlotWatchStatus.choices,
@@ -52,24 +50,12 @@ class BenchSlotWatch(TimeStampedModel):
     def __str__(self) -> str:
         return f"Slot watch {self.pk}: bench {self.bench_id} {self.range_start:%Y-%m-%d %H:%M}"
 
-    def channels(self) -> tuple[str, ...]:
-        wanted = (
-            (self.notify_email, SlotWatchChannel.EMAIL),
-            (self.notify_teams, SlotWatchChannel.TEAMS),
-            (self.notify_web, SlotWatchChannel.IN_APP),
-        )
-        return tuple(channel.value for enabled, channel in wanted if enabled)
-
     class Meta:
         app_label = "labs"
         constraints = [
             models.CheckConstraint(
                 condition=models.Q(range_end__gt=models.F("range_start")),
                 name="slot_watch_range_valid",
-            ),
-            models.CheckConstraint(
-                condition=models.Q(notify_email=True) | models.Q(notify_teams=True) | models.Q(notify_web=True),
-                name="slot_watch_has_channel",
             ),
             models.CheckConstraint(
                 condition=models.Q(status__in=SlotWatchStatus.values),

@@ -28,13 +28,12 @@ class TestSlotWatchAPI:
         assert APIClient().post(URL, _payload(bench, now), format="json").status_code in (401, 403)
 
     def test_create_list_detail_cancel(self, api_client, bench, now):
-        created = api_client.post(URL, _payload(bench, now, channels=["email", "in_app"]), format="json")
+        created = api_client.post(URL, _payload(bench, now), format="json")
         assert created.status_code == 201, created.content
         body = created.json()["data"]
         assert body["bench"]["id"] == bench.pk
         assert body["status"]["value"] == "active"
-        assert [c["value"] for c in body["channels"]] == ["email", "in_app"]
-        assert body["channels"][1]["label"] == "Web"
+        assert "channels" not in body  # the server decides delivery channels
 
         listed = api_client.get(URL)
         assert listed.status_code == 200
@@ -79,7 +78,3 @@ class TestSlotWatchAPI:
         assert stranger.post(f"{URL}/{watch_id}/actions/cancel").status_code == 404
         assert stranger.get(URL).json()["data"] == []
         assert BenchSlotWatch.objects.get(pk=watch_id).status == "active"
-
-    def test_empty_channel_list_is_rejected(self, api_client, bench, now):
-        response = api_client.post(URL, _payload(bench, now, channels=[]), format="json")
-        assert response.status_code in (400, 422)

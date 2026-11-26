@@ -49010,13 +49010,6 @@
             "format": "date-time",
             "readOnly": true
           },
-          "channels": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/LabsChoiceReference"
-            },
-            "readOnly": true
-          },
           "status": {
             "allOf": [
               {
@@ -49038,7 +49031,6 @@
         },
         "required": [
           "bench",
-          "channels",
           "created_at",
           "ends_at",
           "id",
@@ -49061,7 +49053,7 @@
       },
       "BenchSlotWatchCreate": {
         "type": "object",
-        "description": "Watch one bench for free time inside [starts_at, ends_at). Notify-only; nothing is held.",
+        "description": "Watch one bench for free time inside [starts_at, ends_at). Notify-only; nothing is held.\n\nDelivery channels are decided by the server (web always; email and Teams when enabled and reachable).",
         "properties": {
           "bench_id": {
             "type": "integer",
@@ -49074,14 +49066,6 @@
           "ends_at": {
             "type": "string",
             "format": "date-time"
-          },
-          "channels": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ChannelsEnum"
-            },
-            "description": "Where to notify: email, teams, in_app (web). Defaults to all three.",
-            "maxItems": 3
           }
         },
         "required": [
@@ -50384,15 +50368,6 @@
           "unit_id",
           "updated_at"
         ]
-      },
-      "ChannelsEnum": {
-        "enum": [
-          "email",
-          "teams",
-          "in_app"
-        ],
-        "type": "string",
-        "description": "* `email` - Email\n* `teams` - Teams\n* `in_app` - Web"
       },
       "ChannelsFromProfile": {
         "type": "object",

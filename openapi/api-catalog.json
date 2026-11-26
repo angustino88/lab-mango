@@ -18781,14 +18781,6 @@
                       "format": "date-time",
                       "readOnly": true
                     },
-                    "channels": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "description": "(max nesting depth reached)"
-                      },
-                      "readOnly": true
-                    },
                     "status": {
                       "allOf": [
                         {
@@ -18811,7 +18803,6 @@
                   },
                   "required": [
                     "bench",
-                    "channels",
                     "created_at",
                     "ends_at",
                     "id",
@@ -18840,9 +18831,6 @@
                 "bench": {},
                 "starts_at": "2026-10-20T12:00:00Z",
                 "ends_at": "2026-10-20T12:00:00Z",
-                "channels": [
-                  {}
-                ],
                 "status": {},
                 "created_at": "2026-10-20T12:00:00Z",
                 "updated_at": "2026-10-20T12:00:00Z"
@@ -18979,7 +18967,7 @@
         "description": "",
         "schema": {
           "type": "object",
-          "description": "Watch one bench for free time inside [starts_at, ends_at). Notify-only; nothing is held.",
+          "description": "Watch one bench for free time inside [starts_at, ends_at). Notify-only; nothing is held.\n\nDelivery channels are decided by the server (web always; email and Teams when enabled and reachable).",
           "properties": {
             "bench_id": {
               "type": "integer",
@@ -18992,20 +18980,6 @@
             "ends_at": {
               "type": "string",
               "format": "date-time"
-            },
-            "channels": {
-              "type": "array",
-              "items": {
-                "enum": [
-                  "email",
-                  "teams",
-                  "in_app"
-                ],
-                "type": "string",
-                "description": "* `email` - Email\n* `teams` - Teams\n* `in_app` - Web"
-              },
-              "description": "Where to notify: email, teams, in_app (web). Defaults to all three.",
-              "maxItems": 3
             }
           },
           "required": [
@@ -19017,10 +18991,7 @@
         "example_payload": {
           "bench_id": 1,
           "starts_at": "2026-10-20T12:00:00Z",
-          "ends_at": "2026-10-20T12:00:00Z",
-          "channels": [
-            "email"
-          ]
+          "ends_at": "2026-10-20T12:00:00Z"
         }
       },
       "responses": {
@@ -19058,14 +19029,6 @@
                     "format": "date-time",
                     "readOnly": true
                   },
-                  "channels": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "readOnly": true
-                  },
                   "status": {
                     "allOf": [
                       {
@@ -19088,7 +19051,6 @@
                 },
                 "required": [
                   "bench",
-                  "channels",
                   "created_at",
                   "ends_at",
                   "id",
@@ -19108,9 +19070,6 @@
               "bench": {},
               "starts_at": "2026-10-20T12:00:00Z",
               "ends_at": "2026-10-20T12:00:00Z",
-              "channels": [
-                {}
-              ],
               "status": {},
               "created_at": "2026-10-20T12:00:00Z",
               "updated_at": "2026-10-20T12:00:00Z"
@@ -19440,14 +19399,6 @@
                     "format": "date-time",
                     "readOnly": true
                   },
-                  "channels": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "readOnly": true
-                  },
                   "status": {
                     "allOf": [
                       {
@@ -19470,7 +19421,6 @@
                 },
                 "required": [
                   "bench",
-                  "channels",
                   "created_at",
                   "ends_at",
                   "id",
@@ -19490,9 +19440,6 @@
               "bench": {},
               "starts_at": "2026-10-20T12:00:00Z",
               "ends_at": "2026-10-20T12:00:00Z",
-              "channels": [
-                {}
-              ],
               "status": {},
               "created_at": "2026-10-20T12:00:00Z",
               "updated_at": "2026-10-20T12:00:00Z"
@@ -19663,14 +19610,6 @@
                     "format": "date-time",
                     "readOnly": true
                   },
-                  "channels": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "description": "(max nesting depth reached)"
-                    },
-                    "readOnly": true
-                  },
                   "status": {
                     "allOf": [
                       {
@@ -19693,7 +19632,6 @@
                 },
                 "required": [
                   "bench",
-                  "channels",
                   "created_at",
                   "ends_at",
                   "id",
@@ -19713,9 +19651,6 @@
               "bench": {},
               "starts_at": "2026-10-20T12:00:00Z",
               "ends_at": "2026-10-20T12:00:00Z",
-              "channels": [
-                {}
-              ],
               "status": {},
               "created_at": "2026-10-20T12:00:00Z",
               "updated_at": "2026-10-20T12:00:00Z"
