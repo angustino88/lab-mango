@@ -77,7 +77,9 @@ def test_seed_adds_models_once_and_only_fills_empty_defaults():
     assert not report.created and len(report.existing) == len(REFERENCE_MODELS)
     assert storage.saved == len(REFERENCE_MODELS)
     assert report.station_types == ["Server rack → server-rack"]
-    rack.refresh_from_db(), bench.refresh_from_db(), fume_hood.refresh_from_db()
+    for row in (rack, bench, fume_hood):
+        row.refresh_from_db()
+    assert rack.visual_model is not None
     assert rack.visual_model.name == "Reference · Server rack 42U"
     assert bench.visual_model_id == custom.pk
     assert fume_hood.visual_model_id is None

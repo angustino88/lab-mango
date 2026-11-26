@@ -208,9 +208,9 @@ def server_rack() -> Builder:
     b.box("frame", (0, 0.13, d / 2 - 0.02), (w, 0.06, 0.04))
     b.box("led_white", (0, h - 0.13, d / 2 + 0.001), (w * 0.6, 0.012, 0.004))
     # Roof fans and cable entry.
-    for x in (-0.13, 0.13):
-        b.cylinder("cavity", (x, h + 0.003, -0.15), 0.1, 0.006)
-        b.cylinder("rail", (x, h + 0.007, -0.15), 0.03, 0.004)
+    for fan_x in (-0.13, 0.13):
+        b.cylinder("cavity", (fan_x, h + 0.003, -0.15), 0.1, 0.006)
+        b.cylinder("rail", (fan_x, h + 0.007, -0.15), 0.03, 0.004)
     b.box("rubber", (0, h + 0.002, 0.3), (0.3, 0.006, 0.08))
     return b
 
