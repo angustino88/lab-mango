@@ -13,13 +13,13 @@ typed tickets, impact/urgency-driven priority, SLA clocks, team queues, watchers
 | Group | Fields |
 |---|---|
 | Identity | `key` (`SUP-000123`, immutable, unique), `number` (PG sequence `support_ticket_number_seq`), `idempotency_key` |
-| Content | `subject` (200), `description`, `external_reference` (vendor RMA / legacy Jira key) |
-| Classification | `ticket_type` (`incident`, `service_request`, `problem`, `change`, `question`), `source` (`web`, `email`, `phone`, `walk_in`, `api`, `system`), `impact` / `urgency` (`1` high … `3` low, optional), `category` FK, `priority` FK, `labels` M2M |
+| Content | `subject` (200), `description`, `external_reference` (vendor RMA / legacy Jira key), `page_path` (optional relative SPA route, query/fragment stripped, PG check constraint), `client_context` (optional allowlisted diagnostics map: `browser`, `os`, `viewport`, `theme`, `app_version`, `language`) |
+| Classification | `ticket_type` (`incident`, `service_request`, `problem`, `change`, `question`, `bug`, `feature_request`, `feedback`), `source` (`web`, `email`, `phone`, `walk_in`, `api`, `system`), `impact` / `urgency` (`1` high … `3` low, optional), `category` FK (optional on create: defaults to matching active code, `general`, or first active), `priority` FK, `labels` M2M |
 | Ownership | `requester`, `created_by`, `assignee`, `team` FK (defaults from `category.default_team`), `parent` FK (one level of sub-tickets) |
 | Workflow | `status` FK, `version` (optimistic lock), `due_date`, `reopen_count` |
 | Resolution | `resolution_code` (`fixed`, `workaround`, `cannot_reproduce`, `duplicate`, `wont_fix`, `user_error`, `vendor`), `resolution_summary`, `root_cause`, `resolved_by`, `resolved_at`, `closed_at` |
-| SLA | `response_due_at`, `resolution_due_at`, `sla_paused_at`, `sla_paused_seconds`, `response_breached_at`, `resolution_breached_at`, `first_response_at` |
-| CSAT | `csat_score` (1-5, DB check), `csat_comment`, `csat_submitted_at` |
+| SLA | `response_due_at`, `resolution_due_at`, `sla_paused_at`, `sla_paused_seconds`, `response_breached_at`, `resolution_breached_at`, `first_response_at` (`feature_request` and `feedback` tickets bypass SLA clocks) |
+| CSAT | `csat_score` (1-5, DB check), `csat_comment`, `csat_submitted_at`; detail responses expose `can_submit_csat` |
 | Timeline | `created_at`, `updated_at`, `last_activity_at` (bumped by every audit event except passive SLA events) |
 
 Constraints: a ticket cannot be its own parent; sub-tickets are at most one level deep.

@@ -1,10 +1,19 @@
-"""Triage helpers: priority derivation (impact x urgency), labels, and parent validation."""
+"""Triage helpers: category/priority resolution, context sanitization, labels, and parent validation."""
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from typing import Any
 
-from core.support_desk.contracts import IMPACT_CHOICES, URGENCY_CHOICES, Impact, Urgency
+from core.support_desk.contracts import (
+    CLIENT_CONTEXT_ALLOWED_KEYS,
+    CLIENT_CONTEXT_MAX_VALUE_LENGTH,
+    IMPACT_CHOICES,
+    PAGE_PATH_MAX_LENGTH,
+    URGENCY_CHOICES,
+    Impact,
+    Urgency,
+)
 from core.support_desk.exceptions import InvalidFieldValueError, InvalidParentTicketError, TicketCreationDisabledError
+from core.support_desk.models.category import SupportCategory
 from core.support_desk.models.label import SupportLabel
 from core.support_desk.models.priority import SupportPriority
 from core.support_desk.models.ticket import SupportTicket
@@ -18,6 +27,81 @@ def validate_impact_urgency(impact: str | None, urgency: str | None) -> None:
         raise InvalidFieldValueError(f"Invalid impact '{impact}'.")
     if urgency not in (None, "") and urgency not in _URGENCY_VALUES:
         raise InvalidFieldValueError(f"Invalid urgency '{urgency}'.")
+
+
+def resolve_category(*, explicit_id: int | None, ticket_type: str) -> SupportCategory:
+    """Resolve an active category: explicit ID, else type-matched code, else general, else first active."""
+    qs = SupportCategory.objects.select_related("default_team").filter(is_active=True)
+    if explicit_id is not None:
+        category = qs.filter(pk=explicit_id).first()
+        if not category:
+            raise TicketCreationDisabledError(f"Category {explicit_id} is not active or does not exist.")
+        return category
+
+    for candidate_code in (ticket_type, "general"):
+        category = qs.filter(code__iexact=candidate_code).order_by("sort_order", "id").first()
+        if category:
+            return category
+
+    category = qs.order_by("sort_order", "id").first()
+    if not category:
+        raise TicketCreationDisabledError(
+            "Ticket creation is disabled until an administrator defines at least one active category."
+        )
+    return category
+
+
+def sanitize_page_path(raw: str | None) -> str:
+    """Validate and normalize an optional relative web app route path (stripping query/fragment)."""
+    if not raw:
+        return ""
+    value = raw.strip()
+    if not value:
+        return ""
+    if "://" in value or value.startswith("//"):
+        raise InvalidFieldValueError("page_path must be a relative route starting with '/'.")
+    # Strip query string and fragment so sensitive tokens or query parameters are never stored.
+    value = value.split("#", 1)[0].split("?", 1)[0].strip()
+    if not value:
+        return ""
+    if not value.startswith("/"):
+        raise InvalidFieldValueError("page_path must start with '/'.")
+    if any(ord(ch) < 32 or ord(ch) == 127 for ch in value):
+        raise InvalidFieldValueError("page_path contains invalid control characters.")
+    if ".." in value.split("/"):
+        raise InvalidFieldValueError("page_path must not contain parent directory traversal segments.")
+    if len(value) > PAGE_PATH_MAX_LENGTH:
+        raise InvalidFieldValueError(f"page_path must not exceed {PAGE_PATH_MAX_LENGTH} characters.")
+    return value
+
+
+def sanitize_client_context(raw: Mapping[str, Any] | None) -> dict[str, str]:
+    """Validate and normalize an allowlisted map of non-sensitive client diagnostics."""
+    if not raw:
+        return {}
+    if not isinstance(raw, Mapping):
+        raise InvalidFieldValueError("client_context must be a JSON object.")
+
+    cleaned: dict[str, str] = {}
+    for key, raw_value in raw.items():
+        if not isinstance(key, str) or key not in CLIENT_CONTEXT_ALLOWED_KEYS:
+            allowed = ", ".join(sorted(CLIENT_CONTEXT_ALLOWED_KEYS))
+            raise InvalidFieldValueError(f"Unsupported client_context key '{key}'. Allowed keys: {allowed}.")
+        if raw_value is None:
+            continue
+        if not isinstance(raw_value, str):
+            raise InvalidFieldValueError(f"client_context['{key}'] must be a string.")
+        value = raw_value.strip()
+        if not value:
+            continue
+        if any(ord(ch) < 32 or ord(ch) == 127 for ch in value):
+            raise InvalidFieldValueError(f"client_context['{key}'] contains invalid control characters.")
+        if len(value) > CLIENT_CONTEXT_MAX_VALUE_LENGTH:
+            raise InvalidFieldValueError(
+                f"client_context['{key}'] must not exceed {CLIENT_CONTEXT_MAX_VALUE_LENGTH} characters."
+            )
+        cleaned[key] = value
+    return cleaned
 
 
 def derive_priority(impact: str | None, urgency: str | None) -> SupportPriority | None:

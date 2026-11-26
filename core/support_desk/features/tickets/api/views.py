@@ -199,7 +199,7 @@ class TicketListCreateAPIView(SupportAPIView):
         cmd = CreateTicketInput(
             subject=data["subject"],
             description=data["description"],
-            category_id=data["category_id"],
+            category_id=data.get("category_id"),
             priority_id=data.get("priority_id"),
             linked_resources=linked_resources,
             assignee_id=data.get("assignee_id"),
@@ -210,6 +210,8 @@ class TicketListCreateAPIView(SupportAPIView):
             urgency=data.get("urgency", ""),
             source=data.get("source", "web"),
             external_reference=data.get("external_reference", ""),
+            page_path=data.get("page_path", ""),
+            client_context=data.get("client_context") or {},
             due_date=data.get("due_date"),
             team_id=data.get("team_id"),
             labels=tuple(data.get("labels", ())),

@@ -137178,10 +137178,13 @@
                 "service_request",
                 "problem",
                 "change",
-                "question"
+                "question",
+                "bug",
+                "feature_request",
+                "feedback"
               ],
               "type": "string",
-              "description": "* `incident` - Incident\n* `service_request` - Service Request\n* `problem` - Problem\n* `change` - Change\n* `question` - Question"
+              "description": "* `incident` - Incident\n* `service_request` - Service Request\n* `problem` - Problem\n* `change` - Change\n* `question` - Question\n* `bug` - Bug\n* `feature_request` - Feature Request\n* `feedback` - Feedback"
             }
           }
         },
@@ -147272,6 +147275,17 @@
           }
         },
         {
+          "name": "page_path",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1
+          }
+        },
+        {
           "name": "page_size",
           "in": "query",
           "required": false,
@@ -148011,7 +148025,9 @@
               "type": "string"
             },
             "category_id": {
-              "type": "integer"
+              "type": "integer",
+              "nullable": true,
+              "description": "Optional: resolves to a matching active category or General when omitted."
             },
             "priority_id": {
               "type": "integer",
@@ -148024,10 +148040,13 @@
                 "service_request",
                 "problem",
                 "change",
-                "question"
+                "question",
+                "bug",
+                "feature_request",
+                "feedback"
               ],
               "type": "string",
-              "description": "* `incident` - Incident\n* `service_request` - Service Request\n* `problem` - Problem\n* `change` - Change\n* `question` - Question"
+              "description": "* `incident` - Incident\n* `service_request` - Service Request\n* `problem` - Problem\n* `change` - Change\n* `question` - Question\n* `bug` - Bug\n* `feature_request` - Feature Request\n* `feedback` - Feedback"
             },
             "impact": {
               "default": "",
@@ -148087,6 +148106,20 @@
               "type": "string",
               "default": "",
               "maxLength": 128
+            },
+            "page_path": {
+              "type": "string",
+              "default": "",
+              "description": "Optional relative web app route (e.g. /booking-calendar) where the ticket was opened.",
+              "maxLength": 255
+            },
+            "client_context": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string",
+                "maxLength": 64
+              },
+              "description": "Optional non-sensitive client diagnostics (browser, os, viewport, theme, app_version, language)."
             },
             "due_date": {
               "type": "string",
@@ -148150,7 +148183,6 @@
             }
           },
           "required": [
-            "category_id",
             "description",
             "subject"
           ]
@@ -148165,6 +148197,8 @@
           "urgency": "1",
           "source": {},
           "external_reference": "",
+          "page_path": "",
+          "client_context": {},
           "due_date": "2026-10-20",
           "team_id": 1,
           "labels": [
@@ -148261,6 +148295,18 @@
                     "type": "string",
                     "description": "Reference in an external system (vendor RMA / case number, legacy Jira key...).",
                     "maxLength": 128
+                  },
+                  "page_path": {
+                    "type": "string",
+                    "description": "Optional web app route path where the ticket or feedback was submitted.",
+                    "maxLength": 255
+                  },
+                  "client_context": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "readOnly": true
                   },
                   "due_date": {
                     "type": "string",
@@ -148404,6 +148450,10 @@
                     "type": "boolean",
                     "readOnly": true
                   },
+                  "can_submit_csat": {
+                    "type": "boolean",
+                    "readOnly": true
+                  },
                   "created_at": {
                     "type": "string",
                     "format": "date-time",
@@ -148537,8 +148587,10 @@
                   "assignee",
                   "attachments",
                   "available_transitions",
+                  "can_submit_csat",
                   "category",
                   "children",
+                  "client_context",
                   "comments",
                   "created_at",
                   "created_by",
@@ -148583,6 +148635,8 @@
               "impact": {},
               "urgency": {},
               "external_reference": "string",
+              "page_path": "string",
+              "client_context": {},
               "due_date": "2026-10-20",
               "category": {},
               "priority": {},
@@ -148610,6 +148664,7 @@
                 {}
               ],
               "is_watching": true,
+              "can_submit_csat": true,
               "created_at": "2026-10-20T12:00:00Z",
               "updated_at": "2026-10-20T12:00:00Z",
               "last_activity_at": "2026-10-20T12:00:00Z",
@@ -149407,6 +149462,18 @@
                     "description": "Reference in an external system (vendor RMA / case number, legacy Jira key...).",
                     "maxLength": 128
                   },
+                  "page_path": {
+                    "type": "string",
+                    "description": "Optional web app route path where the ticket or feedback was submitted.",
+                    "maxLength": 255
+                  },
+                  "client_context": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "readOnly": true
+                  },
                   "due_date": {
                     "type": "string",
                     "format": "date",
@@ -149549,6 +149616,10 @@
                     "type": "boolean",
                     "readOnly": true
                   },
+                  "can_submit_csat": {
+                    "type": "boolean",
+                    "readOnly": true
+                  },
                   "created_at": {
                     "type": "string",
                     "format": "date-time",
@@ -149682,8 +149753,10 @@
                   "assignee",
                   "attachments",
                   "available_transitions",
+                  "can_submit_csat",
                   "category",
                   "children",
+                  "client_context",
                   "comments",
                   "created_at",
                   "created_by",
@@ -149728,6 +149801,8 @@
               "impact": {},
               "urgency": {},
               "external_reference": "string",
+              "page_path": "string",
+              "client_context": {},
               "due_date": "2026-10-20",
               "category": {},
               "priority": {},
@@ -149755,6 +149830,7 @@
                 {}
               ],
               "is_watching": true,
+              "can_submit_csat": true,
               "created_at": "2026-10-20T12:00:00Z",
               "updated_at": "2026-10-20T12:00:00Z",
               "last_activity_at": "2026-10-20T12:00:00Z",
@@ -150001,10 +150077,13 @@
                 "service_request",
                 "problem",
                 "change",
-                "question"
+                "question",
+                "bug",
+                "feature_request",
+                "feedback"
               ],
               "type": "string",
-              "description": "* `incident` - Incident\n* `service_request` - Service Request\n* `problem` - Problem\n* `change` - Change\n* `question` - Question"
+              "description": "* `incident` - Incident\n* `service_request` - Service Request\n* `problem` - Problem\n* `change` - Change\n* `question` - Question\n* `bug` - Bug\n* `feature_request` - Feature Request\n* `feedback` - Feedback"
             },
             "impact": {
               "oneOf": [
@@ -150164,6 +150243,18 @@
                     "description": "Reference in an external system (vendor RMA / case number, legacy Jira key...).",
                     "maxLength": 128
                   },
+                  "page_path": {
+                    "type": "string",
+                    "description": "Optional web app route path where the ticket or feedback was submitted.",
+                    "maxLength": 255
+                  },
+                  "client_context": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "readOnly": true
+                  },
                   "due_date": {
                     "type": "string",
                     "format": "date",
@@ -150306,6 +150397,10 @@
                     "type": "boolean",
                     "readOnly": true
                   },
+                  "can_submit_csat": {
+                    "type": "boolean",
+                    "readOnly": true
+                  },
                   "created_at": {
                     "type": "string",
                     "format": "date-time",
@@ -150439,8 +150534,10 @@
                   "assignee",
                   "attachments",
                   "available_transitions",
+                  "can_submit_csat",
                   "category",
                   "children",
+                  "client_context",
                   "comments",
                   "created_at",
                   "created_by",
@@ -150485,6 +150582,8 @@
               "impact": {},
               "urgency": {},
               "external_reference": "string",
+              "page_path": "string",
+              "client_context": {},
               "due_date": "2026-10-20",
               "category": {},
               "priority": {},
@@ -150512,6 +150611,7 @@
                 {}
               ],
               "is_watching": true,
+              "can_submit_csat": true,
               "created_at": "2026-10-20T12:00:00Z",
               "updated_at": "2026-10-20T12:00:00Z",
               "last_activity_at": "2026-10-20T12:00:00Z",
@@ -150937,6 +151037,18 @@
                     "description": "Reference in an external system (vendor RMA / case number, legacy Jira key...).",
                     "maxLength": 128
                   },
+                  "page_path": {
+                    "type": "string",
+                    "description": "Optional web app route path where the ticket or feedback was submitted.",
+                    "maxLength": 255
+                  },
+                  "client_context": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "readOnly": true
+                  },
                   "due_date": {
                     "type": "string",
                     "format": "date",
@@ -151079,6 +151191,10 @@
                     "type": "boolean",
                     "readOnly": true
                   },
+                  "can_submit_csat": {
+                    "type": "boolean",
+                    "readOnly": true
+                  },
                   "created_at": {
                     "type": "string",
                     "format": "date-time",
@@ -151212,8 +151328,10 @@
                   "assignee",
                   "attachments",
                   "available_transitions",
+                  "can_submit_csat",
                   "category",
                   "children",
+                  "client_context",
                   "comments",
                   "created_at",
                   "created_by",
@@ -151258,6 +151376,8 @@
               "impact": {},
               "urgency": {},
               "external_reference": "string",
+              "page_path": "string",
+              "client_context": {},
               "due_date": "2026-10-20",
               "category": {},
               "priority": {},
@@ -151285,6 +151405,7 @@
                 {}
               ],
               "is_watching": true,
+              "can_submit_csat": true,
               "created_at": "2026-10-20T12:00:00Z",
               "updated_at": "2026-10-20T12:00:00Z",
               "last_activity_at": "2026-10-20T12:00:00Z",
@@ -151711,6 +151832,18 @@
                     "description": "Reference in an external system (vendor RMA / case number, legacy Jira key...).",
                     "maxLength": 128
                   },
+                  "page_path": {
+                    "type": "string",
+                    "description": "Optional web app route path where the ticket or feedback was submitted.",
+                    "maxLength": 255
+                  },
+                  "client_context": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "readOnly": true
+                  },
                   "due_date": {
                     "type": "string",
                     "format": "date",
@@ -151853,6 +151986,10 @@
                     "type": "boolean",
                     "readOnly": true
                   },
+                  "can_submit_csat": {
+                    "type": "boolean",
+                    "readOnly": true
+                  },
                   "created_at": {
                     "type": "string",
                     "format": "date-time",
@@ -151986,8 +152123,10 @@
                   "assignee",
                   "attachments",
                   "available_transitions",
+                  "can_submit_csat",
                   "category",
                   "children",
+                  "client_context",
                   "comments",
                   "created_at",
                   "created_by",
@@ -152032,6 +152171,8 @@
               "impact": {},
               "urgency": {},
               "external_reference": "string",
+              "page_path": "string",
+              "client_context": {},
               "due_date": "2026-10-20",
               "category": {},
               "priority": {},
@@ -152059,6 +152200,7 @@
                 {}
               ],
               "is_watching": true,
+              "can_submit_csat": true,
               "created_at": "2026-10-20T12:00:00Z",
               "updated_at": "2026-10-20T12:00:00Z",
               "last_activity_at": "2026-10-20T12:00:00Z",
@@ -152528,6 +152670,18 @@
                     "description": "Reference in an external system (vendor RMA / case number, legacy Jira key...).",
                     "maxLength": 128
                   },
+                  "page_path": {
+                    "type": "string",
+                    "description": "Optional web app route path where the ticket or feedback was submitted.",
+                    "maxLength": 255
+                  },
+                  "client_context": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "readOnly": true
+                  },
                   "due_date": {
                     "type": "string",
                     "format": "date",
@@ -152670,6 +152824,10 @@
                     "type": "boolean",
                     "readOnly": true
                   },
+                  "can_submit_csat": {
+                    "type": "boolean",
+                    "readOnly": true
+                  },
                   "created_at": {
                     "type": "string",
                     "format": "date-time",
@@ -152803,8 +152961,10 @@
                   "assignee",
                   "attachments",
                   "available_transitions",
+                  "can_submit_csat",
                   "category",
                   "children",
+                  "client_context",
                   "comments",
                   "created_at",
                   "created_by",
@@ -152849,6 +153009,8 @@
               "impact": {},
               "urgency": {},
               "external_reference": "string",
+              "page_path": "string",
+              "client_context": {},
               "due_date": "2026-10-20",
               "category": {},
               "priority": {},
@@ -152876,6 +153038,7 @@
                 {}
               ],
               "is_watching": true,
+              "can_submit_csat": true,
               "created_at": "2026-10-20T12:00:00Z",
               "updated_at": "2026-10-20T12:00:00Z",
               "last_activity_at": "2026-10-20T12:00:00Z",

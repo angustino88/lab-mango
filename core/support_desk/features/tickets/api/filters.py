@@ -200,6 +200,13 @@ TICKET_FILTERS = FilterSpec(
             label="Resolution Due Before",
         ),
         Filter(
+            name="page_path",
+            field=serializers.CharField(required=False, max_length=255),
+            lookup="page_path",
+            kind="exact",
+            label="Page Path",
+        ),
+        Filter(
             name="updated_after",
             field=QueryDateTimeField(required=False),
             lookup="updated_at__gte",
@@ -214,7 +221,7 @@ TICKET_FILTERS = FilterSpec(
             label="Updated Before",
         ),
     ],
-    search_fields=["key", "subject", "description", "external_reference"],
+    search_fields=["key", "subject", "description", "external_reference", "page_path"],
     ordering={
         "priority": "priority__rank",
         "created_at": "created_at",

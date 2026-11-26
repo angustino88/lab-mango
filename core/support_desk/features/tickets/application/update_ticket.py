@@ -7,7 +7,7 @@ from typing import Any
 from django.db import transaction
 from django.utils import timezone
 
-from core.support_desk.contracts import ActivityEventType, SystemState, TicketType
+from core.support_desk.contracts import NON_SLA_TICKET_TYPES, ActivityEventType, SystemState, TicketType
 from core.support_desk.exceptions import (
     ConcurrencyConflictError,
     InvalidFieldValueError,
@@ -184,23 +184,33 @@ def update_ticket(command: UpdateTicketInput, *, actor: Any) -> SupportTicket:
     if not updates and new_labels is None:
         return ticket
 
-    # A priority change re-bases the open SLA windows on the new targets.
-    if priority_changed and ticket.status.system_state != SystemState.DONE.value:
-        deadlines = compute_deadlines(
-            priority_changed,
-            start=ticket.created_at,
-            paused_seconds=ticket.sla_paused_seconds,
-            enabled=SupportSettings.get_solo().sla_enabled,
-        )
-        if ticket.first_response_at is None:
-            updates["response_due_at"] = deadlines["response_due_at"]
-        updates["resolution_due_at"] = deadlines["resolution_due_at"]
-        # Moving to a more relaxed priority can un-breach a clock; moving to a stricter one is judged on the next scan.
-        now = timezone.now()
-        if deadlines["resolution_due_at"] and deadlines["resolution_due_at"] > now:
-            updates["resolution_breached_at"] = None
-        if ticket.first_response_at is None and deadlines["response_due_at"] and deadlines["response_due_at"] > now:
+    # Re-evaluate open SLA windows when priority changes or when reclassifying between SLA and non-SLA types.
+    final_ticket_type = updates.get("ticket_type", ticket.ticket_type)
+    type_changed = "ticket_type" in updates
+    if ticket.status.system_state != SystemState.DONE.value and (priority_changed or type_changed):
+        if final_ticket_type in NON_SLA_TICKET_TYPES:
+            updates["response_due_at"] = None
+            updates["resolution_due_at"] = None
+            updates["sla_paused_at"] = None
             updates["response_breached_at"] = None
+            updates["resolution_breached_at"] = None
+        elif priority_changed or ticket.ticket_type in NON_SLA_TICKET_TYPES:
+            effective_priority = priority_changed or ticket.priority
+            deadlines = compute_deadlines(
+                effective_priority,
+                start=ticket.created_at,
+                paused_seconds=ticket.sla_paused_seconds,
+                enabled=SupportSettings.get_solo().sla_enabled,
+            )
+            if ticket.first_response_at is None:
+                updates["response_due_at"] = deadlines["response_due_at"]
+            updates["resolution_due_at"] = deadlines["resolution_due_at"]
+            # Moving to a more relaxed priority can un-breach a clock; moving to a stricter one is judged on the next scan.
+            now = timezone.now()
+            if deadlines["resolution_due_at"] and deadlines["resolution_due_at"] > now:
+                updates["resolution_breached_at"] = None
+            if ticket.first_response_at is None and deadlines["response_due_at"] and deadlines["response_due_at"] > now:
+                updates["response_breached_at"] = None
 
     updates["version"] = ticket.version + 1
 
