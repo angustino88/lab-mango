@@ -1,5 +1,6 @@
 """Create support ticket command use case."""
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import date
 from typing import Any
@@ -8,7 +9,13 @@ from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
 
 from core.common.domain.errors import Conflict
-from core.support_desk.contracts import ActivityEventType, SystemState, TicketSource, TicketType
+from core.support_desk.contracts import (
+    NON_SLA_TICKET_TYPES,
+    ActivityEventType,
+    SystemState,
+    TicketSource,
+    TicketType,
+)
 from core.support_desk.exceptions import (
     InvalidFieldValueError,
     PermissionDeniedError,
@@ -28,7 +35,10 @@ from core.support_desk.features.tickets.application.shared import actor_display_
 from core.support_desk.features.tickets.application.sla import compute_deadlines
 from core.support_desk.features.tickets.application.triage import (
     get_or_create_labels,
+    resolve_category,
     resolve_priority,
+    sanitize_client_context,
+    sanitize_page_path,
     validate_impact_urgency,
     validate_parent,
 )
@@ -52,7 +62,7 @@ _SOURCES = {s.value for s in TicketSource if s is not TicketSource.SYSTEM}
 class CreateTicketInput:
     subject: str
     description: str
-    category_id: int
+    category_id: int | None = None
     priority_id: int | None = None
     linked_resources: tuple[tuple[str, str], ...] = ()
     assignee_id: int | None = None
@@ -63,6 +73,8 @@ class CreateTicketInput:
     urgency: str = ""
     source: str = TicketSource.WEB.value
     external_reference: str = ""
+    page_path: str = ""
+    client_context: Mapping[str, Any] | None = None
     due_date: date | None = None
     # Triage fields (support agents / administrators only)
     team_id: int | None = None
@@ -120,14 +132,6 @@ def create_ticket(command: CreateTicketInput, *, actor: Any) -> SupportTicket:
     if not SupportStatus.objects.filter(is_active=True).exists():
         raise TicketCreationDisabledError(_NO_STATUS_MESSAGE)
 
-    category = (
-        SupportCategory.objects.select_related("default_team")
-        .filter(pk=command.category_id, is_active=True)
-        .first()
-    )
-    if not category:
-        raise TicketCreationDisabledError(f"Category {command.category_id} is not active or does not exist.")
-
     is_agent = can_triage_ticket(actor)
 
     ticket_type = command.ticket_type or app_settings.default_ticket_type
@@ -136,6 +140,10 @@ def create_ticket(command: CreateTicketInput, *, actor: Any) -> SupportTicket:
     if command.source not in _SOURCES:
         raise InvalidFieldValueError(f"Invalid source '{command.source}'.")
     validate_impact_urgency(command.impact, command.urgency)
+    page_path = sanitize_page_path(command.page_path)
+    client_context = sanitize_client_context(command.client_context)
+
+    category = resolve_category(explicit_id=command.category_id, ticket_type=ticket_type)
 
     # Priority: requesters may be restricted to describing impact/urgency only.
     explicit_priority_id = command.priority_id
@@ -199,6 +207,8 @@ def create_ticket(command: CreateTicketInput, *, actor: Any) -> SupportTicket:
                 impact=command.impact or "",
                 urgency=command.urgency or "",
                 external_reference=command.external_reference,
+                page_path=page_path,
+                client_context=client_context,
                 due_date=command.due_date,
                 category=category,
                 priority=priority,
@@ -211,8 +221,9 @@ def create_ticket(command: CreateTicketInput, *, actor: Any) -> SupportTicket:
                 idempotency_key=command.idempotency_key,
             )
 
-            # SLA deadlines are measured from the moment the ticket was created.
-            deadlines = compute_deadlines(priority, start=ticket.created_at, enabled=app_settings.sla_enabled)
+            # SLA deadlines are measured from the moment the ticket was created, except for non-SLA feedback types.
+            sla_applies = app_settings.sla_enabled and ticket_type not in NON_SLA_TICKET_TYPES
+            deadlines = compute_deadlines(priority, start=ticket.created_at, enabled=sla_applies)
             for field, value in deadlines.items():
                 setattr(ticket, field, value)
             if any(deadlines.values()):
@@ -253,6 +264,8 @@ def create_ticket(command: CreateTicketInput, *, actor: Any) -> SupportTicket:
                 "team": team.name if team else "",
                 "source": ticket.source,
             }
+            if page_path:
+                activity_payload["page_path"] = page_path
             if assignee:
                 activity_payload["assignee"] = actor_display_name(assignee)
             if command.impact or command.urgency:

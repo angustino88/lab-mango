@@ -48,13 +48,39 @@ class _ChoiceEnum(StrEnum):
 
 
 class TicketType(_ChoiceEnum):
-    """ITIL-style classification of a ticket (Jira "issue type")."""
+    """Classification of a support or platform feedback ticket."""
 
     INCIDENT = "incident"  # something is broken / degraded
     SERVICE_REQUEST = "service_request"  # a request for something (access, calibration, a license...)
     PROBLEM = "problem"  # underlying cause behind one or more incidents
     CHANGE = "change"  # planned change to lab infrastructure
     QUESTION = "question"  # how-to / information request
+    BUG = "bug"  # software bug in the Lab Mango web platform
+    FEATURE_REQUEST = "feature_request"  # enhancement or new capability request
+    FEEDBACK = "feedback"  # general or UX feedback about the web platform
+
+
+#: Ticket types that represent product suggestions or general feedback rather than SLA-bound incidents.
+NON_SLA_TICKET_TYPES: frozenset[str] = frozenset(
+    {
+        TicketType.FEATURE_REQUEST.value,
+        TicketType.FEEDBACK.value,
+    }
+)
+
+PAGE_PATH_MAX_LENGTH = 255
+CLIENT_CONTEXT_MAX_VALUE_LENGTH = 64
+CLIENT_CONTEXT_ALLOWED_KEYS: frozenset[str] = frozenset(
+    {
+        "browser",
+        "os",
+        "viewport",
+        "theme",
+        "app_version",
+        "language",
+    }
+)
+
 
 
 class Impact(_ChoiceEnum):

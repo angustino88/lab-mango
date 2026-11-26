@@ -22611,6 +22611,9 @@ components:
           type: string
         category_id:
           type: integer
+          nullable: true
+          description: 'Optional: resolves to a matching active category or General
+            when omitted.'
         priority_id:
           type: integer
           nullable: true
@@ -22636,6 +22639,19 @@ components:
           type: string
           default: ''
           maxLength: 128
+        page_path:
+          type: string
+          default: ''
+          description: Optional relative web app route (e.g. /booking-calendar) where
+            the ticket was opened.
+          maxLength: 255
+        client_context:
+          type: object
+          additionalProperties:
+            type: string
+            maxLength: 64
+          description: Optional non-sensitive client diagnostics (browser, os, viewport,
+            theme, app_version, language).
         due_date:
           type: string
           format: date
@@ -22671,7 +22687,6 @@ components:
           nullable: true
           maxLength: 128
       required:
-      - category_id
       - description
       - subject
     TicketCreateSerializersTicketDetailDetailResponse:
@@ -22728,6 +22743,16 @@ components:
           description: Reference in an external system (vendor RMA / case number,
             legacy Jira key...).
           maxLength: 128
+        page_path:
+          type: string
+          description: Optional web app route path where the ticket or feedback was
+            submitted.
+          maxLength: 255
+        client_context:
+          type: object
+          additionalProperties:
+            type: string
+          readOnly: true
         due_date:
           type: string
           format: date
@@ -22804,6 +22829,9 @@ components:
             $ref: '#/components/schemas/AvailableTicketTransition'
           readOnly: true
         is_watching:
+          type: boolean
+          readOnly: true
+        can_submit_csat:
           type: boolean
           readOnly: true
         created_at:
@@ -22893,8 +22921,10 @@ components:
       - assignee
       - attachments
       - available_transitions
+      - can_submit_csat
       - category
       - children
+      - client_context
       - comments
       - created_at
       - created_by
@@ -23256,6 +23286,9 @@ components:
       - problem
       - change
       - question
+      - bug
+      - feature_request
+      - feedback
       type: string
       description: '* `incident` - Incident
 
@@ -23265,7 +23298,13 @@ components:
 
         * `change` - Change
 
-        * `question` - Question'
+        * `question` - Question
+
+        * `bug` - Bug
+
+        * `feature_request` - Feature Request
+
+        * `feedback` - Feedback'
     TicketUpdateSerializersTicketDetailDetailResponse:
       type: object
       description: Base serializer for successful API responses.

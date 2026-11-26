@@ -83,6 +83,26 @@ def can_submit_csat(user: Any, ticket: SupportTicket) -> bool:
     return bool(user and getattr(user, "is_authenticated", False) and ticket.requester_id == user.pk)
 
 
+def is_csat_submission_open(
+    user: Any,
+    ticket: SupportTicket,
+    *,
+    app_settings: SupportSettings | None = None,
+    now: Any = None,
+) -> bool:
+    """True when ``user`` can submit or amend a CSAT rating on ``ticket`` right now."""
+    if not can_submit_csat(user, ticket):
+        return False
+    settings_obj = app_settings or SupportSettings.get_solo()
+    if not settings_obj.csat_enabled:
+        return False
+    if ticket.status.system_state != SystemState.DONE.value:
+        return False
+    resolved_at = ticket.resolved_at or ticket.closed_at or ticket.updated_at
+    current_time = now or timezone.now()
+    return bool(current_time <= resolved_at + timedelta(days=settings_obj.csat_window_days))
+
+
 def can_view_internal_notes(user: Any) -> bool:
     return is_support_agent(user)
 
