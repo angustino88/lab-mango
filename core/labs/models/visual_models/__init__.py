@@ -1,3 +1,3 @@
-from .visual_model import VisualModel
+from .asset import VisualModelAsset
 
-__all__ = ["VisualModel"]
+__all__ = ["VisualModelAsset"]

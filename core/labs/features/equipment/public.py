@@ -98,6 +98,9 @@ from .queries.placements import (
     bench_id_at,
     get_active_placement,
     has_active_placements,
+    highest_rack_unit,
+    rack_mounted_rows,
+    station_installed_totals,
     summarize_active_placements,
 )
 from .queries.reservations import list_reservations
@@ -173,6 +176,9 @@ __all__ = (
     "bench_id_at",
     "get_active_placement",
     "has_active_placements",
+    "highest_rack_unit",
+    "rack_mounted_rows",
+    "station_installed_totals",
     "summarize_active_placements",
     "close_placements_for_location",
     "place_equipment",

@@ -4411,6 +4411,13 @@ components:
           maximum: 32767
           minimum: 0
           nullable: true
+        rack_units:
+          type: integer
+          maximum: 60
+          minimum: 1
+          nullable: true
+          description: Usable rack height in units (U) for rack stations, e.g. 42.
+            Empty for non-rack stations.
         max_concurrent_users:
           type: integer
           maximum: 32767
@@ -5176,10 +5183,14 @@ components:
           type: integer
           readOnly: true
           nullable: true
+          description: Slot centre from the room's back-left corner, across the room's
+            width (mm).
         y_mm:
           type: integer
           readOnly: true
           nullable: true
+          description: Slot centre from the room's back-left corner, along the room's
+            length (mm).
         width_mm:
           type: integer
           readOnly: true
@@ -5595,6 +5606,12 @@ components:
           type: integer
           readOnly: true
           nullable: true
+        rack_units:
+          type: integer
+          readOnly: true
+          nullable: true
+          description: Usable rack height in units (U) for rack stations, e.g. 42.
+            Empty for non-rack stations.
         max_concurrent_users:
           type: integer
           readOnly: true
@@ -5708,6 +5725,7 @@ components:
       - position
       - power_capacity_w
       - power_reserved_w
+      - rack_units
       - remark
       - room
       - safety_classification
@@ -5795,6 +5813,13 @@ components:
           maximum: 32767
           minimum: 0
           nullable: true
+        rack_units:
+          type: integer
+          maximum: 60
+          minimum: 1
+          nullable: true
+          description: Usable rack height in units (U) for rack stations, e.g. 42.
+            Empty for non-rack stations.
         max_concurrent_users:
           type: integer
           maximum: 32767
@@ -6720,6 +6745,13 @@ components:
           maximum: 32767
           minimum: 0
           nullable: true
+        rack_units:
+          type: integer
+          maximum: 60
+          minimum: 1
+          nullable: true
+          description: Usable rack height in units (U) for rack stations, e.g. 42.
+            Empty for non-rack stations.
         max_concurrent_users:
           type: integer
           maximum: 32767

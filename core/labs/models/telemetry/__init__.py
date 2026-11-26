@@ -12,6 +12,7 @@ from .device import (
     TelemetryDeviceRole,
     TelemetryDeviceState,
 )
+from .latest import TelemetryLatest, TelemetryReadingStatus
 from .reference_data import (
     DeviceProfile,
     DeviceProfileStatus,
@@ -32,6 +33,8 @@ __all__ = [
     "DeviceProfileStatus",
     "DeviceProtocol",
     "GatewayScopeBinding",
+    "TelemetryLatest",
+    "TelemetryReadingStatus",
     "MetricAggregation",
     "MetricCombination",
     "MetricDefinition",

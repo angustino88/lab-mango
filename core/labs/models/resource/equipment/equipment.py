@@ -94,6 +94,14 @@ class Equipment(ResourceModel):
         null=True,
         blank=True,
     )
+    visual_model = models.ForeignKey(
+        "labs.VisualModelAsset",
+        related_name="equipment_items",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        help_text="3D model from the shared library shown on the 3D dashboard.",
+    )
     serial_number = models.CharField(max_length=255, blank=True, default="")
     firmware_version = models.CharField(
         max_length=255, blank=True, default="", help_text="Firmware currently installed on this unit."

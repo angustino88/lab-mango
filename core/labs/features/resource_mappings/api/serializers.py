@@ -20,6 +20,16 @@ class ResourceMappingQuerySerializer(serializers.Serializer):
     license_assignments_cursor = serializers.CharField(required=False)
 
 
+class MappingConditionsSerializer(serializers.Serializer):
+    """Current conditions from fresh telemetry placed in the room or station; null when nothing reports."""
+
+    temperature_c = serializers.FloatField(allow_null=True, help_text="Mean of current temperature channels.")
+    humidity_percent = serializers.FloatField(allow_null=True, help_text="Mean of current humidity channels.")
+    power_w = serializers.FloatField(allow_null=True, help_text="Sum of current power channels.")
+    observed_at = serializers.DateTimeField(allow_null=True, help_text="Newest reading included.")
+    channel_count = serializers.IntegerField()
+
+
 @embedded_resource
 class MappingRoomSerializer(serializers.Serializer):
     id = serializers.IntegerField()
@@ -28,6 +38,9 @@ class MappingRoomSerializer(serializers.Serializer):
     name = serializers.CharField(allow_blank=True)
     layout_rows = serializers.IntegerField(allow_null=True)
     layout_columns = serializers.IntegerField(allow_null=True)
+    length_m = serializers.DecimalField(max_digits=8, decimal_places=2, allow_null=True, required=False)
+    width_m = serializers.DecimalField(max_digits=8, decimal_places=2, allow_null=True, required=False)
+    conditions = MappingConditionsSerializer(allow_null=True, required=False)
 
 
 @embedded_resource
@@ -42,6 +55,39 @@ class MappingRoomSlotSerializer(serializers.Serializer):
     width_mm = serializers.IntegerField(allow_null=True)
     depth_mm = serializers.IntegerField(allow_null=True)
     orientation_degrees = serializers.IntegerField()
+    slot_type = serializers.CharField(required=False, help_text="station, storage, aisle, safety, utility or reserved.")
+    status = serializers.CharField(required=False, help_text="usable, blocked or retired.")
+
+
+class MappingStationLayoutSerializer(serializers.Serializer):
+    width_mm = serializers.IntegerField(allow_null=True)
+    depth_mm = serializers.IntegerField(allow_null=True)
+    height_mm = serializers.IntegerField(allow_null=True)
+    orientation_degrees = serializers.IntegerField(allow_null=True)
+
+
+class MappingStationCapacitySerializer(serializers.Serializer):
+    bench_capacity = serializers.IntegerField(allow_null=True)
+    rack_units = serializers.IntegerField(allow_null=True)
+    rack_units_used = serializers.IntegerField(required=False)
+    power_capacity_w = serializers.IntegerField(allow_null=True)
+    power_reserved_w = serializers.IntegerField(allow_null=True)
+    power_installed_w = serializers.FloatField(required=False, help_text="Rated draw of equipment installed here.")
+    max_load_kg = serializers.IntegerField(allow_null=True)
+    load_installed_kg = serializers.FloatField(required=False)
+    network_port_capacity = serializers.IntegerField(allow_null=True)
+    installed_units = serializers.IntegerField(required=False)
+
+
+class MappingRackItemSerializer(serializers.Serializer):
+    equipment_id = serializers.IntegerField()
+    sku = serializers.CharField()
+    name = serializers.CharField(allow_blank=True)
+    category = serializers.CharField(allow_null=True)
+    power_draw_w = serializers.IntegerField(allow_null=True)
+    rack_unit = serializers.IntegerField()
+    rack_unit_height = serializers.IntegerField()
+    rack_face = serializers.CharField()
 
 
 @embedded_resource
@@ -52,6 +98,13 @@ class MappingStationSerializer(serializers.Serializer):
     name = serializers.CharField(allow_blank=True)
     room_id = serializers.IntegerField(allow_null=True)
     slot_id = serializers.IntegerField(allow_null=True)
+    visual_model_id = serializers.IntegerField(
+        allow_null=True, required=False, help_text="3D library model shown for this resource, after catalog defaults."
+    )
+    layout = MappingStationLayoutSerializer(required=False)
+    capacity = MappingStationCapacitySerializer(required=False)
+    conditions = MappingConditionsSerializer(allow_null=True, required=False)
+    rack = MappingRackItemSerializer(many=True, required=False, help_text="Rack-mounted equipment, bottom unit first.")
 
 
 @embedded_resource
@@ -60,9 +113,11 @@ class MappingStationSlotSerializer(serializers.Serializer):
     station_id = serializers.IntegerField()
     position_index = serializers.IntegerField()
     slot_code = serializers.CharField()
+
     def get_fields(self):
         fields = super().get_fields()
         fields["label"] = serializers.CharField(allow_blank=True)
+        fields["width_mm"] = serializers.IntegerField(allow_null=True, required=False)
         return fields
 
 
@@ -74,6 +129,9 @@ class MappingBenchSerializer(serializers.Serializer):
     name = serializers.CharField(allow_blank=True)
     setup_location_id = serializers.IntegerField(allow_null=True)
     station_slot_id = serializers.IntegerField(allow_null=True)
+    visual_model_id = serializers.IntegerField(
+        allow_null=True, required=False, help_text="3D library model shown for this resource, after catalog defaults."
+    )
 
 
 class MappingEquipmentCategorySerializer(serializers.Serializer):
@@ -105,6 +163,9 @@ class MappingEquipmentSerializer(serializers.Serializer):
     product_model = MappingEquipmentCategorySerializer(allow_null=True, required=False)
     bench_id = serializers.IntegerField(allow_null=True)
     bench_assignment = MappingEquipmentAssignmentSerializer(allow_null=True)
+    visual_model_id = serializers.IntegerField(
+        allow_null=True, required=False, help_text="3D library model shown for this resource, after catalog defaults."
+    )
 
 
 @embedded_resource

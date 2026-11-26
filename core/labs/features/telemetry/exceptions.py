@@ -101,3 +101,17 @@ __all__ = [
     "TargetNotLocated",
     "TargetOutsideInstallRoom",
 ]
+
+
+class GatewayNotRegistered(Forbidden):
+    """The authenticated agent's computer is not a claimed telemetry gateway."""
+
+    code = "telemetry_gateway_not_registered"
+    default_message = "This computer is not registered as a telemetry gateway."
+
+
+class GatewayHasNoScope(Conflict):
+    """A gateway may only submit readings while it covers a room, station or equipment item."""
+
+    code = "telemetry_gateway_without_scope"
+    default_message = "This gateway has no scope yet. Set the room, station or equipment it covers first."

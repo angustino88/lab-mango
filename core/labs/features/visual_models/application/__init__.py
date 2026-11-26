@@ -1,19 +1,20 @@
-"""Unique target constraint and locked version checks guard concurrent catalog edits."""
+"""Library and selection writes. The unique sha256, row locks and version checks guard concurrent editors."""
 
+import hashlib
 import math
-import re
 
 from django.core.exceptions import PermissionDenied
-from django.db import transaction
+from django.db import IntegrityError, transaction
 
-from core.labs.models.visual_models import VisualModel
+from core.common.models.user_stamped import UserStampedModel
+from core.labs.models.visual_models import VisualModelAsset
 from core.users.public import LabsPermission, has_permission
 
-from ..contracts import ModelStorage, SaveModelInput
-from ..exceptions import InvalidModel, ModelConflict
+from ..contracts import AssetDetails, ModelSelection, ModelStorage
+from ..exceptions import AssetInUse, InvalidModel, ModelConflict, ModelNotFound
+from ..queries import asset_usage, get_selection
+from ..targets import TARGETS
 from ..validation import validate_glb
-
-SCOPES = ("station_type", "equipment_category", "equipment_model", "equipment", "bench")
 
 
 def ensure_editor(actor):
@@ -21,71 +22,115 @@ def ensure_editor(actor):
         raise PermissionDenied
 
 
-def save_model(data: SaveModelInput, *, actor, storage: ModelStorage) -> VisualModel:
-    ensure_editor(actor)
-    if data.scope not in SCOPES or not (
-        re.fullmatch(r"[1-9][0-9]*", data.target_key) or (data.scope == "bench" and data.target_key == "*")
-    ):
-        raise InvalidModel("Select a supported catalog type or resource.")
-    if not all(
-        math.isfinite(value)
-        for value in (data.scale, data.rotation, data.surface, data.offset_x, data.offset_y, data.offset_z)
-    ):
+def _check_finite(*values: float) -> None:
+    if not all(math.isfinite(value) for value in values):
         raise InvalidModel("Placement values must be finite numbers.")
-    if any(abs(value) > 1 for value in (data.offset_x, data.offset_y, data.offset_z)):
-        raise InvalidModel("Offsets must be between -1 and 1.")
-    if not 0 < data.scale <= 2 or not 0 <= data.surface <= 1 or not -360 <= data.rotation <= 360:
-        raise InvalidModel("The placement settings are out of range.")
-    if data.content is not None:
-        validate_glb(data.content)
-    stored = storage.save(data.content) if data.content is not None else None
+
+
+def _check_details(details: AssetDetails) -> None:
+    _check_finite(details.rotation, details.surface)
+    if not -360 <= details.rotation <= 360 or not 0 <= details.surface <= 1:
+        raise InvalidModel("The model placement defaults are out of range.")
+
+
+def _apply_details(asset: VisualModelAsset, details: AssetDetails) -> bool:
+    changed = False
+    for field in ("name", "source_url", "license", "rotation", "surface"):
+        value = getattr(details, field)
+        if getattr(asset, field) != value:
+            setattr(asset, field, value)
+            changed = True
+    return changed
+
+
+def upload_asset(
+    content: bytes, details: AssetDetails, *, actor, storage: ModelStorage
+) -> tuple[VisualModelAsset, bool]:
+    """Add a GLB to the library. Returns ``(asset, created)``; identical bytes reuse the existing asset."""
+    ensure_editor(actor)
+    return store_asset(content, details, storage=storage)
+
+
+def store_asset(content: bytes, details: AssetDetails, *, storage: ModelStorage) -> tuple[VisualModelAsset, bool]:
+    """``upload_asset`` without the permission check, for trusted callers such as management commands."""
+    _check_details(details)
+    validate_glb(content)
+    digest = hashlib.sha256(content).hexdigest()
+    existing = VisualModelAsset.objects.filter(sha256=digest).first()
+    if existing is not None:
+        return existing, False
+    stored = storage.save(content)
     try:
         with transaction.atomic():
-            # The unique constraint makes get_or_create safe when two editors create a target.
-            model, created = VisualModel.objects.select_for_update().get_or_create(
-                scope=data.scope,
-                target_key=data.target_key,
-                defaults={"name": data.name, "file": stored or ""},
-            )
-            if (0 if created else model.version) != data.expected_version:
-                raise ModelConflict
-            if not stored and not model.file:
-                raise InvalidModel("Attach a GLB file before saving.")
-            old = model.file.name
-            for field in (
-                "name",
-                "rotation",
-                "scale",
-                "surface",
-                "source_url",
-                "license",
-                "offset_x",
-                "offset_y",
-                "offset_z",
-            ):
-                setattr(model, field, getattr(data, field))
-            if stored:
-                model.file.name = stored
-            model.version = 1 if created else model.version + 1
-            model.save()
-            if old and stored and old != stored:
-                transaction.on_commit(lambda: storage.delete(old))
+            asset = VisualModelAsset(file=stored, sha256=digest, size=len(content))
+            _apply_details(asset, details)
+            asset.save()
+    except IntegrityError:
+        # A concurrent upload of the same bytes won the unique sha256 constraint.
+        storage.delete(stored)
+        existing = VisualModelAsset.objects.filter(sha256=digest).first()
+        if existing is None:
+            raise
+        return existing, False
     except BaseException:
-        if stored:
-            storage.delete(stored)
+        storage.delete(stored)
         raise
-    return model
+    return asset, True
 
 
-def remove_model(*, scope: str, target_key: str, expected_version: int, actor, storage: ModelStorage):
+def update_asset(asset_id: int, details: AssetDetails, *, expected_version: int, actor) -> VisualModelAsset:
+    ensure_editor(actor)
+    _check_details(details)
+    with transaction.atomic():
+        asset = VisualModelAsset.objects.select_for_update().filter(pk=asset_id).first()
+        if asset is None:
+            raise ModelNotFound
+        if asset.version != expected_version:
+            raise ModelConflict
+        if _apply_details(asset, details):
+            asset.version += 1
+            asset.save()
+    return asset
+
+
+def delete_asset(asset_id: int, *, expected_version: int, actor, storage: ModelStorage) -> None:
     ensure_editor(actor)
     with transaction.atomic():
-        model = VisualModel.objects.select_for_update().filter(scope=scope, target_key=target_key).first()
-        if model is None:
+        asset = VisualModelAsset.objects.select_for_update().filter(pk=asset_id).first()
+        if asset is None:
+            raise ModelNotFound
+        if asset.version != expected_version:
             raise ModelConflict
-        if model.version != expected_version:
-            raise ModelConflict
-        name = model.file.name
-        model.delete()
+        # Resources reference the asset with PROTECT; this check gives a clear error before the database does.
+        usage = asset_usage(asset.pk)
+        if usage:
+            raise AssetInUse(usage)
+        name = asset.file.name
+        asset.delete()
         if name:
             transaction.on_commit(lambda: storage.delete(name))
+
+
+def select_visual_model(segment: str, pk: int, asset_id: int | None, *, actor) -> ModelSelection:
+    """Store ``asset_id`` (or clear it with None) on one resource. Last write wins; the row lock serializes writers."""
+    ensure_editor(actor)
+    target = TARGETS.get(segment)
+    if target is None:
+        raise ModelNotFound
+    with transaction.atomic():
+        row = target.queryset().select_for_update(of=("self",)).filter(pk=pk).first()
+        if row is None:
+            raise ModelNotFound
+        # Lock the asset so it cannot be deleted while it is being assigned.
+        if asset_id is not None and not VisualModelAsset.objects.select_for_update().filter(pk=asset_id).exists():
+            raise InvalidModel("Select a model from the library.")
+        if row.visual_model_id != asset_id:
+            row.visual_model_id = asset_id
+            fields = ["visual_model"] + [name for name in ("updated_at",) if hasattr(row, name)]
+            if isinstance(row, UserStampedModel):
+                row.save(update_fields=fields, actor=actor)
+            else:
+                row.save(update_fields=fields)
+    selection = get_selection(segment, pk)
+    assert selection is not None
+    return selection

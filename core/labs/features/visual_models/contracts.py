@@ -8,17 +8,22 @@ class ModelStorage(Protocol):
 
 
 @dataclass(frozen=True)
-class SaveModelInput:
-    scope: str
-    target_key: str
+class AssetDetails:
+    """Editable library metadata and the model's placement."""
+
     name: str
-    content: bytes | None
-    expected_version: int
-    rotation: float = 0
-    scale: float = 1
-    surface: float = 1
-    offset_x: float = 0
-    offset_y: float = 0
-    offset_z: float = 0
     source_url: str = ""
     license: str = ""
+    rotation: float = 0
+    surface: float = 1
+
+
+@dataclass(frozen=True)
+class ModelSelection:
+    """The model a resource stores and the one it shows after inheriting catalog defaults."""
+
+    id: int
+    name: str
+    visual_model_id: int | None
+    effective_visual_model_id: int | None
+    origin: str | None  # "own", the catalog it is inherited from (e.g. "station_type"), or None when none applies
