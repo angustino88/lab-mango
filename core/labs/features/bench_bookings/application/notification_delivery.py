@@ -22,9 +22,11 @@ from core.common.notifications import (
 from core.labs.features.equipment.public import inactive_equipment_candidates
 from core.labs.models import BookingApprovalStatus, BookingNotification, BookingStatus
 from core.users.public import resolve_teams_recipient
+from core.websocket.models import Notification
+from core.websocket.publish_service import publish_user_notification
 
 from ..contracts import BookingNotificationSnapshot
-from ..integrations.notification_transport import deliver
+from ..integrations.notification_transport import booking_web_message, deliver
 from .notification_collection import start_eligible
 from .notification_intents import notifications_enabled
 
@@ -141,7 +143,9 @@ def complete_claim(*, row: BookingNotification, result: DeliveryOutcome, now: da
     state = result.state
     if state == "retry":
         state = DeliveryState.PENDING.value if row.attempts < MAX_ATTEMPTS else DeliveryState.FAILED.value
-    backoff = retry_delay(attempt=row.attempts, jitter=random.random()) if state == DeliveryState.PENDING.value else None
+    backoff = (
+        retry_delay(attempt=row.attempts, jitter=random.random()) if state == DeliveryState.PENDING.value else None
+    )
     changed = complete_leased_record(
         BookingNotification.objects,
         row=row,
@@ -159,6 +163,41 @@ def complete_claim(*, row: BookingNotification, result: DeliveryOutcome, now: da
             result.code,
         )
     return bool(changed)
+
+
+class _Fenced(Exception):
+    """Another worker owns the row now; roll back the web notification."""
+
+
+def deliver_web(*, row: BookingNotification, snapshot: BookingNotificationSnapshot) -> bool:
+    """Create the bell entry and complete the claim in one transaction (exactly once); push after commit."""
+    now = timezone.now()
+    title, details, action_path = booking_web_message(kind=row.kind, snapshot=snapshot)
+    try:
+        with transaction.atomic():
+            notification = Notification.objects.create(
+                target_user_id=row.recipient_id,
+                message=title,
+                details=details,
+                message_type=Notification.INFO if row.kind == "start" else Notification.WARNING,
+                expiry_date=max(datetime.fromisoformat(snapshot.ends_at), now + timedelta(minutes=15)),
+                action_path=action_path,
+            )
+            if not complete_claim(row=row, result=DeliveryOutcome("sent", "accepted"), now=now):
+                raise _Fenced
+            transaction.on_commit(
+                lambda: publish_user_notification(
+                    row.recipient_id,
+                    title,
+                    message_type=notification.message_type,
+                    details=details,
+                    notification_id=notification.pk,
+                    action_path=action_path,
+                )
+            )
+    except _Fenced:
+        return False
+    return True
 
 
 def deliver_notifications(*, limit: int = 5) -> dict[str, int]:
@@ -203,6 +242,9 @@ def deliver_notifications(*, limit: int = 5) -> dict[str, int]:
             now = timezone.now()
             if row.expires_at <= now or not reminder_is_current(row=row, now=now):
                 result = DeliveryOutcome("expired", "expired")
+        if result is None and row.channel == "in_app":
+            counts["sent" if deliver_web(row=row, snapshot=snapshot) else "fenced"] += 1
+            continue
         if result is None:
             started = monotonic()
             result = deliver(

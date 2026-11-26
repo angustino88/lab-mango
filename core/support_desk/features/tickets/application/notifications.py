@@ -99,7 +99,8 @@ def queue_ticket_notifications(
         "ticket_subject": ticket.subject,
         "actor_id": actor_pk,
         "actor_name": actor_display_name(actor, default="System"),
-        "deep_link": f"/support/tickets/{ticket.key}",
+        # The web app's ticket page (frontend route /support-tickets/:key).
+        "deep_link": f"/support-tickets/{ticket.key}",
         **(extra or {}),
     }
 

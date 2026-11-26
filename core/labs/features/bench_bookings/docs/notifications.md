@@ -172,3 +172,16 @@ connected or migrated, no live notifications, no schedule provisioning, no stagi
 - PostgreSQL integration/concurrency, migration application, full suite, deploy checks,
   import-linter and independent review: **not run**. `lint-imports` unavailable locally.
 
+## Web channel (bell, toast, desktop notification)
+
+Added 2026-11-26. The **start** and **inactivity** reminders also go to the web channel (`in_app`) when
+`BOOKING_NOTIFICATIONS_IN_APP_ENABLED` is on (default off; also needs the master switch and cutoff). Creation and
+update confirmations stay email/Teams: they confirm the user's own action.
+
+* Same ledger, dedupe, lease, expiry and send-time revalidation as email/Teams (`booking_notice_channel` now allows
+  `in_app`). Delivery creates the bell entry (`websocket.Notification`, targeted at the booking creator) in the same
+  transaction as the fenced completion, so it is created exactly once; the live push runs after commit.
+* Messages: "Your booking on Bench 12 starts now" (window, booking code, sign-in hint) and "No activity on GPU-RTX
+  for over an hour" (booked-until time, suggestion to end early). Both link to `/my-bookings` ("View booking").
+* In the browser these become a toast and, if the user opted in, a desktop notification that stays on screen until
+  clicked or closed.

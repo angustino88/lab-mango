@@ -12,6 +12,8 @@ def notification_settings(env) -> dict:
     enabled = env.bool("BOOKING_NOTIFICATIONS_ENABLED", default=False)
     email = env.bool("BOOKING_NOTIFICATIONS_EMAIL_ENABLED", default=False)
     teams = env.bool("BOOKING_NOTIFICATIONS_TEAMS_ENABLED", default=False)
+    # Web (bell, toast, opt-in desktop notification) for the start and inactivity reminders.
+    in_app = env.bool("BOOKING_NOTIFICATIONS_IN_APP_ENABLED", default=False)
     raw_cutoff = env("BOOKING_NOTIFICATIONS_ENABLEMENT_CUTOFF", default="")
     cutoff = None
     if raw_cutoff:
@@ -62,6 +64,7 @@ def notification_settings(env) -> dict:
         "BOOKING_NOTIFICATIONS_ENABLED": enabled,
         "BOOKING_NOTIFICATIONS_EMAIL_ENABLED": email,
         "BOOKING_NOTIFICATIONS_TEAMS_ENABLED": teams,
+        "BOOKING_NOTIFICATIONS_IN_APP_ENABLED": in_app,
         "BOOKING_NOTIFICATIONS_ENABLEMENT_CUTOFF": cutoff,
         "BOOKING_NOTIFICATIONS_TEAMS_WORKFLOW_URL": endpoint,
         "BOOKING_NOTIFICATIONS_TEAMS_EXPECTED_TENANT_ID": tenant,

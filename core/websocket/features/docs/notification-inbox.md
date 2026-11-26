@@ -27,3 +27,21 @@ Bell with unread badge → panel (All / Unread, mark all read, item click marks 
 New live notifications show a toast with the action; desktop (browser) notifications are opt-in from the panel and
 shown only while the tab is in the background. The sticky banner is reserved for unread `announcement`
 notifications; dismissing one marks it read.
+
+## What reaches the bell (and therefore toasts / desktop notifications)
+
+| Source | Action link | Desktop stays until clicked |
+|---|---|---|
+| Slot alerts, followed bookings | `/booking-calendar?action=create&…` (Book now) | yes |
+| Booking start / inactivity reminders | `/my-bookings` (View booking) | yes |
+| Support desk ticket updates | `/support-tickets/<key>` (View ticket) | no |
+| License expiry, license-check attention, license missing | `/lab-equipment/license` | no |
+| Monitoring: expected device disconnected | `/lab-monitoring` | no |
+| Admin announcements | banner (not a pop-up) | — |
+
+Support-desk in-app updates used to be pushed to the broadcast channel (every connected user) and were not saved;
+they are now saved for the recipient only. Their email links pointed to `/support/tickets/<key>`, which the web app
+does not serve; they now use `/support-tickets/<key>`.
+
+Not on the bell (by design): OTP codes (security), storage-quota emails and equipment loan reminders (email only;
+candidates for a later change).
