@@ -44,14 +44,14 @@ from core.labs.models import (
     SlotWatchStatus,
 )
 
-MIN_FREE_GAP = timedelta(minutes=5)
+from ..contracts import MIN_FREE_GAP, Interval, free_intervals
+
 RELEASE_LOOKBACK = timedelta(minutes=15)
 FOLLOW_RELEASE_LOOKBACK = timedelta(days=1)
 NOTICE_LIFETIME = timedelta(minutes=30)
 PAGE_SIZE = 100
 BOOKINGS_PER_WATCH = 200
 
-Interval = tuple[datetime, datetime]
 
 
 def slot_watch_enabled() -> bool:
@@ -68,26 +68,6 @@ def channel_enabled(channel: str) -> bool:
         getattr(settings, "BOOKING_NOTIFICATIONS_ENABLED", False)
         and getattr(settings, f"BOOKING_NOTIFICATIONS_{channel.upper()}_ENABLED", False)
     )
-
-
-def free_intervals(window: Interval, busy: list[Interval], *, min_gap: timedelta = MIN_FREE_GAP) -> list[Interval]:
-    """Half-open gaps in ``window`` not covered by ``busy``, each at least ``min_gap`` long."""
-    lo, hi = window
-    gaps: list[Interval] = []
-    cursor = lo
-    for start, end in sorted(busy):
-        if end <= cursor:
-            continue
-        if start >= hi:
-            break
-        if start > cursor:
-            gaps.append((cursor, min(start, hi)))
-        cursor = max(cursor, end)
-        if cursor >= hi:
-            break
-    if cursor < hi:
-        gaps.append((cursor, hi))
-    return [(s, e) for s, e in gaps if e - s >= min_gap]
 
 
 def is_reserving(booking: BenchBooking) -> bool:

@@ -110,3 +110,16 @@ free window), is not sent.
 * `ruff check` / `ruff format --check` on new files — passed. `mypy` — no findings in new modules (pre-existing
   repository findings elsewhere unchanged).
 * Not run: deploy check, Spectral, live email/Teams sends, concurrent-worker load test.
+
+## Availability ("queue view") on each alert
+
+Added 2026-11-26. Active alerts carry `availability` (null otherwise), used by the Dashboard "Up next" card:
+
+* `window_starts_at` / `window_ends_at` — the watched time from now (follows: until 2 h after the booking ends);
+* `busy_periods` — reserving bookings in that window, clipped, **anonymous** (`is_mine` only marks the viewer's own);
+* `next_free_starts_at` / `next_free_ends_at` — first gap of at least 5 minutes, or null when fully booked;
+* `watcher_count` — other users with an active alert on the same bench overlapping the window (count only).
+
+This is deliberately a demand signal, not a queue position: alerts are notify-only and the first person to book gets
+the slot, so a "you are #2" position would mislead. Cost: two bounded queries per active alert (20 busy periods
+max; at most 20 active alerts per user). `free_intervals` moved to `contracts.py` so queries and application share it.

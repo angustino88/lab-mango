@@ -15,6 +15,7 @@ from core.labs.features.base.serializers import (
     UIDNamedReferenceSerializer,
     to_choice_reference,
 )
+from core.labs.features.bench_bookings.queries.slot_watches import slot_availability
 from core.labs.models import (
     BenchBooking,
     BenchSlotWatch,
@@ -226,10 +227,30 @@ class BenchSlotWatchListQuerySerializer(PageNumberQuerySerializer):
     )
 
 
+class SlotBusyPeriodSerializer(serializers.Serializer):
+    starts_at = serializers.DateTimeField()
+    ends_at = serializers.DateTimeField()
+    is_mine = serializers.BooleanField(help_text="The viewer's own booking. Other bookings are anonymous.")
+
+
+class SlotAvailabilitySerializer(serializers.Serializer):
+    """Live view of the watched time: who-free (anonymous) busy blocks, next free gap, and demand."""
+
+    window_starts_at = serializers.DateTimeField()
+    window_ends_at = serializers.DateTimeField()
+    busy_periods = SlotBusyPeriodSerializer(many=True)
+    next_free_starts_at = serializers.DateTimeField(allow_null=True)
+    next_free_ends_at = serializers.DateTimeField(allow_null=True)
+    watcher_count = serializers.IntegerField(help_text="Other users with an active alert on this bench and time.")
+
+
 class BenchSlotWatchSerializer(AppModelSerializer):
     bench = UIDNamedReferenceSerializer(read_only=True)
     starts_at = serializers.DateTimeField(source="range_start", read_only=True)
     ends_at = serializers.DateTimeField(source="range_end", read_only=True)
+    availability = serializers.SerializerMethodField(
+        help_text="For active alerts: busy blocks, next free time and how many others are watching."
+    )
     followed_booking_id = serializers.IntegerField(
         source="target_booking_id",
         read_only=True,
@@ -247,6 +268,7 @@ class BenchSlotWatchSerializer(AppModelSerializer):
             "starts_at",
             "ends_at",
             "followed_booking_id",
+            "availability",
             "status",
             "created_at",
             "updated_at",
@@ -256,3 +278,8 @@ class BenchSlotWatchSerializer(AppModelSerializer):
     @extend_schema_field(ChoiceReferenceSerializer)
     def get_status(self, obj: BenchSlotWatch) -> dict[str, str] | None:
         return to_choice_reference(obj.status, SlotWatchStatus.choices)
+
+    @extend_schema_field(SlotAvailabilitySerializer(allow_null=True))
+    def get_availability(self, obj: BenchSlotWatch) -> dict | None:
+        availability = slot_availability(obj)
+        return SlotAvailabilitySerializer(availability).data if availability else None

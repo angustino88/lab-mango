@@ -104,3 +104,31 @@ class TestSlotWatchAPI:
         assert (
             api_client.get(URL, {"status": "fulfilled", "updated_after": (now + H).isoformat()}).json()["data"] == []
         )
+
+    def test_availability_shows_busy_blocks_next_free_and_demand(self, api_client, actor, bench, make_booking, now):
+        from core.labs.models import BenchBooking
+
+        other = grant_labs_role(UserFactory(username="slot-busy-owner"), "member")
+        busy = BenchBooking(bench=bench, starts_at=now - H, ends_at=now + H, booking_code="AV-1")
+        busy.save(actor=other)
+        mine = BenchBooking(bench=bench, starts_at=now + 2 * H, ends_at=now + 3 * H, booking_code="AV-2")
+        mine.save(actor=actor)
+        rival = APIClient()
+        rival.force_authenticate(grant_labs_role(UserFactory(username="slot-rival"), "member"))
+        window = {"bench_id": bench.pk, "starts_at": now.isoformat(), "ends_at": (now + 4 * H).isoformat()}
+        rival.post(URL, window, format="json")
+
+        body = api_client.post(URL, window, format="json").json()["data"]
+        availability = body["availability"]
+        assert [p["is_mine"] for p in availability["busy_periods"]] == [False, True]
+        from datetime import datetime
+
+        assert datetime.fromisoformat(availability["next_free_starts_at"]) == now + H
+        assert datetime.fromisoformat(availability["next_free_ends_at"]) == now + 2 * H
+        assert availability["watcher_count"] == 1
+        assert "booking_code" not in str(availability) and "AV-1" not in str(availability)
+
+    def test_availability_is_null_for_stopped_alerts(self, api_client, bench, now):
+        watch_id = api_client.post(URL, _payload(bench, now), format="json").json()["data"]["id"]
+        body = api_client.post(f"{URL}/{watch_id}/actions/cancel").json()["data"]
+        assert body["availability"] is None

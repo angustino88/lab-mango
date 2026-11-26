@@ -49226,6 +49226,16 @@
             "nullable": true,
             "description": "Set when this alert follows one booking: you get one alert when it ends, whichever way."
           },
+          "availability": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SlotAvailability"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true,
+            "description": "For active alerts: busy blocks, next free time and how many others are watching."
+          },
           "status": {
             "allOf": [
               {
@@ -49246,6 +49256,7 @@
           }
         },
         "required": [
+          "availability",
           "bench",
           "created_at",
           "ends_at",
@@ -72657,6 +72668,70 @@
           "name",
           "rows",
           "updated"
+        ]
+      },
+      "SlotAvailability": {
+        "type": "object",
+        "description": "Live view of the watched time: who-free (anonymous) busy blocks, next free gap, and demand.",
+        "properties": {
+          "window_starts_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "window_ends_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "busy_periods": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SlotBusyPeriod"
+            }
+          },
+          "next_free_starts_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "next_free_ends_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "watcher_count": {
+            "type": "integer",
+            "description": "Other users with an active alert on this bench and time."
+          }
+        },
+        "required": [
+          "busy_periods",
+          "next_free_ends_at",
+          "next_free_starts_at",
+          "watcher_count",
+          "window_ends_at",
+          "window_starts_at"
+        ]
+      },
+      "SlotBusyPeriod": {
+        "type": "object",
+        "properties": {
+          "starts_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "is_mine": {
+            "type": "boolean",
+            "description": "The viewer's own booking. Other bookings are anonymous."
+          }
+        },
+        "required": [
+          "ends_at",
+          "is_mine",
+          "starts_at"
         ]
       },
       "SnapshotItem": {

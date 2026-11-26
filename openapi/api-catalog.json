@@ -16857,6 +16857,17 @@
                     "nullable": true,
                     "description": "Set when this alert follows one booking: you get one alert when it ends, whichever way."
                   },
+                  "availability": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
+                    "readOnly": true,
+                    "description": "For active alerts: busy blocks, next free time and how many others are watching."
+                  },
                   "status": {
                     "allOf": [
                       {
@@ -16878,6 +16889,7 @@
                   }
                 },
                 "required": [
+                  "availability",
                   "bench",
                   "created_at",
                   "ends_at",
@@ -16900,6 +16912,7 @@
               "starts_at": "2026-10-20T12:00:00Z",
               "ends_at": "2026-10-20T12:00:00Z",
               "followed_booking_id": 1,
+              "availability": {},
               "status": {},
               "created_at": "2026-10-20T12:00:00Z",
               "updated_at": "2026-10-20T12:00:00Z"
@@ -19070,6 +19083,17 @@
                       "nullable": true,
                       "description": "Set when this alert follows one booking: you get one alert when it ends, whichever way."
                     },
+                    "availability": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "nullable": true,
+                      "readOnly": true,
+                      "description": "For active alerts: busy blocks, next free time and how many others are watching."
+                    },
                     "status": {
                       "allOf": [
                         {
@@ -19091,6 +19115,7 @@
                     }
                   },
                   "required": [
+                    "availability",
                     "bench",
                     "created_at",
                     "ends_at",
@@ -19122,6 +19147,7 @@
                 "starts_at": "2026-10-20T12:00:00Z",
                 "ends_at": "2026-10-20T12:00:00Z",
                 "followed_booking_id": 1,
+                "availability": {},
                 "status": {},
                 "created_at": "2026-10-20T12:00:00Z",
                 "updated_at": "2026-10-20T12:00:00Z"
@@ -19326,6 +19352,17 @@
                     "nullable": true,
                     "description": "Set when this alert follows one booking: you get one alert when it ends, whichever way."
                   },
+                  "availability": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
+                    "readOnly": true,
+                    "description": "For active alerts: busy blocks, next free time and how many others are watching."
+                  },
                   "status": {
                     "allOf": [
                       {
@@ -19347,6 +19384,7 @@
                   }
                 },
                 "required": [
+                  "availability",
                   "bench",
                   "created_at",
                   "ends_at",
@@ -19369,6 +19407,7 @@
               "starts_at": "2026-10-20T12:00:00Z",
               "ends_at": "2026-10-20T12:00:00Z",
               "followed_booking_id": 1,
+              "availability": {},
               "status": {},
               "created_at": "2026-10-20T12:00:00Z",
               "updated_at": "2026-10-20T12:00:00Z"
@@ -19704,6 +19743,17 @@
                     "nullable": true,
                     "description": "Set when this alert follows one booking: you get one alert when it ends, whichever way."
                   },
+                  "availability": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
+                    "readOnly": true,
+                    "description": "For active alerts: busy blocks, next free time and how many others are watching."
+                  },
                   "status": {
                     "allOf": [
                       {
@@ -19725,6 +19775,7 @@
                   }
                 },
                 "required": [
+                  "availability",
                   "bench",
                   "created_at",
                   "ends_at",
@@ -19747,6 +19798,7 @@
               "starts_at": "2026-10-20T12:00:00Z",
               "ends_at": "2026-10-20T12:00:00Z",
               "followed_booking_id": 1,
+              "availability": {},
               "status": {},
               "created_at": "2026-10-20T12:00:00Z",
               "updated_at": "2026-10-20T12:00:00Z"
@@ -19923,6 +19975,17 @@
                     "nullable": true,
                     "description": "Set when this alert follows one booking: you get one alert when it ends, whichever way."
                   },
+                  "availability": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "nullable": true,
+                    "readOnly": true,
+                    "description": "For active alerts: busy blocks, next free time and how many others are watching."
+                  },
                   "status": {
                     "allOf": [
                       {
@@ -19944,6 +20007,7 @@
                   }
                 },
                 "required": [
+                  "availability",
                   "bench",
                   "created_at",
                   "ends_at",
@@ -19966,6 +20030,7 @@
               "starts_at": "2026-10-20T12:00:00Z",
               "ends_at": "2026-10-20T12:00:00Z",
               "followed_booking_id": 1,
+              "availability": {},
               "status": {},
               "created_at": "2026-10-20T12:00:00Z",
               "updated_at": "2026-10-20T12:00:00Z"
