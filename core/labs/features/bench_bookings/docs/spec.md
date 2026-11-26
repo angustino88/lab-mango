@@ -62,3 +62,4 @@ Both decision actions require an RFC 9562 UUID `Idempotency-Key`, scoped to the 
 | `GET, POST /api/labs/bench-slot-watches` | `BenchSlotWatchListCreateAPIView` | The caller's own slot alerts: notify (email, Teams, web) when a bench frees up inside a chosen range. Notify-only, nothing is held. See [slot-watches.md](slot-watches.md). |
 | `GET /api/labs/bench-slot-watches/{id}` | `BenchSlotWatchDetailAPIView` | Owner only; others get `404`. |
 | `POST /api/labs/bench-slot-watches/{id}/actions/cancel` | `BenchSlotWatchCancelActionAPIView` | Stop a slot alert; repeatable. |
+| `POST /api/labs/bench-bookings/{id}/actions/follow` | `BenchBookingFollowActionAPIView` | One alert when this booking is about to end, completes, or is cancelled/expired/rejected. Not for your own booking. |

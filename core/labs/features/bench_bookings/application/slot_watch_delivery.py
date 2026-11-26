@@ -24,17 +24,30 @@ from core.common.notifications import (
     reap_expired_records,
     verify_lease_ownership,
 )
-from core.labs.models import BenchSlotNotification, SlotWatchStatus
+from core.labs.models import BenchBooking, BenchSlotNotification, SlotWatchKind, SlotWatchStatus
 from core.users.public import resolve_teams_recipient
 from core.websocket.models import Notification
 from core.websocket.publish_service import publish_user_notification
 
 from ..integrations.slot_watch_transport import send_slot_email, send_slot_teams, web_expiry, web_message
-from .slot_watch_collection import channel_enabled, slot_still_free, slot_watch_enabled
+from .slot_watch_collection import channel_enabled, is_reserving, slot_still_free, slot_watch_enabled
 
 logger = logging.getLogger(__name__)
 MAX_ATTEMPTS = 5
 LEASE_SECONDS = 120
+
+
+FOLLOW_KINDS = frozenset({SlotWatchKind.BOOKING_ENDING_SOON.value, SlotWatchKind.BOOKING_RELEASED.value})
+
+
+def follow_still_current(*, row: BenchSlotNotification) -> bool:
+    """An "ending soon" alert is stale if the booking was extended; a release alert is always news."""
+    if row.kind != SlotWatchKind.BOOKING_ENDING_SOON.value:
+        return True
+    booking = BenchBooking.objects.only("status", "approval_status", "ends_at").get(pk=row.booking_id)
+    if not is_reserving(booking):
+        return True  # ended even sooner: still worth telling
+    return booking.ends_at == datetime.fromisoformat(row.snapshot["free_from"])
 
 
 class _Fenced(Exception):
@@ -47,12 +60,17 @@ def precheck(*, row: BenchSlotNotification, now: datetime) -> DeliveryOutcome | 
     if not channel_enabled(row.channel):
         return DeliveryOutcome("skipped", "channel_disabled")
     watch = row.watch
-    if watch.status != SlotWatchStatus.ACTIVE or watch.user_id != row.recipient_id or watch.range_end <= now:
+    is_follow = row.kind in FOLLOW_KINDS
+    # A follow is marked fulfilled when its single alert is queued; a range watch must still be active.
+    live = (SlotWatchStatus.ACTIVE, SlotWatchStatus.FULFILLED) if is_follow else (SlotWatchStatus.ACTIVE,)
+    if watch.status not in live or watch.user_id != row.recipient_id or (not is_follow and watch.range_end <= now):
         return DeliveryOutcome("skipped", "watch_inactive")
     if not row.recipient.is_active:
         return DeliveryOutcome("skipped", "recipient_unavailable")
     if row.channel == NotificationChannel.EMAIL.value and not (row.recipient.email or "").strip():
         return DeliveryOutcome("skipped", "recipient_unavailable")
+    if is_follow:
+        return None if follow_still_current(row=row) else DeliveryOutcome("expired", "booking_changed")
     if not slot_still_free(
         bench_id=row.snapshot["bench_id"],
         free_from=datetime.fromisoformat(row.snapshot["free_from"]),

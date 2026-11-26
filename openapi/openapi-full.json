@@ -4494,6 +4494,76 @@
         "summary": "Complete Bench Bookings by Booking ID"
       }
     },
+    "/api/labs/bench-bookings/{booking_id}/actions/follow": {
+      "post": {
+        "operationId": "labs_bench_bookings_actions_follow_create_by_booking_id",
+        "description": "Get one alert (web, email, Teams) when this booking is about to end, completes, or is cancelled.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "booking_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Bench Bookings"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchBookingFollowActionSerializersBenchSlotWatchDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Follow Bench Bookings by Booking ID"
+      }
+    },
     "/api/labs/bench-bookings/{booking_id}/actions/reject": {
       "post": {
         "operationId": "labs_bench_bookings_actions_reject_create_by_booking_id",
@@ -5572,12 +5642,13 @@
               "enum": [
                 "active",
                 "cancelled",
-                "expired"
+                "expired",
+                "fulfilled"
               ],
               "type": "string",
               "minLength": 1
             },
-            "description": "* `active` - Active\n* `cancelled` - Cancelled\n* `expired` - Expired"
+            "description": "* `active` - Active\n* `cancelled` - Cancelled\n* `expired` - Expired\n* `fulfilled` - Notified"
           }
         ],
         "tags": [
@@ -47628,6 +47699,18 @@
           "data"
         ]
       },
+      "BenchBookingFollowActionSerializersBenchSlotWatchDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/BenchSlotWatch"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
       "BenchBookingListSerializersBenchBookingPaginatedResponse": {
         "type": "object",
         "description": "Base serializer for successful API responses.",
@@ -49010,6 +49093,12 @@
             "format": "date-time",
             "readOnly": true
           },
+          "followed_booking_id": {
+            "type": "integer",
+            "readOnly": true,
+            "nullable": true,
+            "description": "Set when this alert follows one booking: you get one alert when it ends, whichever way."
+          },
           "status": {
             "allOf": [
               {
@@ -49033,6 +49122,7 @@
           "bench",
           "created_at",
           "ends_at",
+          "followed_booking_id",
           "id",
           "starts_at",
           "status",

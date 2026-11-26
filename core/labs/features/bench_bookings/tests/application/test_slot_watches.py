@@ -358,3 +358,120 @@ def test_enable_with_only_slot_watch_flag_enables_only_slot_schedules(settings):
         command.handle(enable=True)
     enabled_names = {c.kwargs["name"] for c in tasks.call_args_list if c.kwargs["defaults"]["enabled"]}
     assert enabled_names == {row[0] for row in schedules.SLOT_WATCH_SCHEDULES}
+
+
+# --- booking follows -------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+class TestFollowBooking:
+    @pytest.fixture()
+    def follow(self, watcher):
+        from core.labs.features.bench_bookings.application.slot_watches import follow_booking
+
+        def _follow(booking):
+            watch = follow_booking(actor=watcher, booking_id=booking.pk)
+            BenchSlotWatch.objects.filter(pk=watch.pk).update(created=timezone.now() - H)
+            watch.refresh_from_db()
+            return watch
+
+        return _follow
+
+    def test_follow_is_idempotent_and_shows_on_calendar_scope(self, enabled, follow, make_booking, now):
+        booking = make_booking(starts_at=now + H, ends_at=now + 2 * H)
+        first = follow(booking)
+        assert follow(booking).pk == first.pk
+        assert first.target_booking_id == booking.pk and first.range_end == booking.ends_at
+
+    def test_cannot_follow_own_or_ended_or_hidden_bookings(self, watcher, bench, make_booking, now):
+        from core.labs.features.bench_bookings.application.slot_watches import follow_booking
+
+        own = BenchBooking(bench=bench, starts_at=now + H, ends_at=now + 2 * H, booking_code="OWN-F-1")
+        own.save(actor=watcher)
+        with pytest.raises(SlotWatchInvalid):
+            follow_booking(actor=watcher, booking_id=own.pk)
+        cancelled = make_booking(starts_at=now + H, ends_at=now + 2 * H, status=BookingStatus.CANCELLED)
+        with pytest.raises(BenchBooking.DoesNotExist):  # not on the shared calendar, not the watcher's: 404
+            follow_booking(actor=watcher, booking_id=cancelled.pk)
+
+    def test_one_alert_when_ending_soon_then_nothing_more(self, enabled, follow, make_booking, now):
+        booking = make_booking(starts_at=now - H, ends_at=now + 10 * M, status=BookingStatus.IN_PROGRESS)
+        watch = follow(booking)
+        assert collect_slot_watch_notifications(now=now)["created"] == 3
+        watch.refresh_from_db()
+        assert watch.status == SlotWatchStatus.FULFILLED
+        booking.status = BookingStatus.COMPLETED
+        booking.completed_at = now
+        booking.save(update_fields=("status", "completed_at", "modified"))
+        assert collect_slot_watch_notifications(now=now + M)["created"] == 0
+        assert set(BenchSlotNotification.objects.values_list("kind", flat=True)) == {"booking_ending_soon"}
+
+    def test_natural_completion_alerts_when_ending_soon_was_missed(self, enabled, follow, make_booking, now):
+        booking = make_booking(starts_at=now - 2 * H, ends_at=now - M, status=BookingStatus.IN_PROGRESS)
+        BenchBooking.objects.filter(pk=booking.pk).update(ends_at=now + H)  # followable while running
+        watch = follow(booking)
+        BenchBooking.objects.filter(pk=booking.pk).update(
+            ends_at=now - M, status=BookingStatus.COMPLETED, completed_at=now - M, modified=now
+        )
+        assert collect_slot_watch_notifications(now=now)["created"] == 3
+        row = BenchSlotNotification.objects.filter(watch=watch).first()
+        assert row.kind == "booking_released" and row.snapshot["is_follow"] is True
+
+    def test_cancellation_alerts_with_free_until_next_booking(self, enabled, follow, make_booking, now):
+        booking = make_booking(starts_at=now + H, ends_at=now + 3 * H)
+        make_booking(starts_at=now + 3 * H, ends_at=now + 4 * H)
+        follow(booking)
+        _cancel(booking)
+        collect_slot_watch_notifications(now=now)
+        snapshot = BenchSlotNotification.objects.first().snapshot
+        assert snapshot["free_until"] == (now + 3 * H).astimezone(dt_timezone.utc).isoformat()
+
+    def test_pending_booking_rejection_alerts(self, enabled, follow, make_booking, now):
+        booking = make_booking(starts_at=now + H, ends_at=now + 6 * H)
+        BenchBooking.objects.filter(pk=booking.pk).update(approval_status=BookingApprovalStatus.PENDING)
+        booking.refresh_from_db()
+        follow(booking)
+        booking.approval_status = BookingApprovalStatus.REJECTED
+        booking.rejection_reason = "no"
+        booking.save(update_fields=("approval_status", "rejection_reason", "modified"))
+        assert collect_slot_watch_notifications(now=now)["created"] == 3
+
+    def test_extension_moves_the_alert(self, enabled, follow, make_booking, now):
+        booking = make_booking(starts_at=now - H, ends_at=now + H, status=BookingStatus.IN_PROGRESS)
+        watch = follow(booking)
+        BenchBooking.objects.filter(pk=booking.pk).update(ends_at=now + 3 * H)
+        assert collect_slot_watch_notifications(now=now)["created"] == 0
+        watch.refresh_from_db()
+        assert watch.range_end == now + 3 * H and watch.status == SlotWatchStatus.ACTIVE
+        assert collect_slot_watch_notifications(now=now + 3 * H - 10 * M)["created"] == 3
+
+    def test_extended_after_queueing_expires_the_stale_alert(self, enabled, follow, make_booking, now):
+        booking = make_booking(starts_at=now - H, ends_at=now + 10 * M, status=BookingStatus.IN_PROGRESS)
+        follow(booking)
+        collect_slot_watch_notifications(now=timezone.now())
+        BenchBooking.objects.filter(pk=booking.pk).update(ends_at=now + 3 * H)
+        counts = deliver_slot_watch_notifications()
+        assert counts["expired"] == 3
+        assert set(BenchSlotNotification.objects.values_list("outcome", flat=True)) == {"booking_changed"}
+
+    def test_fulfilled_follow_still_delivers(self, enabled, follow, make_booking, watcher):
+        now = timezone.now()
+        booking = make_booking(starts_at=now - H, ends_at=now + 10 * M, status=BookingStatus.IN_PROGRESS)
+        follow(booking)
+        collect_slot_watch_notifications(now=now)
+        with (
+            patch(
+                "core.labs.features.bench_bookings.application.slot_watch_delivery.send_slot_email",
+                return_value=DeliveryOutcome("sent", "accepted"),
+            ),
+            patch(
+                "core.labs.features.bench_bookings.application.slot_watch_delivery.resolve_teams_recipient",
+                return_value=None,
+            ),
+            patch("core.labs.features.bench_bookings.application.slot_watch_delivery.publish_user_notification"),
+        ):
+            counts = deliver_slot_watch_notifications()
+        assert counts["sent"] == 2 and counts["skipped"] == 1  # Teams identity not provisioned
+        assert Notification.objects.get(target_user=watcher).message.startswith(
+            "The booking you're following ends soon"
+        )

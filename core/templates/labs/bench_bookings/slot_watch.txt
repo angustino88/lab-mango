@@ -1,6 +1,6 @@
 {{ heading }}.
 Bench: {{ bench_name }}
-Free from {{ free_from|date:"Y-m-d H:i" }} to {{ free_until|date:"Y-m-d H:i" }} ({{ time_zone }}).
-Your watched range: {{ range_start|date:"Y-m-d H:i" }} to {{ range_end|date:"Y-m-d H:i" }}.
-This slot is not held for you: book it in Lab Mango to secure it.{% if booking_url %}
+Free from {{ free_from|date:"Y-m-d H:i" }}{% if free_until %} to {{ free_until|date:"Y-m-d H:i" }}{% endif %} ({{ time_zone }}).
+{% if not is_follow %}Your watched range: {{ range_start|date:"Y-m-d H:i" }} to {{ range_end|date:"Y-m-d H:i" }}.
+{% endif %}This slot is not held for you: book it in Lab Mango to secure it.{% if booking_url %}
 Book: {{ booking_url }}{% endif %}

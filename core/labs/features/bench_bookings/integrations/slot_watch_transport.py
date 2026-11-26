@@ -20,6 +20,8 @@ from .notification_transport import _teams_delivery_outcome, protect_workflow_lo
 HEADINGS = {
     "slot_ending_soon": "A bench you are watching frees up soon",
     "slot_freed": "A bench you are watching is now free",
+    "booking_ending_soon": "The booking you're following ends soon",
+    "booking_released": "The booking you're following has ended",
 }
 
 
@@ -32,7 +34,8 @@ def message_context(*, kind: str, snapshot: dict) -> dict:
         "heading": HEADINGS[kind],
         "bench_name": snapshot.get("bench_name") or "Bench",
         "free_from": _local(snapshot["free_from"]),
-        "free_until": _local(snapshot["free_until"]),
+        "free_until": _local(snapshot["free_until"]) if snapshot.get("free_until") else None,
+        "is_follow": bool(snapshot.get("is_follow")),
         "range_start": _local(snapshot["range_start"]),
         "range_end": _local(snapshot["range_end"]),
         "time_zone": settings.TIME_ZONE,
@@ -50,14 +53,16 @@ def web_message(*, kind: str, snapshot: dict) -> tuple[str, str]:
     """(message, details) for the persisted web notification; both fit 255 characters."""
     context = message_context(kind=kind, snapshot=snapshot)
     message = f"{context['heading']}: {context['bench_name']}"[:255]
-    details = (
-        f"Free {context['free_from']:%Y-%m-%d %H:%M} – {context['free_until']:%H:%M} "
-        f"({context['time_zone']}). Book it before someone else does."
-    )[:255]
+    window = f"Free from {context['free_from']:%Y-%m-%d %H:%M}"
+    if context["free_until"]:
+        window += f" until {context['free_until']:%H:%M}"
+    details = f"{window} ({context['time_zone']}). Book it before someone else does."[:255]
     return message, details
 
 
 def web_expiry(*, snapshot: dict, now: datetime) -> datetime:
+    if not snapshot.get("free_until"):
+        return now + timedelta(hours=2)
     return max(datetime.fromisoformat(snapshot["free_until"]), now + timedelta(minutes=15))
 
 

@@ -34,6 +34,7 @@ from core.labs.features.bench_bookings.application.slot_watches import (
     CreateSlotWatchInput,
     cancel_slot_watch,
     create_slot_watch,
+    follow_booking,
 )
 from core.labs.features.bench_bookings.queries import (
     get_bench_booking,
@@ -452,3 +453,12 @@ class BenchSlotWatchCancelActionAPIView(BenchSlotWatchAPIView):
 
     def handle_post(self, request, watch_id, **kwargs):
         return self._execute(lambda: cancel_slot_watch(actor=self.acting_user, watch_id=watch_id))
+
+
+class BenchBookingFollowActionAPIView(BenchSlotWatchAPIView):
+    """Get one alert (web, email, Teams) when this booking is about to end, completes, or is cancelled."""
+
+    post_contract = operation("BenchBookingFollowAction", BenchSlotWatchSerializer, forbidden=True)
+
+    def handle_post(self, request, booking_id, **kwargs):
+        return self._execute(lambda: follow_booking(actor=self.acting_user, booking_id=booking_id))

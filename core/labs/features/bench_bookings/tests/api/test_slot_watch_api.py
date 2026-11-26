@@ -78,3 +78,20 @@ class TestSlotWatchAPI:
         assert stranger.post(f"{URL}/{watch_id}/actions/cancel").status_code == 404
         assert stranger.get(URL).json()["data"] == []
         assert BenchSlotWatch.objects.get(pk=watch_id).status == "active"
+
+    def test_follow_action(self, bench, now):
+        from core.labs.models import BenchBooking
+
+        owner = grant_labs_role(UserFactory(username="slot-owner"), "member")
+        booking = BenchBooking(bench=bench, starts_at=now + H, ends_at=now + 2 * H, booking_code="FOLLOW-API-1")
+        booking.save(actor=owner)
+        follower = APIClient()
+        follower.force_authenticate(grant_labs_role(UserFactory(username="slot-follower"), "member"))
+        response = follower.post(f"/api/labs/bench-bookings/{booking.pk}/actions/follow")
+        assert response.status_code == 200, response.content
+        assert response.json()["data"]["followed_booking_id"] == booking.pk
+        owner_client = APIClient()
+        owner_client.force_authenticate(owner)
+        own = owner_client.post(f"/api/labs/bench-bookings/{booking.pk}/actions/follow")
+        assert own.status_code == 422 and own.json()["error"]["code"] == "slot_watch_own_booking"
+        assert follower.post("/api/labs/bench-bookings/999999/actions/follow").status_code == 404

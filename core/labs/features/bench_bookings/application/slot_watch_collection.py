@@ -7,6 +7,16 @@ Two events, both about a booking that overlaps the watched range on the same ben
 * ``slot_freed`` — a booking stopped reserving the bench (cancelled, expired, rejected, or
   completed before its booked end) after the watch was created, leaving free time in the range.
 
+Booking follows (``target_booking`` set) get exactly one alert, whichever comes first:
+
+* ``booking_ending_soon`` — the followed booking still reserves the bench and ends within the lead time;
+* ``booking_released`` — it completed (early or on time), or was cancelled, expired or rejected after the
+  follow started.
+
+Recording that alert and marking the watch ``fulfilled`` happen in one transaction under a row lock on the
+watch, so concurrent or repeated runs cannot send a second alert. While the booking is extended, the
+watch's ``range_end`` follows its current end.
+
 "Free time" means a gap of at least ``MIN_FREE_GAP`` not covered by any other reserving booking.
 The job is bounded (keyset pages of 100 watches) and repeatable: dedupe keys make a second run
 over the same state insert nothing. It holds no lock while it reads; inserts are single rows.
@@ -36,6 +46,7 @@ from core.labs.models import (
 
 MIN_FREE_GAP = timedelta(minutes=5)
 RELEASE_LOOKBACK = timedelta(minutes=15)
+FOLLOW_RELEASE_LOOKBACK = timedelta(days=1)
 NOTICE_LIFETIME = timedelta(minutes=30)
 PAGE_SIZE = 100
 BOOKINGS_PER_WATCH = 200
@@ -89,7 +100,7 @@ class SlotEvent:
     booking_id: int
     logical_key: str
     free_from: datetime
-    free_until: datetime
+    free_until: datetime | None
 
 
 def _released_from(booking: BenchBooking) -> datetime:
@@ -145,6 +156,73 @@ def evaluate_watch(*, watch: BenchSlotWatch, bookings: list[BenchBooking], now: 
     return events
 
 
+def next_reserving_start(*, bench_id: int, after: datetime, exclude_id: int) -> datetime | None:
+    """Start of the next booking that will take the bench at or after ``after`` (within a day)."""
+    booking = (
+        BenchBooking.objects.filter(
+            bench_id=bench_id,
+            ends_at__gt=after,
+            starts_at__lt=after + timedelta(days=1),
+            status__in=(BookingStatus.RESERVED, BookingStatus.IN_PROGRESS),
+            approval_status__in=(BookingApprovalStatus.PENDING, BookingApprovalStatus.APPROVED),
+        )
+        .exclude(pk=exclude_id)
+        .order_by("starts_at")
+        .only("starts_at")
+        .first()
+    )
+    return max(booking.starts_at, after) if booking else None
+
+
+def evaluate_follow(*, watch: BenchSlotWatch, booking: BenchBooking, now: datetime) -> SlotEvent | None:
+    """Pure-ish decision for a followed booking: the one alert to send now, if any."""
+    lead = timedelta(minutes=getattr(settings, "BOOKING_SLOT_WATCH_LEAD_MINUTES", 15))
+    if is_reserving(booking):
+        if not now < booking.ends_at <= now + lead:
+            return None
+        kind, key, free_from = (
+            SlotWatchKind.BOOKING_ENDING_SOON.value,
+            booking.ends_at.astimezone(dt_timezone.utc).isoformat(),
+            booking.ends_at,
+        )
+    else:
+        if booking.modified < max(watch.created, now - FOLLOW_RELEASE_LOOKBACK):
+            return None
+        kind, key, free_from = SlotWatchKind.BOOKING_RELEASED.value, "released", max(now, _released_from(booking))
+    free_until = next_reserving_start(bench_id=booking.bench_id, after=free_from, exclude_id=booking.pk)
+    return SlotEvent(kind=kind, booking_id=booking.pk, logical_key=key, free_from=free_from, free_until=free_until)
+
+
+def collect_follow(*, watch: BenchSlotWatch, now: datetime) -> tuple[int, bool]:
+    """Evaluate one booking follow. Returns (rows created, watch closed)."""
+    booking = watch.target_booking
+    if booking is None:
+        return 0, False
+    event = evaluate_follow(watch=watch, booking=booking, now=now)
+    if event is None:
+        if not is_reserving(booking):
+            # Released before the follow started, or longer ago than we backfill: nothing left to say.
+            closed = BenchSlotWatch.objects.filter(pk=watch.pk, status=SlotWatchStatus.ACTIVE).update(
+                status=SlotWatchStatus.EXPIRED, modified=now
+            )
+            return 0, bool(closed)
+        if booking.ends_at != watch.range_end and booking.ends_at > watch.range_start:
+            # Extended or shortened: keep following the booking's current end.
+            BenchSlotWatch.objects.filter(pk=watch.pk, status=SlotWatchStatus.ACTIVE).update(
+                range_end=booking.ends_at, modified=now
+            )
+        return 0, False
+    with transaction.atomic():
+        # One-shot guard: only the run that still sees the follow active records the alert.
+        locked = BenchSlotWatch.objects.select_for_update().filter(pk=watch.pk, status=SlotWatchStatus.ACTIVE).first()
+        if locked is None:
+            return 0, False
+        created = record_events(watch=watch, events=[event], now=now)
+        locked.status = SlotWatchStatus.FULFILLED
+        locked.save(update_fields=("status", "modified"))
+    return created, True
+
+
 def overlapping_bookings(*, bench_id: int, window: Interval) -> list[BenchBooking]:
     lo, hi = window
     return list(
@@ -174,7 +252,8 @@ def snapshot_for(*, watch: BenchSlotWatch, event: SlotEvent) -> dict:
         "range_start": _iso(watch.range_start),
         "range_end": _iso(watch.range_end),
         "free_from": _iso(event.free_from),
-        "free_until": _iso(event.free_until),
+        "free_until": _iso(event.free_until) if event.free_until else None,
+        "is_follow": watch.target_booking_id is not None,
     }
 
 
@@ -208,7 +287,7 @@ def record_events(*, watch: BenchSlotWatch, events: list[SlotEvent], now: dateti
                         "snapshot": snapshot_for(watch=watch, event=event),
                         "created_at": now,
                         "available_at": now,
-                        "expires_at": min(event.free_until, now + NOTICE_LIFETIME),
+                        "expires_at": min(event.free_until or now + NOTICE_LIFETIME, now + NOTICE_LIFETIME),
                     },
                 )
             created += int(was_created)
@@ -217,7 +296,8 @@ def record_events(*, watch: BenchSlotWatch, events: list[SlotEvent], now: dateti
 
 def expire_finished_watches(*, now: datetime, limit: int = 500) -> int:
     ids = list(
-        BenchSlotWatch.objects.filter(status=SlotWatchStatus.ACTIVE, range_end__lte=now)
+        # Follows end with their booking (collect_follow), not with their range.
+        BenchSlotWatch.objects.filter(status=SlotWatchStatus.ACTIVE, range_end__lte=now, target_booking__isnull=True)
         .order_by("pk")
         .values_list("pk", flat=True)[:limit]
     )
@@ -235,17 +315,22 @@ def collect_slot_watch_notifications(*, now: datetime, after_watch_id: int = 0) 
     expired = expire_finished_watches(now=now) if after_watch_id == 0 else 0
     watches = list(
         BenchSlotWatch.objects.filter(
-            Q(user__is_active=True),
+            Q(target_booking__isnull=False)
+            # Range watches: nothing can be "ending soon" further out than a day.
+            | Q(range_end__gt=now, range_start__lt=now + timedelta(days=1)),
+            user__is_active=True,
             pk__gt=after_watch_id,
             status=SlotWatchStatus.ACTIVE,
-            range_end__gt=now,
-            range_start__lt=now + timedelta(days=1),  # nothing can be "ending soon" further out
         )
-        .select_related("user", "bench")
+        .select_related("user", "bench", "target_booking")
         .order_by("pk")[:PAGE_SIZE]
     )
     created = 0
     for watch in watches:
+        if watch.target_booking_id is not None:
+            rows, _ = collect_follow(watch=watch, now=now)
+            created += rows
+            continue
         window = (max(watch.range_start, now), watch.range_end)
         if window[0] >= window[1]:
             continue

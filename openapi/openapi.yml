@@ -106,6 +106,8 @@ paths:
     $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1{booking_id}~1actions~1cancel
   /api/labs/bench-bookings/{booking_id}/actions/complete:
     $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1{booking_id}~1actions~1complete
+  /api/labs/bench-bookings/{booking_id}/actions/follow:
+    $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1{booking_id}~1actions~1follow
   /api/labs/bench-bookings/{booking_id}/actions/reject:
     $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1{booking_id}~1actions~1reject
   /api/labs/bench-bookings/code/{booking_code}:

@@ -226,12 +226,27 @@ class BenchSlotWatchSerializer(AppModelSerializer):
     bench = UIDNamedReferenceSerializer(read_only=True)
     starts_at = serializers.DateTimeField(source="range_start", read_only=True)
     ends_at = serializers.DateTimeField(source="range_end", read_only=True)
+    followed_booking_id = serializers.IntegerField(
+        source="target_booking_id",
+        read_only=True,
+        allow_null=True,
+        help_text="Set when this alert follows one booking: you get one alert when it ends, whichever way.",
+    )
     status = serializers.SerializerMethodField()
 
     class Meta:
         model = BenchSlotWatch
         ref_name = "BenchSlotWatch"
-        fields = ("id", "bench", "starts_at", "ends_at", "status", "created_at", "updated_at")
+        fields = (
+            "id",
+            "bench",
+            "starts_at",
+            "ends_at",
+            "followed_booking_id",
+            "status",
+            "created_at",
+            "updated_at",
+        )
         read_only_fields = fields
 
     @extend_schema_field(ChoiceReferenceSerializer)

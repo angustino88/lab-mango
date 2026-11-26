@@ -13,6 +13,23 @@ never holds or reserves the bench: whoever books first gets the slot (owner deci
 | `slot_ending_soon` | A booking that still reserves the bench and overlaps the range ends within the lead time (default 15 min, `BOOKING_SLOT_WATCH_LEAD_MINUTES`), and the time right after it is free inside the range. |
 | `slot_freed` | A booking overlapping the range stops reserving the bench **after the watch was created**: cancelled, expired, rejected, or completed before its booked end. Fires only if a free gap remains in the range. |
 
+### Following one booking
+
+`POST /bench-bookings/{id}/actions/follow` (owner decision 2026-11-26) gives **one** alert, whichever comes first:
+
+| Event (`kind`) | When it fires |
+|---|---|
+| `booking_ending_soon` | The followed booking still reserves the bench and ends within the lead time. |
+| `booking_released` | It completed (early **or on time**), or was cancelled, expired or rejected after the follow started. |
+
+The follow is then `fulfilled` and nothing more is sent. Recording the alert and marking the follow fulfilled happen
+in one transaction under a row lock on the watch (one-shot race guard). If the booking is extended, the follow's end
+moves with it; an already queued "ending soon" alert for the old end expires at send time (`booking_changed`).
+Pending bookings can be followed (a rejection fires `booking_released`). A user can follow any booking on the shared
+calendar (still reserving) or one they may already read; anything else is 404, so ids cannot be probed. Following
+your own booking or one that has ended is `422` (`slot_watch_own_booking`, `slot_watch_ended`). Follows count toward
+the 20-alert cap. Messages say when the bench is free from and, when another booking follows, until when.
+
 "Free" means a gap of at least 5 minutes not covered by any other reserving booking (reserved/in progress and
 pending/approved, the same set as the `bench_booking_no_overlap` exclusion constraint). A back-to-back booking
 suppresses the event. The watcher's own bookings never trigger events. Messages carry the bench name and the free
@@ -31,12 +48,14 @@ user has a verified Entra identity.
 | `POST /bench-slot-watches` | `{bench_id, starts_at, ends_at}`. Idempotent: the same user/bench/range returns the existing active watch. 201. Range must end in the future, span ≤ 7 days, start within 60 days; ≤ 20 active watches per user (`422 slot_watch_invalid` / `slot_watch_limit`). Unknown bench → 404. API-key-only caller → 403. |
 | `GET /bench-slot-watches/{id}` | Caller's own watch; anyone else's → 404 (no existence oracle). |
 | `POST /bench-slot-watches/{id}/actions/cancel` | Stop the watch; repeating is a no-op. Others' → 404. |
+| `POST /bench-bookings/{id}/actions/follow` | One alert when that booking ends (see "Following one booking"). Returns the watch with `followed_booking_id`. Idempotent per user and booking. |
 
 ## Data and invariants
 
 * `labs.BenchSlotWatch`: user, bench, `range_start/range_end`, status
-  (`active/cancelled/expired`). DB constraints: range valid, status allowlist, partial unique
-  `(user, bench, range_start, range_end) WHERE status='active'`.
+  (`active/cancelled/expired/fulfilled`), optional `target_booking` for follows. DB constraints: range valid, status allowlist, partial unique
+  `(user, bench, range_start, range_end) WHERE status='active' AND target_booking IS NULL`, and
+  `(user, target_booking) WHERE status='active' AND target_booking IS NOT NULL`.
 * `labs.BenchSlotNotification`: feature-owned outbox on `AbstractOutboxLedger` (lease/state constraints),
   plus channel and kind allowlists. FK `booking` (PROTECT) is the booking whose end/release opened the slot.
 * Dedupe: one row per (watch, kind, booking, logical key, channel, recipient). Ending-soon keys include the booking
@@ -68,7 +87,7 @@ free window), is not sent.
 
 ## Verification (2026-11-26, local PostgreSQL 16, `config.settings.test`)
 
-* `uv run pytest core/labs tests/unit tests/architecture core/common core/websocket -q` — passed (2913).
+* `uv run pytest core/labs tests/unit tests/architecture core/common core/websocket -q` — passed (2920).
 * New tests: `tests/application/test_slot_watches.py` (commands, availability rules, collection, delivery per
   channel, retries, revalidation, provisioning) and `tests/api/test_slot_watch_api.py` (ownership, contract, codes).
 * `makemigrations --check --dry-run` — passed. OpenAPI regenerated; contract rules 0 violations; parity check passed.

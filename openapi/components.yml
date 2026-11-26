@@ -1726,6 +1726,14 @@ components:
           $ref: '#/components/schemas/BenchBooking'
       required:
       - data
+    BenchBookingFollowActionSerializersBenchSlotWatchDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchSlotWatch'
+      required:
+      - data
     BenchBookingListSerializersBenchBookingPaginatedResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -2711,6 +2719,12 @@ components:
           type: string
           format: date-time
           readOnly: true
+        followed_booking_id:
+          type: integer
+          readOnly: true
+          nullable: true
+          description: 'Set when this alert follows one booking: you get one alert
+            when it ends, whichever way.'
         status:
           allOf:
           - $ref: '#/components/schemas/LabsChoiceReference'
@@ -2727,6 +2741,7 @@ components:
       - bench
       - created_at
       - ends_at
+      - followed_booking_id
       - id
       - starts_at
       - status
