@@ -28,6 +28,10 @@ class PlaceEquipmentInput:
     location_note: str = ""
     role: str = "default"
     position: int = 0
+    # Rack mounting at a station: lowest unit (1 = bottom), height in units and face; all or none.
+    rack_unit: int | None = None
+    rack_unit_height: int | None = None
+    rack_face: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -50,6 +54,11 @@ def place_equipment(command: PlaceEquipmentInput, *, actor):
     note = clean_location_note(command.location_note)
     if command.bench_id is None and (command.role != "default" or command.position != 0):
         raise ValidationError({"role": "Role and position apply to bench placements only."})
+    rack = (command.rack_unit, command.rack_unit_height, command.rack_face or None)
+    if any(value is not None for value in rack) and (command.station_id is None or None in rack):
+        raise ValidationError(
+            {"rack_unit": "Rack unit, height and face apply together, and only to a station placement."}
+        )
     if command.bench_id is not None:
         equipment = Equipment.objects.select_for_update().get(pk=command.equipment_id, deleted_at__isnull=True)
         Bench.objects.select_for_update().get(pk=command.bench_id, deleted_at__isnull=True)
@@ -73,7 +82,17 @@ def place_equipment(command: PlaceEquipmentInput, *, actor):
     equipment = Equipment.objects.select_for_update().get(pk=command.equipment_id, deleted_at__isnull=True)
     station = lock_station(command.station_id) if command.station_id is not None else None
     room = lock_room(command.room_id) if command.room_id is not None else None
-    return rest_equipment(equipment, station=station, room=room, location_note=note, actor=actor)
+    rack_position = None
+    if command.rack_unit is not None and station is not None:
+        top = command.rack_unit + (command.rack_unit_height or 1) - 1
+        if not station.rack_units:
+            raise ValidationError({"rack_unit": "Set the station's rack height (rack units) before mounting equipment."})
+        if top > station.rack_units:
+            raise ValidationError({"rack_unit": f"The unit does not fit: this rack has {station.rack_units} U."})
+        rack_position = (command.rack_unit, command.rack_unit_height, command.rack_face)
+    return rest_equipment(
+        equipment, station=station, room=room, location_note=note, rack_position=rack_position, actor=actor
+    )
 
 
 @transaction.atomic

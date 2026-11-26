@@ -714,6 +714,76 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
           description: Request rate exceeded
+  /agent/telemetry/samples/bulk:
+    post:
+      operationId: agent_telemetry_samples_bulk_create
+      description: 'Readings from a gateway''s sources. Each operation is one source''s
+        poll cycle; readings are judged one
+
+        by one and attributed through the channel''s binding, never through ids in
+        the body. Replays are safe:
+
+        an already stored `sample_id` reports `duplicate`.'
+      tags:
+      - Agents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelemetryBulk'
+        required: true
+      security:
+      - observationSignatureAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentTelemetryIngestTelemetryTelemetryIngestResultDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Create Agent Telemetry Samples Bulk
   /api/agents:
     get:
       operationId: list_agents
@@ -1668,6 +1738,14 @@ components:
           $ref: '#/components/schemas/AgentSessionLogData'
       required:
       - data
+    AgentTelemetryIngestTelemetryTelemetryIngestResultDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/TelemetryIngestResult'
+      required:
+      - data
     CarrierId:
       type: object
       description: The carrier as the license tool names it (Vector device name);
@@ -2330,6 +2408,123 @@ components:
       description: '* `connected` - Connected
 
         * `disconnected` - Disconnected'
+    TelemetryBulk:
+      type: object
+      properties:
+        mode:
+          $ref: '#/components/schemas/TelemetryBulkModeEnum'
+        operations:
+          type: array
+          items:
+            $ref: '#/components/schemas/TelemetryOperation'
+      required:
+      - mode
+      - operations
+    TelemetryBulkModeEnum:
+      enum:
+      - partial
+      type: string
+      description: '* `partial` - partial'
+    TelemetryIngestResult:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TelemetryOperationResult'
+        config_version:
+          type: integer
+          description: Re-pull the configuration when this is newer.
+      required:
+      - config_version
+      - results
+    TelemetryOperation:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/TelemetrySample'
+      required:
+      - data
+    TelemetryOperationError:
+      type: object
+      properties:
+        code:
+          type: string
+        reading:
+          type: integer
+          description: Index of the rejected reading in the operation.
+      required:
+      - code
+    TelemetryOperationResult:
+      type: object
+      properties:
+        status:
+          type: string
+          description: accepted, duplicate, partially_accepted or rejected.
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/TelemetryOperationError'
+      required:
+      - errors
+      - status
+    TelemetryReading:
+      type: object
+      properties:
+        channel_id:
+          type: integer
+          minimum: 1
+        value:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+          nullable: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/TelemetryReadingStatusEnum'
+          default: ok
+        profile_version:
+          type: string
+          default: ''
+          maxLength: 64
+      required:
+      - channel_id
+    TelemetryReadingStatusEnum:
+      enum:
+      - ok
+      - no_response
+      - error
+      type: string
+      description: '* `ok` - ok
+
+        * `no_response` - no_response
+
+        * `error` - error'
+    TelemetrySample:
+      type: object
+      properties:
+        device_uid:
+          type: string
+          maxLength: 64
+        sample_id:
+          type: string
+          format: uuid
+          description: One per source poll cycle; persisted before the first send.
+        observed_at:
+          type: string
+          format: date-time
+        config_version:
+          type: integer
+          minimum: 0
+        readings:
+          type: array
+          items:
+            $ref: '#/components/schemas/TelemetryReading'
+      required:
+      - device_uid
+      - observed_at
+      - readings
+      - sample_id
     UserReference:
       type: object
       description: 'REL-3 user relation ``{id, username, display_name}``.

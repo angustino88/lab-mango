@@ -121,8 +121,9 @@ def test_query_count_does_not_grow_with_the_page(client, benches, django_assert_
             bench=bench, equipment=unit, assigned_at=timezone.now() - timedelta(hours=1)
         )
 
-    # Authentication and permission reads plus 9 mapping queries; fixed whatever the page size.
-    with django_assert_max_num_queries(16):
+    # Authentication and permission reads, 9 mapping queries, 3 visual-model lookups and 4 DCIM reads
+    # (conditions, installed totals x2, rack contents); fixed whatever the page size.
+    with django_assert_max_num_queries(20):
         body = _data(client.get(URL, {"page_size": 25}))
 
     assert len(body["data"]["benches"]) == 23

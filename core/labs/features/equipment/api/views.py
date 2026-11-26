@@ -209,6 +209,9 @@ class EquipmentPlacementAPIView(EquipmentAPIView):
                 location_note=data["location_note"],
                 role=data["role"],
                 position=data["position"],
+                rack_unit=data["rack_unit"],
+                rack_unit_height=data["rack_unit_height"],
+                rack_face=data["rack_face"],
             ),
             actor=self.acting_user,
         )

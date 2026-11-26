@@ -1,8 +1,15 @@
 # Telemetry: real-time environment and power data for rooms, stations, benches and equipment
 
-> Status: **Proposed** (not approved, not implemented) · Risk tier: **T2** (new migrations and constraints,
+> Status: **Partially implemented** · Risk tier: **T2** (new migrations and constraints,
 > new device and operator API contracts, device authn, object-scoped authz, background jobs, cross-feature
-> dependencies, retention) · Owner decision required before implementation.
+> dependencies, retention).
+>
+> Implemented: configuration (targets, metrics, devices, profiles, channels, bindings, gateway scope); gateway
+> ingest `POST /agent/telemetry/samples/bulk` into `TelemetryLatest` (§6.8, §7.1 without `Idempotency-Key`
+> replay; a replayed `sample_id` reports `duplicate`); current room and station conditions (mean temperature and
+> humidity, total power of readings fresh within 15 minutes) on the resource-mapping rows the 3D dashboard reads.
+> Pending: raw `TelemetryReading` partitions and retention (§6.6), rollups (§6.7), the config and discovery
+> gateway endpoints, operator history and latest endpoints (§7.2), device health (§6.9) and real-time push (§7.4).
 
 Field devices (sensors, meters, converters, other network devices) measure power, temperature, humidity
 and, later, other metrics. A **gateway** (collector software with a Lab Mango identity) reads them and pushes
