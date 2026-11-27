@@ -88,7 +88,8 @@ def slot_watch_settings(env) -> dict:
         if parts.scheme not in ("https", "http") or not parts.hostname or parts.query or parts.fragment:
             raise ImproperlyConfigured("Slot watch app URL must be the Lab Mango web address, e.g. https://host.")
     return {
-        "BOOKING_SLOT_WATCH_ENABLED": env.bool("BOOKING_SLOT_WATCH_ENABLED", default=False),
+        # On by default: web alerts need nothing else. Email and Teams keep their own switches.
+        "BOOKING_SLOT_WATCH_ENABLED": env.bool("BOOKING_SLOT_WATCH_ENABLED", default=True),
         "BOOKING_SLOT_WATCH_LEAD_MINUTES": lead,
         # Public web address of the frontend, used for "Book now" links in email and Teams.
         "BOOKING_SLOT_WATCH_APP_URL": app_url,

@@ -86,7 +86,7 @@ opens the booking form with bench and times prefilled:
 
 ## Configuration and rollout
 
-* `BOOKING_SLOT_WATCH_ENABLED` (default false) — master switch; alone it enables web delivery.
+* `BOOKING_SLOT_WATCH_ENABLED` (default true) — master switch; alone it enables web delivery.
 * Email/Teams additionally require `BOOKING_NOTIFICATIONS_ENABLED` and the matching
   `BOOKING_NOTIFICATIONS_{EMAIL,TEAMS}_ENABLED` (Teams endpoint/tenant validation is reused unchanged).
 * `BOOKING_SLOT_WATCH_LEAD_MINUTES` (1–120, default 15).
@@ -94,8 +94,10 @@ opens the booking form with bench and times prefilled:
 * Jobs (queue `BOOKING_NOTIFICATIONS_QUEUE`): `labs.bench_bookings.collect_slot_watch_notifications` every 60 s
   (100 watches per page, keyset continuation; also expires finished watches) and
   `labs.bench_bookings.deliver_slot_watch_notifications` every 15 s (≤ 10 rows per run).
-  `provision_booking_notification_schedules` now also provisions these two, disabled by default; `--enable`
-  enables each group only when its own configuration is on.
+  Both are code-owned beat entries (`CELERY_BEAT_SCHEDULE` in `config/settings/base.py`), so beat creates
+  them at startup in every environment; they do nothing while the flag is off. An earlier run of
+  `provision_booking_notification_schedules` without `--enable` left them disabled in Periodic Tasks: beat keeps an
+  admin's "disabled", so re-run it with `--enable` or enable them in Django admin.
 * Rollback: turn the flag off and disable the two schedules; the additive tables stay.
 
 Missed windows are not backfilled: a release older than 15 minutes, or a notice older than 30 minutes (or past the

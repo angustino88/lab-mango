@@ -79,6 +79,7 @@ class BenchBookingSerializer(AppModelSerializer):
             "bench",
             "starts_at",
             "ends_at",
+            "completed_at",
             "status",
             "approval_status",
             "project",

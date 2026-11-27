@@ -96,3 +96,22 @@ def test_license_jobs_run_daily_and_are_registered(name, task):
     assert settings.CELERY_BEAT_SCHEDULE[name]["task"] == task
     app.loader.import_default_modules()
     assert task in app.tasks
+
+
+SLOT_WATCH_JOBS = {
+    "bench-slot-watch-collection": ("labs.bench_bookings.collect_slot_watch_notifications", 60),
+    "bench-slot-watch-delivery": ("labs.bench_bookings.deliver_slot_watch_notifications", 15),
+}
+
+
+@pytest.mark.django_db
+def test_slot_alert_jobs_are_scheduled_without_a_manual_step():
+    """Without these, "tell me when this bench is free" alerts are never found or sent."""
+    app.loader.import_default_modules()
+    start_beat()
+
+    for name, (task_name, seconds) in SLOT_WATCH_JOBS.items():
+        assert task_name in app.tasks
+        task = PeriodicTask.objects.get(name=name)
+        assert (task.task, task.enabled, task.queue) == (task_name, True, settings.BOOKING_NOTIFICATIONS_QUEUE)
+        assert (task.interval.every, task.interval.period) == (seconds, IntervalSchedule.SECONDS)

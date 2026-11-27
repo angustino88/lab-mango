@@ -383,6 +383,19 @@ CELERY_BEAT_SCHEDULE = {
         "task": "labs.bench_bookings.reconcile_statuses",
         "schedule": env.float("BENCH_BOOKING_RECONCILE_INTERVAL_SECONDS", default=60.0),
     },
+    # Slot alerts ("tell me when this bench is free"): find benches that opened up, then deliver the
+    # alerts (web, email, Teams). Both are no-ops while BOOKING_SLOT_WATCH_ENABLED is off, idempotent and
+    # bounded. Same names as provision_booking_notification_schedules, so beat and that command share one row.
+    "bench-slot-watch-collection": {
+        "task": "labs.bench_bookings.collect_slot_watch_notifications",
+        "schedule": 60.0,
+        "options": {"queue": env("BOOKING_NOTIFICATIONS_QUEUE", default="booking_notifications")},
+    },
+    "bench-slot-watch-delivery": {
+        "task": "labs.bench_bookings.deliver_slot_watch_notifications",
+        "schedule": 15.0,
+        "options": {"queue": env("BOOKING_NOTIFICATIONS_QUEUE", default="booking_notifications")},
+    },
     # Daily analytics snapshots behind the /api/labs/analytics/{booking,lab-visits,user-count,lab-count}
     # ?unit=day charts. Each records the local day that just ended (CELERY_TIMEZONE) and is idempotent.
     "analytics-snapshot-daily-booking-volume": {
