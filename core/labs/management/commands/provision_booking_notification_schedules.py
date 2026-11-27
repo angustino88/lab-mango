@@ -9,10 +9,6 @@ SCHEDULES = (
     ("bench-booking-notification-collection", "labs.bench_bookings.collect_notifications", 60),
     ("bench-booking-notification-delivery", "labs.bench_bookings.deliver_notifications", 15),
 )
-SLOT_WATCH_SCHEDULES = (
-    ("bench-slot-watch-collection", "labs.bench_bookings.collect_slot_watch_notifications", 60),
-    ("bench-slot-watch-delivery", "labs.bench_bookings.deliver_slot_watch_notifications", 15),
-)
 
 
 class Command(BaseCommand):
@@ -26,11 +22,10 @@ class Command(BaseCommand):
         booking_ready = bool(
             settings.BOOKING_NOTIFICATIONS_ENABLED and settings.BOOKING_NOTIFICATIONS_ENABLEMENT_CUTOFF is not None
         )
-        slot_ready = bool(getattr(settings, "BOOKING_SLOT_WATCH_ENABLED", False))
-        if enabled and not (booking_ready or slot_ready):
+        if enabled and not booking_ready:
             raise CommandError("Enable notification configuration with a UTC cutoff first.")
+        # Slot alert jobs are not provisioned here: they are built-in beat entries (CELERY_BEAT_SCHEDULE).
         plan = [(row, enabled and booking_ready) for row in SCHEDULES]
-        plan += [(row, enabled and slot_ready) for row in SLOT_WATCH_SCHEDULES]
         with transaction.atomic():
             for (name, task, seconds), row_enabled in plan:
                 interval, _ = IntervalSchedule.objects.get_or_create(every=seconds, period=IntervalSchedule.SECONDS)

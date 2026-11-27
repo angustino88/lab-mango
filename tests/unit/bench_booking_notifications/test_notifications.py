@@ -463,3 +463,40 @@ def test_configuration_rejects_unapproved_workflow_host_without_echoing_url():
     with pytest.raises(ImproperlyConfigured) as error:
         notification_settings(env)
     assert "synthetic-secret" not in str(error.value)
+
+
+def _interval_env(**values):
+    env = MagicMock()
+    env.side_effect = lambda name, default: values.get(name, default)
+    return env
+
+
+def test_slot_alert_intervals_default_to_one_minute_and_fifteen_seconds():
+    from config.settings.booking_notifications import slot_watch_intervals
+
+    assert slot_watch_intervals(_interval_env()) == {"collect": 60.0, "deliver": 15.0}
+    tuned = _interval_env(
+        BENCH_SLOT_WATCH_COLLECT_INTERVAL_SECONDS="30", BENCH_SLOT_WATCH_DELIVER_INTERVAL_SECONDS="5"
+    )
+    assert slot_watch_intervals(tuned) == {"collect": 30.0, "deliver": 5.0}
+
+
+@pytest.mark.parametrize(
+    "name,value,message",
+    [
+        # Past the 15-minute release look-back, freed benches would be missed without an error.
+        ("BENCH_SLOT_WATCH_COLLECT_INTERVAL_SECONDS", "900", "between 15 and 300"),
+        ("BENCH_SLOT_WATCH_COLLECT_INTERVAL_SECONDS", "5", "between 15 and 300"),
+        ("BENCH_SLOT_WATCH_DELIVER_INTERVAL_SECONDS", "120", "between 5 and 60"),
+        ("BENCH_SLOT_WATCH_DELIVER_INTERVAL_SECONDS", "0", "between 5 and 60"),
+        ("BENCH_SLOT_WATCH_DELIVER_INTERVAL_SECONDS", "1.5", "whole number"),
+        ("BENCH_SLOT_WATCH_COLLECT_INTERVAL_SECONDS", "", "whole number"),
+    ],
+)
+def test_slot_alert_intervals_out_of_range_stop_startup(name, value, message):
+    from django.core.exceptions import ImproperlyConfigured
+
+    from config.settings.booking_notifications import slot_watch_intervals
+
+    with pytest.raises(ImproperlyConfigured, match=message):
+        slot_watch_intervals(_interval_env(**{name: value}))

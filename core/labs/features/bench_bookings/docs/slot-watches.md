@@ -86,17 +86,22 @@ opens the booking form with bench and times prefilled:
 
 ## Configuration and rollout
 
-* `BOOKING_SLOT_WATCH_ENABLED` (default false) — master switch; alone it enables web delivery.
-* Email/Teams additionally require `BOOKING_NOTIFICATIONS_ENABLED` and the matching
+* In-app alerts are built in: there is no switch for them (owner decision 2026-11-27).
+* Email/Teams require `BOOKING_NOTIFICATIONS_ENABLED` and the matching
   `BOOKING_NOTIFICATIONS_{EMAIL,TEAMS}_ENABLED` (Teams endpoint/tenant validation is reused unchanged).
 * `BOOKING_SLOT_WATCH_LEAD_MINUTES` (1–120, default 15).
 * `BOOKING_SLOT_WATCH_APP_URL` (optional) — public web address of the frontend for email/Teams links.
 * Jobs (queue `BOOKING_NOTIFICATIONS_QUEUE`): `labs.bench_bookings.collect_slot_watch_notifications` every 60 s
   (100 watches per page, keyset continuation; also expires finished watches) and
   `labs.bench_bookings.deliver_slot_watch_notifications` every 15 s (≤ 10 rows per run).
-  `provision_booking_notification_schedules` now also provisions these two, disabled by default; `--enable`
-  enables each group only when its own configuration is on.
-* Rollback: turn the flag off and disable the two schedules; the additive tables stay.
+  Tune with `BENCH_SLOT_WATCH_COLLECT_INTERVAL_SECONDS` (15–300) and `BENCH_SLOT_WATCH_DELIVER_INTERVAL_SECONDS`
+  (5–60); other values stop startup. Collection must stay well inside the 15-minute release look-back, delivery
+  inside the 120-second claim lease. Beat rewrites the interval from these on every start, so tune here, not in
+  Django admin.
+  Both are code-owned beat entries (`CELERY_BEAT_SCHEDULE` in `config/settings/base.py`), so beat creates
+  them at startup in every environment. `provision_booking_notification_schedules` no longer manages them;
+  migration `labs.0005_slot_alert_beat_rows` removes rows it saved as disabled so beat recreates them enabled.
+* Pause: disable the two Periodic Tasks in Django admin (beat keeps them disabled); the additive tables stay.
 
 Missed windows are not backfilled: a release older than 15 minutes, or a notice older than 30 minutes (or past the
 free window), is not sent.

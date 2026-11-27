@@ -96,3 +96,44 @@ def test_license_jobs_run_daily_and_are_registered(name, task):
     assert settings.CELERY_BEAT_SCHEDULE[name]["task"] == task
     app.loader.import_default_modules()
     assert task in app.tasks
+
+
+SLOT_WATCH_JOBS = {
+    "bench-slot-watch-collection": ("labs.bench_bookings.collect_slot_watch_notifications", 60),
+    "bench-slot-watch-delivery": ("labs.bench_bookings.deliver_slot_watch_notifications", 15),
+}
+
+
+@pytest.mark.django_db
+def test_slot_alert_jobs_are_scheduled_without_a_manual_step():
+    """Without these, "tell me when this bench is free" alerts are never found or sent."""
+    app.loader.import_default_modules()
+    start_beat()
+
+    for name, (task_name, seconds) in SLOT_WATCH_JOBS.items():
+        assert task_name in app.tasks
+        task = PeriodicTask.objects.get(name=name)
+        assert (task.task, task.enabled, task.queue) == (task_name, True, settings.BOOKING_NOTIFICATIONS_QUEUE)
+        assert (task.interval.every, task.interval.period) == (seconds, IntervalSchedule.SECONDS)
+
+
+@pytest.mark.django_db
+def test_slot_alert_rows_saved_disabled_by_old_provisioning_come_back_enabled():
+    """The provisioning command used to save these rows disabled; beat would have kept them off."""
+    from importlib import import_module
+
+    from django.apps import apps
+
+    migration = import_module("core.labs.migrations.0005_slot_alert_beat_rows")
+    interval, _ = IntervalSchedule.objects.get_or_create(every=60, period=IntervalSchedule.SECONDS)
+    for name, (task_name, _seconds) in SLOT_WATCH_JOBS.items():
+        PeriodicTask.objects.update_or_create(
+            name=name, defaults={"task": task_name, "interval": interval, "enabled": False}
+        )
+
+    migration.remove_provisioned_slot_alert_rows(apps, None)
+    start_beat()
+
+    assert set(
+        PeriodicTask.objects.filter(name__in=SLOT_WATCH_JOBS, enabled=True).values_list("name", flat=True)
+    ) == set(SLOT_WATCH_JOBS)

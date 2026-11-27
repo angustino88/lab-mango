@@ -42,6 +42,7 @@ def list_bench_bookings(
 
     ``view_side=booking_calendar`` is the shared schedule: every signed-in user sees which slots are taken, so it
     lists everyone's *reserving* bookings (cancelled, expired and rejected ones free the slot and stay private).
+    Coordinators also see completed bookings there (history), but never released ones: those are not on the schedule.
     The serializer withholds ``booking_code`` from rows the caller did not create.
     The explicit my_booking filter narrows elevated users to their own records.
     API keys and actors without a real authenticated user have no personal scope.
@@ -74,6 +75,11 @@ def list_bench_bookings(
             shared_calendar = True
             bookings = bookings.filter(
                 status__in=Booking.ACTIVE_STATUSES,
+                approval_status__in=Booking.RESERVING_APPROVAL_STATUSES,
+            )
+        else:
+            bookings = bookings.filter(
+                status__in=Booking.ACTIVE_STATUSES | {BookingStatus.COMPLETED},
                 approval_status__in=Booking.RESERVING_APPROVAL_STATUSES,
             )
     else:
