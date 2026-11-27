@@ -14,6 +14,7 @@ class NotificationSerializer(serializers.ModelSerializer):
     target_user = UserReferenceSerializer(read_only=True, allow_null=True)
     created_at = serializers.DateTimeField(source="created", read_only=True)
     updated_at = serializers.DateTimeField(source="modified", read_only=True)
+    is_read = serializers.SerializerMethodField(help_text="Whether the caller has read this notification.")
 
     class Meta:
         model = Notification
@@ -23,11 +24,17 @@ class NotificationSerializer(serializers.ModelSerializer):
             "details",
             "message_type",
             "expires_at",
+            "action_path",
+            "is_read",
             "target_user",
             "created_at",
             "updated_at",
         ]
         read_only_fields = fields
+
+    def get_is_read(self, obj) -> bool:
+        # Annotated by the inbox queryset; a just-created notification is unread.
+        return bool(getattr(obj, "is_read", False))
 
 
 class NotificationWriteSerializer(serializers.ModelSerializer):

@@ -42,6 +42,7 @@ def _push(notification: Notification) -> None:
         message_type=notification.message_type,
         details=notification.details or "",
         notification_id=notification.pk,
+        action_path=notification.action_path,
     )
 
 
@@ -89,6 +90,7 @@ def send_license_expiry_alerts(*, now: datetime | None = None) -> ExpiryAlertRes
                     message_type=Notification.ERROR if threshold == 0 else Notification.WARNING,
                     expiry_date=now + ALERT_LIFETIME,
                     target_user_id=recipient_id,
+                    action_path="/lab-equipment/license",
                 )
                 transaction.on_commit(partial(_push, notification))
         except IntegrityError:

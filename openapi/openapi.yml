@@ -106,6 +106,8 @@ paths:
     $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1{booking_id}~1actions~1cancel
   /api/labs/bench-bookings/{booking_id}/actions/complete:
     $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1{booking_id}~1actions~1complete
+  /api/labs/bench-bookings/{booking_id}/actions/follow:
+    $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1{booking_id}~1actions~1follow
   /api/labs/bench-bookings/{booking_id}/actions/reject:
     $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1{booking_id}~1actions~1reject
   /api/labs/bench-bookings/code/{booking_code}:
@@ -116,6 +118,12 @@ paths:
     $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1reference-data~1projects
   /api/labs/bench-bookings/reference-data/projects/{reference_id}:
     $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1reference-data~1projects~1{reference_id}
+  /api/labs/bench-slot-watches:
+    $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-slot-watches
+  /api/labs/bench-slot-watches/{watch_id}:
+    $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-slot-watches~1{watch_id}
+  /api/labs/bench-slot-watches/{watch_id}/actions/cancel:
+    $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-slot-watches~1{watch_id}~1actions~1cancel
   /api/labs/lab-projects:
     $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1lab-projects
   /api/labs/lab-projects/{project_id}:
@@ -682,6 +690,12 @@ paths:
     $ref: ./users-auth-logout.yml#/paths/~1api~1logout
   /api/notifications:
     $ref: ./websocket-list-notifications.yml#/paths/~1api~1notifications
+  /api/notifications/{notification_id}/actions/mark-read:
+    $ref: ./websocket-list-notifications.yml#/paths/~1api~1notifications~1{notification_id}~1actions~1mark-read
+  /api/notifications/actions/mark-all-read:
+    $ref: ./websocket-list-notifications.yml#/paths/~1api~1notifications~1actions~1mark-all-read
+  /api/notifications/unread-count:
+    $ref: ./websocket-list-notifications.yml#/paths/~1api~1notifications~1unread-count
   /api/refresh-token:
     $ref: ./users-auth-refresh-token.yml#/paths/~1api~1refresh-token
   /api/schema/:

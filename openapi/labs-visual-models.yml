@@ -991,11 +991,8 @@ components:
           type: string
           maxLength: 160
         source_url:
-          oneOf:
-          - type: string
-            format: uri
-          - type: string
-            maxLength: 0
+          type: string
+          default: ''
         license:
           type: string
           default: ''
@@ -1021,11 +1018,8 @@ components:
           type: string
           maxLength: 160
         source_url:
-          oneOf:
-          - type: string
-            format: uri
-          - type: string
-            maxLength: 0
+          type: string
+          default: ''
         license:
           type: string
           default: ''

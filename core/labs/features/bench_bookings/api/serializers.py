@@ -15,7 +15,14 @@ from core.labs.features.base.serializers import (
     UIDNamedReferenceSerializer,
     to_choice_reference,
 )
-from core.labs.models import BenchBooking, BookingStatus, LabProject
+from core.labs.features.bench_bookings.queries.slot_watches import slot_availability
+from core.labs.models import (
+    BenchBooking,
+    BenchSlotWatch,
+    BookingStatus,
+    LabProject,
+    SlotWatchStatus,
+)
 from core.users.public import LabsPermission, has_permission
 
 _ORDERING_HELP = (
@@ -195,3 +202,84 @@ class LabProjectSerializer(serializers.ModelSerializer):
         fields = ("id", "name", "code", "is_active", "start_date", "end_date")
         read_only_fields = fields
         ref_name = "LabProject"
+
+
+class BenchSlotWatchCreateSerializer(serializers.Serializer):
+    """Watch one bench for free time inside [starts_at, ends_at). Notify-only; nothing is held.
+
+    Delivery channels are decided by the server (web always; email and Teams when enabled and reachable).
+    """
+
+    bench_id = serializers.IntegerField(min_value=1)
+    starts_at = serializers.DateTimeField()
+    ends_at = serializers.DateTimeField()
+
+    def to_command_kwargs(self) -> dict:
+        data = self.validated_data
+        return {"bench_id": data["bench_id"], "range_start": data["starts_at"], "range_end": data["ends_at"]}
+
+
+class BenchSlotWatchListQuerySerializer(PageNumberQuerySerializer):
+    status = serializers.ChoiceField(choices=SlotWatchStatus.choices, required=False)
+    updated_after = serializers.DateTimeField(
+        required=False,
+        help_text="Only alerts changed at or after this time, e.g. recently notified follows (status=fulfilled).",
+    )
+
+
+class SlotBusyPeriodSerializer(serializers.Serializer):
+    starts_at = serializers.DateTimeField()
+    ends_at = serializers.DateTimeField()
+    is_mine = serializers.BooleanField(help_text="The viewer's own booking. Other bookings are anonymous.")
+
+
+class SlotAvailabilitySerializer(serializers.Serializer):
+    """Live view of the watched time: who-free (anonymous) busy blocks, next free gap, and demand."""
+
+    window_starts_at = serializers.DateTimeField()
+    window_ends_at = serializers.DateTimeField()
+    busy_periods = SlotBusyPeriodSerializer(many=True)
+    next_free_starts_at = serializers.DateTimeField(allow_null=True)
+    next_free_ends_at = serializers.DateTimeField(allow_null=True)
+    watcher_count = serializers.IntegerField(help_text="Other users with an active alert on this bench and time.")
+
+
+class BenchSlotWatchSerializer(AppModelSerializer):
+    bench = UIDNamedReferenceSerializer(read_only=True)
+    starts_at = serializers.DateTimeField(source="range_start", read_only=True)
+    ends_at = serializers.DateTimeField(source="range_end", read_only=True)
+    availability = serializers.SerializerMethodField(
+        help_text="For active alerts: busy blocks, next free time and how many others are watching."
+    )
+    followed_booking_id = serializers.IntegerField(
+        source="target_booking_id",
+        read_only=True,
+        allow_null=True,
+        help_text="Set when this alert follows one booking: you get one alert when it ends, whichever way.",
+    )
+    status = serializers.SerializerMethodField()
+
+    class Meta:
+        model = BenchSlotWatch
+        ref_name = "BenchSlotWatch"
+        fields = (
+            "id",
+            "bench",
+            "starts_at",
+            "ends_at",
+            "followed_booking_id",
+            "availability",
+            "status",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = fields
+
+    @extend_schema_field(ChoiceReferenceSerializer)
+    def get_status(self, obj: BenchSlotWatch) -> dict[str, str] | None:
+        return to_choice_reference(obj.status, SlotWatchStatus.choices)
+
+    @extend_schema_field(SlotAvailabilitySerializer(allow_null=True))
+    def get_availability(self, obj: BenchSlotWatch) -> dict | None:
+        availability = slot_availability(obj)
+        return SlotAvailabilitySerializer(availability).data if availability else None

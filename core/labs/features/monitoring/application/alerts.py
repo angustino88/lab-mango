@@ -29,6 +29,7 @@ def _push(notification: Notification) -> None:
         message_type=notification.message_type,
         details=notification.details or "",
         notification_id=notification.pk,
+        action_path=notification.action_path,
     )
 
 
@@ -53,6 +54,7 @@ def notify_expected_disconnects(*, computing_id: int, equipment_ids: Iterable[in
             message_type=Notification.WARNING,
             expiry_date=timezone.now() + ALERT_LIFETIME,
             target_user_id=expected.creator_id,
+            action_path="/lab-monitoring",
         )
         transaction.on_commit(partial(_push, notification))
         written += 1

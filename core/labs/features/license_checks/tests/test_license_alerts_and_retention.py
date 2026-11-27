@@ -63,6 +63,10 @@ def test_expiry_warnings_once_per_threshold(owner, make_license):
         "License expires in 19 days: LIC-30",
         "License expires in 2 days: LIC-7",
     ]
+    # Each alert opens the licenses page from the bell, toast or desktop notification.
+    assert set(Notification.objects.filter(target_user=owner).values_list("action_path", flat=True)) == {
+        "/lab-equipment/license"
+    }
     assert send_license_expiry_alerts().sent == 0  # never twice
 
     assert send_license_expiry_alerts(now=timezone.now() + timedelta(days=4)).sent == 1  # LIC-7 expired

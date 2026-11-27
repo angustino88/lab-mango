@@ -4494,6 +4494,76 @@
         "summary": "Complete Bench Bookings by Booking ID"
       }
     },
+    "/api/labs/bench-bookings/{booking_id}/actions/follow": {
+      "post": {
+        "operationId": "labs_bench_bookings_actions_follow_create_by_booking_id",
+        "description": "Get one alert (web, email, Teams) when this booking is about to end, completes, or is cancelled.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "booking_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Bench Bookings"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchBookingFollowActionSerializersBenchSlotWatchDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Follow Bench Bookings by Booking ID"
+      }
+    },
     "/api/labs/bench-bookings/{booking_id}/actions/reject": {
       "post": {
         "operationId": "labs_bench_bookings_actions_reject_create_by_booking_id",
@@ -5541,6 +5611,327 @@
         },
         "x-owner": "benches",
         "summary": "Get Bench Groups Options"
+      }
+    },
+    "/api/labs/bench-slot-watches": {
+      "get": {
+        "operationId": "labs_bench_slot_watches_retrieve",
+        "description": "Slot watches: the caller's own requests to hear when a bench frees up (email, Teams, web).",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "enum": [
+                "active",
+                "cancelled",
+                "expired",
+                "fulfilled"
+              ],
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "* `active` - Active\n* `cancelled` - Cancelled\n* `expired` - Expired\n* `fulfilled` - Notified"
+          },
+          {
+            "in": "query",
+            "name": "updated_after",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Only alerts changed at or after this time, e.g. recently notified follows (status=fulfilled)."
+          }
+        ],
+        "tags": [
+          "Bench Bookings"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchSlotWatchListSerializersBenchSlotWatchPaginatedResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": "The requested page does not exist (page beyond the last page)."
+          }
+        },
+        "summary": "Get Bench Slot Watches"
+      },
+      "post": {
+        "operationId": "labs_bench_slot_watches_create",
+        "description": "Slot watches: the caller's own requests to hear when a bench frees up (email, Teams, web).",
+        "tags": [
+          "Bench Bookings"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BenchSlotWatchCreate"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/BenchSlotWatchCreate"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/BenchSlotWatchCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchSlotWatchCreateSerializersBenchSlotWatchDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Create Bench Slot Watches"
+      }
+    },
+    "/api/labs/bench-slot-watches/{watch_id}": {
+      "get": {
+        "operationId": "labs_bench_slot_watches_retrieve_by_watch_id",
+        "description": "Slot watches: the caller's own requests to hear when a bench frees up (email, Teams, web).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "watch_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Bench Bookings"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchSlotWatchDetailSerializersBenchSlotWatchDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Bench Slot Watches by Watch ID"
+      }
+    },
+    "/api/labs/bench-slot-watches/{watch_id}/actions/cancel": {
+      "post": {
+        "operationId": "labs_bench_slot_watches_actions_cancel_create_by_watch_id",
+        "description": "Slot watches: the caller's own requests to hear when a bench frees up (email, Teams, web).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "watch_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Bench Bookings"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchSlotWatchCancelActionSerializersBenchSlotWatchDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Cancel Bench Slot Watches by Watch ID"
       }
     },
     "/api/labs/bench-types": {
@@ -37068,6 +37459,14 @@
           },
           {
             "in": "query",
+            "name": "unread",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "true: only notifications the caller has not read; false: only read ones."
+          },
+          {
+            "in": "query",
             "name": "user_id",
             "schema": {
               "type": "integer",
@@ -37178,6 +37577,116 @@
           }
         },
         "summary": "Create Notifications"
+      }
+    },
+    "/api/notifications/{notification_id}/actions/mark-read": {
+      "post": {
+        "operationId": "notifications_actions_mark_read_create_by_notification_id",
+        "description": "Mark one visible notification as read. Repeating is a no-op. Others' notifications return 404.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "notification_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Websocket Notifications"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationMarkReadSerializerNotificationDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Mark Read Notifications by Notification ID"
+      }
+    },
+    "/api/notifications/actions/mark-all-read": {
+      "post": {
+        "operationId": "notifications_actions_mark_all_read_create",
+        "description": "Mark the caller's visible unread notifications as read (up to 500 per call).",
+        "tags": [
+          "Websocket Notifications"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationMarkAllReadInboxMarkAllReadDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Mark All Read Notifications"
+      }
+    },
+    "/api/notifications/unread-count": {
+      "get": {
+        "operationId": "notifications_unread_count_retrieve",
+        "description": "Number of unread, unexpired notifications for the caller (for the header bell).",
+        "tags": [
+          "Websocket Notifications"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationUnreadCountInboxUnreadCountDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Notifications Unread Count"
       }
     },
     "/api/refresh-token": {
@@ -46489,16 +46998,8 @@
             "maxLength": 160
           },
           "source_url": {
-            "oneOf": [
-              {
-                "type": "string",
-                "format": "uri"
-              },
-              {
-                "type": "string",
-                "maxLength": 0
-              }
-            ]
+            "type": "string",
+            "default": ""
           },
           "license": {
             "type": "string",
@@ -46532,16 +47033,8 @@
             "maxLength": 160
           },
           "source_url": {
-            "oneOf": [
-              {
-                "type": "string",
-                "format": "uri"
-              },
-              {
-                "type": "string",
-                "maxLength": 0
-              }
-            ]
+            "type": "string",
+            "default": ""
           },
           "license": {
             "type": "string",
@@ -47318,6 +47811,18 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/BenchBooking"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "BenchBookingFollowActionSerializersBenchSlotWatchDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/BenchSlotWatch"
           }
         },
         "required": [
@@ -48679,6 +49184,200 @@
           "role"
         ],
         "x-embedded-resource": true
+      },
+      "BenchSlotWatch": {
+        "type": "object",
+        "description": "Base model serializer that automatically exposes created_at and updated_at from TimeStampedModel.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "bench": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsUIDNamedReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "followed_booking_id": {
+            "type": "integer",
+            "readOnly": true,
+            "nullable": true,
+            "description": "Set when this alert follows one booking: you get one alert when it ends, whichever way."
+          },
+          "availability": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SlotAvailability"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true,
+            "description": "For active alerts: busy blocks, next free time and how many others are watching."
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "availability",
+          "bench",
+          "created_at",
+          "ends_at",
+          "followed_booking_id",
+          "id",
+          "starts_at",
+          "status",
+          "updated_at"
+        ]
+      },
+      "BenchSlotWatchCancelActionSerializersBenchSlotWatchDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/BenchSlotWatch"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "BenchSlotWatchCreate": {
+        "type": "object",
+        "description": "Watch one bench for free time inside [starts_at, ends_at). Notify-only; nothing is held.\n\nDelivery channels are decided by the server (web always; email and Teams when enabled and reachable).",
+        "properties": {
+          "bench_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "bench_id",
+          "ends_at",
+          "starts_at"
+        ]
+      },
+      "BenchSlotWatchCreateSerializersBenchSlotWatchDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/BenchSlotWatch"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "BenchSlotWatchDetailSerializersBenchSlotWatchDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/BenchSlotWatch"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "BenchSlotWatchListSerializersBenchSlotWatchPaginatedResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/BenchSlotWatchListSerializersBenchSlotWatchPaginationMeta"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BenchSlotWatch"
+            }
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "BenchSlotWatchListSerializersBenchSlotWatchPagination": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "next": {
+            "type": "string",
+            "nullable": true
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "count",
+          "next",
+          "page",
+          "page_size",
+          "previous"
+        ]
+      },
+      "BenchSlotWatchListSerializersBenchSlotWatchPaginationMeta": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/BenchSlotWatchListSerializersBenchSlotWatchPagination"
+          }
+        },
+        "required": [
+          "pagination"
+        ]
       },
       "BenchStationReference": {
         "type": "object",
@@ -65052,6 +65751,18 @@
         ],
         "x-embedded-resource": true
       },
+      "MarkAllRead": {
+        "type": "object",
+        "properties": {
+          "marked_count": {
+            "type": "integer",
+            "description": "Notifications newly marked as read."
+          }
+        },
+        "required": [
+          "marked_count"
+        ]
+      },
       "MaterialCatalogCreate": {
         "type": "object",
         "properties": {
@@ -65751,6 +66462,15 @@
             "format": "date-time",
             "readOnly": true
           },
+          "action_path": {
+            "type": "string",
+            "readOnly": true
+          },
+          "is_read": {
+            "type": "boolean",
+            "readOnly": true,
+            "description": "Whether the caller has read this notification."
+          },
           "target_user": {
             "allOf": [
               {
@@ -65772,14 +66492,40 @@
           }
         },
         "required": [
+          "action_path",
           "created_at",
           "details",
           "expires_at",
           "id",
+          "is_read",
           "message",
           "message_type",
           "target_user",
           "updated_at"
+        ]
+      },
+      "NotificationMarkAllReadInboxMarkAllReadDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/MarkAllRead"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "NotificationMarkReadSerializerNotificationDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Notification"
+          }
+        },
+        "required": [
+          "data"
         ]
       },
       "NotificationSerializerNotificationDetailResponse": {
@@ -65854,6 +66600,18 @@
         },
         "required": [
           "pagination"
+        ]
+      },
+      "NotificationUnreadCountInboxUnreadCountDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/UnreadCount"
+          }
+        },
+        "required": [
+          "data"
         ]
       },
       "NotificationWrite": {
@@ -71903,6 +72661,70 @@
           "updated"
         ]
       },
+      "SlotAvailability": {
+        "type": "object",
+        "description": "Live view of the watched time: who-free (anonymous) busy blocks, next free gap, and demand.",
+        "properties": {
+          "window_starts_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "window_ends_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "busy_periods": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SlotBusyPeriod"
+            }
+          },
+          "next_free_starts_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "next_free_ends_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "watcher_count": {
+            "type": "integer",
+            "description": "Other users with an active alert on this bench and time."
+          }
+        },
+        "required": [
+          "busy_periods",
+          "next_free_ends_at",
+          "next_free_starts_at",
+          "watcher_count",
+          "window_ends_at",
+          "window_starts_at"
+        ]
+      },
+      "SlotBusyPeriod": {
+        "type": "object",
+        "properties": {
+          "starts_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "is_mine": {
+            "type": "boolean",
+            "description": "The viewer's own booking. Other bookings are anonymous."
+          }
+        },
+        "required": [
+          "ends_at",
+          "is_mine",
+          "starts_at"
+        ]
+      },
       "SnapshotItem": {
         "type": "object",
         "properties": {
@@ -77245,6 +78067,18 @@
         },
         "required": [
           "pagination"
+        ]
+      },
+      "UnreadCount": {
+        "type": "object",
+        "properties": {
+          "unread_count": {
+            "type": "integer",
+            "description": "Unread, unexpired notifications for the caller, capped at 100."
+          }
+        },
+        "required": [
+          "unread_count"
         ]
       },
       "UrgencyEnum": {

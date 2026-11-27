@@ -25,7 +25,10 @@ from core.support_desk.models.outbox import NotificationOutbox
 from core.support_desk.models.settings import SupportSettings
 from core.support_desk.models.status import SupportStatus
 from core.support_desk.models.ticket import SupportTicket
-from core.websocket.publish_service import publish_notification
+from core.websocket.models import Notification
+from core.websocket.publish_service import publish_user_notification
+
+IN_APP_LIFETIME = timedelta(days=14)
 
 logger = logging.getLogger(__name__)
 
@@ -95,11 +98,24 @@ def process_notification_outbox(batch_size: int = 50) -> int:
                     email.attach_alternative(html_body, "text/html")
                     email.send(fail_silently=False)
 
-            elif channel == OutboxChannel.IN_APP.value:
-                publish_notification(
-                    message=payload.get("message", "New support update"),
-                    details=payload.get("ticket_key", ""),
-                    target_user_id=recipient.pk if recipient else None,
+            elif channel == OutboxChannel.IN_APP.value and recipient is not None:
+                # Saved for the bell and pushed to this recipient only (never the broadcast channel).
+                deep_link = payload.get("deep_link", "")
+                notification = Notification.objects.create(
+                    target_user_id=recipient.pk,
+                    message=str(payload.get("subject") or "Support ticket update")[:255],
+                    details=str(payload.get("message", ""))[:255],
+                    message_type=Notification.INFO,
+                    expiry_date=timezone.now() + IN_APP_LIFETIME,
+                    action_path=deep_link if deep_link.startswith("/") and not deep_link.startswith("//") else "",
+                )
+                publish_user_notification(
+                    recipient.pk,
+                    notification.message,
+                    message_type=notification.message_type,
+                    details=notification.details,
+                    notification_id=notification.pk,
+                    action_path=notification.action_path,
                 )
 
             record.status = OutboxStatus.SENT.value

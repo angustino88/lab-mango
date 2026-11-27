@@ -32,6 +32,9 @@ class Notification(TimeStampedModel, UserStampedModel):
         choices=MESSAGE_TYPES,
     )
     expiry_date = models.DateTimeField()
+    # Optional in-app destination for the notification's primary action, e.g. "/booking-calendar?...".
+    # Always a path inside this app (starts with "/"), never an external URL.
+    action_path = models.CharField(max_length=500, blank=True, default="")
     # Optional: target user for per-user notifications (null = broadcast)
     target_user = models.ForeignKey(
         "users.User",
@@ -49,11 +52,39 @@ class Notification(TimeStampedModel, UserStampedModel):
             models.Index(fields=["expiry_date"]),
             models.Index(fields=["target_user", "created"]),
         ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(action_path="")
+                | (models.Q(action_path__startswith="/") & ~models.Q(action_path__startswith="//")),
+                name="notification_action_path_internal",
+            ),
+        ]
 
     def clean(self) -> None:
         super().clean()
         if self.expiry_date and self.expiry_date <= timezone.now():
             raise ValidationError({"expiry_date": _("Expiry date must be in the future.")})
+        if self.action_path and (not self.action_path.startswith("/") or self.action_path.startswith("//")):
+            raise ValidationError({"action_path": _("Must be a path inside the app.")})
 
     def __str__(self) -> str:
         return self.message
+
+
+class NotificationRead(models.Model):
+    """One user has read one notification (targeted or broadcast). Drives the bell's unread count.
+
+    Race guard: the unique (user, notification) constraint makes marking read idempotent.
+    """
+
+    user = models.ForeignKey("users.User", on_delete=models.CASCADE, related_name="notification_reads")
+    notification = models.ForeignKey(Notification, on_delete=models.CASCADE, related_name="reads")
+    read_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=("user", "notification"), name="notification_read_unique"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user_id} read {self.notification_id}"

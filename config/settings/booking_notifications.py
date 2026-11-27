@@ -12,6 +12,8 @@ def notification_settings(env) -> dict:
     enabled = env.bool("BOOKING_NOTIFICATIONS_ENABLED", default=False)
     email = env.bool("BOOKING_NOTIFICATIONS_EMAIL_ENABLED", default=False)
     teams = env.bool("BOOKING_NOTIFICATIONS_TEAMS_ENABLED", default=False)
+    # Web (bell, toast, opt-in desktop notification) for the start and inactivity reminders.
+    in_app = env.bool("BOOKING_NOTIFICATIONS_IN_APP_ENABLED", default=False)
     raw_cutoff = env("BOOKING_NOTIFICATIONS_ENABLEMENT_CUTOFF", default="")
     cutoff = None
     if raw_cutoff:
@@ -62,8 +64,32 @@ def notification_settings(env) -> dict:
         "BOOKING_NOTIFICATIONS_ENABLED": enabled,
         "BOOKING_NOTIFICATIONS_EMAIL_ENABLED": email,
         "BOOKING_NOTIFICATIONS_TEAMS_ENABLED": teams,
+        "BOOKING_NOTIFICATIONS_IN_APP_ENABLED": in_app,
         "BOOKING_NOTIFICATIONS_ENABLEMENT_CUTOFF": cutoff,
         "BOOKING_NOTIFICATIONS_TEAMS_WORKFLOW_URL": endpoint,
         "BOOKING_NOTIFICATIONS_TEAMS_EXPECTED_TENANT_ID": tenant,
         "BOOKING_NOTIFICATIONS_QUEUE": env("BOOKING_NOTIFICATIONS_QUEUE", default="booking_notifications"),
+        **slot_watch_settings(env),
+    }
+
+
+def slot_watch_settings(env) -> dict:
+    """Bench slot watches. Web delivery needs only this flag; email and Teams also need the
+    booking notification master switch and their channel switch (validated above)."""
+    try:
+        lead = int(env("BOOKING_SLOT_WATCH_LEAD_MINUTES", default="15"))
+    except (TypeError, ValueError):
+        raise ImproperlyConfigured("Slot watch lead time must be a whole number of minutes.") from None
+    if not 1 <= lead <= 120:
+        raise ImproperlyConfigured("Slot watch lead time must be between 1 and 120 minutes.")
+    app_url = str(env("BOOKING_SLOT_WATCH_APP_URL", default="") or "").strip().rstrip("/")
+    if app_url:
+        parts = urlsplit(app_url)
+        if parts.scheme not in ("https", "http") or not parts.hostname or parts.query or parts.fragment:
+            raise ImproperlyConfigured("Slot watch app URL must be the Lab Mango web address, e.g. https://host.")
+    return {
+        "BOOKING_SLOT_WATCH_ENABLED": env.bool("BOOKING_SLOT_WATCH_ENABLED", default=False),
+        "BOOKING_SLOT_WATCH_LEAD_MINUTES": lead,
+        # Public web address of the frontend, used for "Book now" links in email and Teams.
+        "BOOKING_SLOT_WATCH_APP_URL": app_url,
     }

@@ -1,0 +1,7 @@
+{% comment %}Plain text for Teams: not HTML, so no HTML escaping.{% endcomment %}{% autoescape off %}**{{ title }}**
+{{ intro }}
+
+Available: {{ window }} ({{ time_zone }})
+{% if watched %}Your alert: {{ watched }}
+{% endif %}
+The slot is not reserved for you. {% if booking_url %}Book it now: {{ booking_url }}{% else %}Book it in Lab Mango to secure it.{% endif %}{% endautoescape %}

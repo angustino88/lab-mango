@@ -28,7 +28,7 @@ class BookingNotification(models.Model):
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="booking_notifications"
     )
-    channel = models.CharField(max_length=8, choices=(("email", "Email"), ("teams", "Teams")))
+    channel = models.CharField(max_length=8, choices=(("email", "Email"), ("teams", "Teams"), ("in_app", "Web")))
     kind = models.CharField(max_length=16)
     snapshot = models.JSONField()
     created_at = models.DateTimeField(default=timezone.now)
@@ -52,7 +52,9 @@ class BookingNotification(models.Model):
                 ),
                 name="booking_notice_one_booking",
             ),
-            models.CheckConstraint(condition=models.Q(channel__in=("email", "teams")), name="booking_notice_channel"),
+            models.CheckConstraint(
+                condition=models.Q(channel__in=("email", "teams", "in_app")), name="booking_notice_channel"
+            ),
             models.CheckConstraint(
                 condition=models.Q(kind__in=("created", "updated", "start", "inactive")), name="booking_notice_kind"
             ),
