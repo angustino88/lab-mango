@@ -46492,8 +46492,7 @@
             "oneOf": [
               {
                 "type": "string",
-                "format": "uri",
-                "default": ""
+                "format": "uri"
               },
               {
                 "type": "string",
@@ -46536,8 +46535,7 @@
             "oneOf": [
               {
                 "type": "string",
-                "format": "uri",
-                "default": ""
+                "format": "uri"
               },
               {
                 "type": "string",

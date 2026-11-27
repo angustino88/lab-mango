@@ -294,3 +294,27 @@ def test_room_mapping_rows_carry_the_shown_model(operator):
     assert mapping is not None
     assert [(row["id"], row["visual_model_id"]) for row in mapping["data"]["stations"]] == [(station.pk, workbench.pk)]
     assert [(row["id"], row["visual_model_id"]) for row in mapping["data"]["benches"]] == [(bench.pk, instrument.pk)]
+
+
+@pytest.mark.django_db
+def test_source_url_is_optional_and_stored_blank(client, operator, tmp_path):
+    with override_settings(MEDIA_ROOT=str(tmp_path), MINIO_ENABLED=False):
+        created = client.post(
+            "/api/labs/visual-model-assets",
+            {"file": SimpleUploadedFile("rack.glb", glb()), "name": "Rack"},
+            format="multipart",
+        )
+        assert created.status_code == 201, created.data
+        assert created.data["data"]["source_url"] == ""
+
+        asset_id = created.data["data"]["id"]
+        url = f"/api/labs/visual-model-assets/{asset_id}"
+        with_url = client.put(
+            url, {"name": "Rack", "source_url": "https://example.com/rack"}, format="json", HTTP_IF_MATCH='"1"'
+        )
+        assert with_url.status_code == 200, with_url.data
+        assert with_url.data["data"]["source_url"] == "https://example.com/rack"
+
+        cleared = client.put(url, {"name": "Rack"}, format="json", HTTP_IF_MATCH='"2"')
+        assert cleared.status_code == 200, cleared.data
+        assert cleared.data["data"]["source_url"] == ""

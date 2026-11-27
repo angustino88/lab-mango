@@ -2,7 +2,7 @@
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
   "total_endpoints": 548,
-  "generated_at": "2026-11-26",
+  "generated_at": "2026-11-27",
   "endpoints": [
     {
       "endpoint": "/agent/bookings/actions/check-in",
@@ -130264,8 +130264,7 @@
               "oneOf": [
                 {
                   "type": "string",
-                  "format": "uri",
-                  "default": ""
+                  "format": "uri"
                 },
                 {
                   "type": "string",
@@ -130703,8 +130702,7 @@
               "oneOf": [
                 {
                   "type": "string",
-                  "format": "uri",
-                  "default": ""
+                  "format": "uri"
                 },
                 {
                   "type": "string",

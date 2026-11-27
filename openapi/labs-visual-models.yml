@@ -994,7 +994,6 @@ components:
           oneOf:
           - type: string
             format: uri
-            default: ''
           - type: string
             maxLength: 0
         license:
@@ -1025,7 +1024,6 @@ components:
           oneOf:
           - type: string
             format: uri
-            default: ''
           - type: string
             maxLength: 0
         license:

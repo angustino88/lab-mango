@@ -57,7 +57,7 @@ class ModelUploadField(serializers.FileField):
 
 class AssetDetailsSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=160)
-    source_url = serializers.URLField(required=False, allow_blank=True, default="")
+    source_url = serializers.URLField(required=False, allow_blank=True)  # omitted -> AssetDetails default ""
     license = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
     rotation = serializers.FloatField(min_value=-360, max_value=360, default=0)
     surface = serializers.FloatField(min_value=0, max_value=1, default=1)
