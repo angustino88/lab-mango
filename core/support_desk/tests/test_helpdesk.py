@@ -577,3 +577,36 @@ class TestBackgroundJobs:
             actor=requester_user,
         )
         assert b.scan_status == "pending"
+
+
+@pytest.mark.django_db
+class TestInAppTicketNotifications:
+    """In-app ticket updates are saved for the bell and pushed only to their recipient."""
+
+    def test_saved_private_and_linked(self, requester_user):
+        from unittest.mock import patch
+
+        from core.support_desk.features.tickets.application.tasks import process_notification_outbox
+        from core.websocket.models import Notification
+
+        NotificationOutbox.objects.create(
+            event_id="e-inapp",
+            recipient=requester_user,
+            channel="in_app",
+            payload={
+                "subject": "[SUP-9] Ticket Created: Printer",
+                "message": "Submitted.",
+                "deep_link": "/support-tickets/SUP-9",
+            },
+        )
+        with (
+            patch("core.support_desk.features.tickets.application.tasks.publish_user_notification") as private,
+            patch("core.websocket.publish_service.publish_notification") as broadcast,
+        ):
+            assert process_notification_outbox() == 1
+        notification = Notification.objects.get(target_user=requester_user)
+        assert notification.message == "[SUP-9] Ticket Created: Printer"
+        assert notification.action_path == "/support-tickets/SUP-9"
+        private.assert_called_once()
+        assert private.call_args.args[0] == requester_user.pk
+        broadcast.assert_not_called()

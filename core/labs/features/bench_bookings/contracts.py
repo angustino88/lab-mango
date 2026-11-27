@@ -63,3 +63,28 @@ class AgentBookingLogin:
     starts_at: datetime
     ends_at: datetime
     booked_for: str | None
+
+
+# Free time on a bench: shared by slot alert collection and the alerts' availability view.
+MIN_FREE_GAP = timedelta(minutes=5)
+Interval = tuple[datetime, datetime]
+
+
+def free_intervals(window: Interval, busy: list[Interval], *, min_gap: timedelta = MIN_FREE_GAP) -> list[Interval]:
+    """Half-open gaps in ``window`` not covered by ``busy``, each at least ``min_gap`` long."""
+    lo, hi = window
+    gaps: list[Interval] = []
+    cursor = lo
+    for start, end in sorted(busy):
+        if end <= cursor:
+            continue
+        if start >= hi:
+            break
+        if start > cursor:
+            gaps.append((cursor, min(start, hi)))
+        cursor = max(cursor, end)
+        if cursor >= hi:
+            break
+    if cursor < hi:
+        gaps.append((cursor, hi))
+    return [(s, e) for s, e in gaps if e - s >= min_gap]

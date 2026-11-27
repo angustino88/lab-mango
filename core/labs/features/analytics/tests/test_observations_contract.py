@@ -188,6 +188,8 @@ def test_websocket_get_pagination_audit_and_precise_candidate(schema, rows, page
             "details": "Synthetic details",
             "message_type": {"value": "info", "label": "Info"},
             "expires_at": "2026-11-10T12:00:00Z",
+            "action_path": "",
+            "is_read": False,
             "target_user": None,
             "created_at": "2026-11-09T12:00:00Z",
             "updated_at": "2026-11-09T12:00:00Z",

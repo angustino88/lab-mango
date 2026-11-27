@@ -1718,6 +1718,14 @@ components:
           $ref: '#/components/schemas/BenchBooking'
       required:
       - data
+    BenchBookingFollowActionSerializersBenchSlotWatchDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchSlotWatch'
+      required:
+      - data
     BenchBookingListSerializersBenchBookingPaginatedResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -2683,6 +2691,151 @@ components:
       - position
       - role
       x-embedded-resource: true
+    BenchSlotWatch:
+      type: object
+      description: Base model serializer that automatically exposes created_at and
+        updated_at from TimeStampedModel.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        bench:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          readOnly: true
+        starts_at:
+          type: string
+          format: date-time
+          readOnly: true
+        ends_at:
+          type: string
+          format: date-time
+          readOnly: true
+        followed_booking_id:
+          type: integer
+          readOnly: true
+          nullable: true
+          description: 'Set when this alert follows one booking: you get one alert
+            when it ends, whichever way.'
+        availability:
+          allOf:
+          - $ref: '#/components/schemas/SlotAvailability'
+          nullable: true
+          readOnly: true
+          description: 'For active alerts: busy blocks, next free time and how many
+            others are watching.'
+        status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - availability
+      - bench
+      - created_at
+      - ends_at
+      - followed_booking_id
+      - id
+      - starts_at
+      - status
+      - updated_at
+    BenchSlotWatchCancelActionSerializersBenchSlotWatchDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchSlotWatch'
+      required:
+      - data
+    BenchSlotWatchCreate:
+      type: object
+      description: 'Watch one bench for free time inside [starts_at, ends_at). Notify-only;
+        nothing is held.
+
+
+        Delivery channels are decided by the server (web always; email and Teams when
+        enabled and reachable).'
+      properties:
+        bench_id:
+          type: integer
+          minimum: 1
+        starts_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+      required:
+      - bench_id
+      - ends_at
+      - starts_at
+    BenchSlotWatchCreateSerializersBenchSlotWatchDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchSlotWatch'
+      required:
+      - data
+    BenchSlotWatchDetailSerializersBenchSlotWatchDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchSlotWatch'
+      required:
+      - data
+    BenchSlotWatchListSerializersBenchSlotWatchPaginatedResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        meta:
+          $ref: '#/components/schemas/BenchSlotWatchListSerializersBenchSlotWatchPaginationMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchSlotWatch'
+      required:
+      - data
+      - meta
+    BenchSlotWatchListSerializersBenchSlotWatchPagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+      required:
+      - count
+      - next
+      - page
+      - page_size
+      - previous
+    BenchSlotWatchListSerializersBenchSlotWatchPaginationMeta:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/BenchSlotWatchListSerializersBenchSlotWatchPagination'
+      required:
+      - pagination
     BenchStationReference:
       type: object
       properties:
@@ -14556,6 +14709,14 @@ components:
       - slot_code
       - station_id
       x-embedded-resource: true
+    MarkAllRead:
+      type: object
+      properties:
+        marked_count:
+          type: integer
+          description: Notifications newly marked as read.
+      required:
+      - marked_count
     MaterialCatalogCreate:
       type: object
       properties:
@@ -15068,6 +15229,13 @@ components:
           type: string
           format: date-time
           readOnly: true
+        action_path:
+          type: string
+          readOnly: true
+        is_read:
+          type: boolean
+          readOnly: true
+          description: Whether the caller has read this notification.
         target_user:
           allOf:
           - $ref: '#/components/schemas/UserReference'
@@ -15082,14 +15250,32 @@ components:
           format: date-time
           readOnly: true
       required:
+      - action_path
       - created_at
       - details
       - expires_at
       - id
+      - is_read
       - message
       - message_type
       - target_user
       - updated_at
+    NotificationMarkAllReadInboxMarkAllReadDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/MarkAllRead'
+      required:
+      - data
+    NotificationMarkReadSerializerNotificationDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Notification'
+      required:
+      - data
     NotificationSerializerNotificationDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -15142,6 +15328,14 @@ components:
           $ref: '#/components/schemas/NotificationSerializerNotificationPagination'
       required:
       - pagination
+    NotificationUnreadCountInboxUnreadCountDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/UnreadCount'
+      required:
+      - data
     NotificationWrite:
       type: object
       description: Write shape (RW-1); the target user is not writable here.
@@ -19612,6 +19806,55 @@ components:
       - name
       - rows
       - updated
+    SlotAvailability:
+      type: object
+      description: 'Live view of the watched time: who-free (anonymous) busy blocks,
+        next free gap, and demand.'
+      properties:
+        window_starts_at:
+          type: string
+          format: date-time
+        window_ends_at:
+          type: string
+          format: date-time
+        busy_periods:
+          type: array
+          items:
+            $ref: '#/components/schemas/SlotBusyPeriod'
+        next_free_starts_at:
+          type: string
+          format: date-time
+          nullable: true
+        next_free_ends_at:
+          type: string
+          format: date-time
+          nullable: true
+        watcher_count:
+          type: integer
+          description: Other users with an active alert on this bench and time.
+      required:
+      - busy_periods
+      - next_free_ends_at
+      - next_free_starts_at
+      - watcher_count
+      - window_ends_at
+      - window_starts_at
+    SlotBusyPeriod:
+      type: object
+      properties:
+        starts_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+        is_mine:
+          type: boolean
+          description: The viewer's own booking. Other bookings are anonymous.
+      required:
+      - ends_at
+      - is_mine
+      - starts_at
     SnapshotItem:
       type: object
       properties:
@@ -23488,6 +23731,14 @@ components:
           $ref: '#/components/schemas/TypedResourceAuditListSerializersResourceAuditItemPagination'
       required:
       - pagination
+    UnreadCount:
+      type: object
+      properties:
+        unread_count:
+          type: integer
+          description: Unread, unexpired notifications for the caller, capped at 100.
+      required:
+      - unread_count
     UrgencyEnum:
       enum:
       - '1'

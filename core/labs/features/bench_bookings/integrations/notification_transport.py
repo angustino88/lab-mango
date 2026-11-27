@@ -132,3 +132,31 @@ def deliver(
         log_failure_details=False,
     )
     return DeliveryOutcome("sent", "accepted") if sent else DeliveryOutcome("retry", "email_not_sent")
+
+
+def booking_web_message(*, kind: str, snapshot: BookingNotificationSnapshot) -> tuple[str, str, str]:
+    """(title, details, action_path) for the bell, toast and desktop notification of a reminder."""
+    from datetime import datetime
+
+    from django.utils import timezone
+
+    from .slot_watch_transport import describe_window
+
+    now = timezone.now()
+    bench = snapshot.bench_name or "your bench"
+    starts = timezone.localtime(datetime.fromisoformat(snapshot.starts_at))
+    ends = timezone.localtime(datetime.fromisoformat(snapshot.ends_at))
+    if kind == "start":
+        title = f"Your booking on {bench} starts now"
+        details = (
+            f"{describe_window(starts, ends, now)} · Booking {snapshot.booking_code}. "
+            "Sign in on the bench computer with your booking code."
+        )
+    else:
+        device = snapshot.equipment_name or bench
+        title = f"No activity on {device} for over an hour"
+        details = (
+            f"{bench} is booked for you until {ends:%H:%M}. "
+            "If you've finished, end the booking to free the bench for others."
+        )
+    return title[:255], details[:255], "/my-bookings"

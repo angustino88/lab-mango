@@ -34,6 +34,12 @@ paths:
         description: 'Reconnection cursor: return only notifications whose id is greater
           than this value. Pass the highest id already received.'
       - in: query
+        name: unread
+        schema:
+          type: boolean
+        description: 'true: only notifications the caller has not read; false: only
+          read ones.'
+      - in: query
         name: user_id
         schema:
           type: integer
@@ -100,6 +106,72 @@ paths:
                 $ref: '#/components/schemas/ProblemResponseEnvelope'
           description: ''
       summary: Create Notifications
+  /api/notifications/{notification_id}/actions/mark-read:
+    post:
+      operationId: notifications_actions_mark_read_create_by_notification_id
+      description: Mark one visible notification as read. Repeating is a no-op. Others'
+        notifications return 404.
+      parameters:
+      - in: path
+        name: notification_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Websocket Notifications
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationMarkReadSerializerNotificationDetailResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemResponseEnvelope'
+          description: ''
+      summary: Mark Read Notifications by Notification ID
+  /api/notifications/actions/mark-all-read:
+    post:
+      operationId: notifications_actions_mark_all_read_create
+      description: Mark the caller's visible unread notifications as read (up to 500
+        per call).
+      tags:
+      - Websocket Notifications
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationMarkAllReadInboxMarkAllReadDetailResponse'
+          description: ''
+      summary: Mark All Read Notifications
+  /api/notifications/unread-count:
+    get:
+      operationId: notifications_unread_count_retrieve
+      description: Number of unread, unexpired notifications for the caller (for the
+        header bell).
+      tags:
+      - Websocket Notifications
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationUnreadCountInboxUnreadCountDetailResponse'
+          description: ''
+      summary: Get Notifications Unread Count
 components:
   schemas:
     Choice:
@@ -115,6 +187,14 @@ components:
       required:
       - label
       - value
+    MarkAllRead:
+      type: object
+      properties:
+        marked_count:
+          type: integer
+          description: Notifications newly marked as read.
+      required:
+      - marked_count
     MessageTypeEnum:
       enum:
       - success
@@ -154,6 +234,13 @@ components:
           type: string
           format: date-time
           readOnly: true
+        action_path:
+          type: string
+          readOnly: true
+        is_read:
+          type: boolean
+          readOnly: true
+          description: Whether the caller has read this notification.
         target_user:
           allOf:
           - $ref: '#/components/schemas/UserReference'
@@ -168,14 +255,32 @@ components:
           format: date-time
           readOnly: true
       required:
+      - action_path
       - created_at
       - details
       - expires_at
       - id
+      - is_read
       - message
       - message_type
       - target_user
       - updated_at
+    NotificationMarkAllReadInboxMarkAllReadDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/MarkAllRead'
+      required:
+      - data
+    NotificationMarkReadSerializerNotificationDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/Notification'
+      required:
+      - data
     NotificationSerializerNotificationDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -228,6 +333,14 @@ components:
           $ref: '#/components/schemas/NotificationSerializerNotificationPagination'
       required:
       - pagination
+    NotificationUnreadCountInboxUnreadCountDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/UnreadCount'
+      required:
+      - data
     NotificationWrite:
       type: object
       description: Write shape (RW-1); the target user is not writable here.
@@ -273,6 +386,14 @@ components:
           $ref: '#/components/schemas/ProblemDetail'
       required:
       - error
+    UnreadCount:
+      type: object
+      properties:
+        unread_count:
+          type: integer
+          description: Unread, unexpired notifications for the caller, capped at 100.
+      required:
+      - unread_count
     UserReference:
       type: object
       description: 'REL-3 user relation ``{id, username, display_name}``.

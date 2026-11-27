@@ -40,3 +40,23 @@ def deliver_booking_notifications_task() -> dict[str, int]:
     from .application.notification_delivery import deliver_notifications
 
     return deliver_notifications()
+
+
+@shared_task(name="labs.bench_bookings.collect_slot_watch_notifications", soft_time_limit=50, time_limit=60)
+def collect_slot_watch_notifications_task(after_watch_id: int = 0) -> dict[str, int]:
+    from .application.slot_watch_collection import collect_slot_watch_notifications
+
+    result = collect_slot_watch_notifications(now=timezone.now(), after_watch_id=after_watch_id)
+    if result["cursor"] >= 0:
+        collect_slot_watch_notifications_task.apply_async(
+            args=(result["cursor"],), queue=settings.BOOKING_NOTIFICATIONS_QUEUE
+        )
+    logging.getLogger(__name__).info("slot_watch_collection created=%s", result["created"])
+    return result
+
+
+@shared_task(name="labs.bench_bookings.deliver_slot_watch_notifications", soft_time_limit=80, time_limit=90)
+def deliver_slot_watch_notifications_task() -> dict[str, int]:
+    from .application.slot_watch_delivery import deliver_slot_watch_notifications
+
+    return deliver_slot_watch_notifications()

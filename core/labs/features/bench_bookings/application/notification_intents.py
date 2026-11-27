@@ -13,6 +13,9 @@ from core.labs.models import BenchBooking, BookingNotification
 
 from ..contracts import BookingNotificationSnapshot
 
+# Creation and updates confirm the user's own action (email/Teams); reminders need attention now.
+WEB_KINDS = frozenset({"start", "inactive"})
+
 MATERIAL_FIELDS = ("creator_id", "bench_id", "starts_at", "ends_at", "status", "approval_status", "project_id")
 
 
@@ -71,7 +74,11 @@ def record_notification(
     elif kind == "inactive":
         expires_at = min(booking.ends_at, now + timedelta(minutes=10))
     count = 0
-    for channel in (NotificationChannel.EMAIL.value, NotificationChannel.TEAMS.value):
+    channels = [NotificationChannel.EMAIL.value, NotificationChannel.TEAMS.value]
+    if kind in WEB_KINDS:
+        # Time-sensitive reminders also go to the bell, a toast and (opt-in) a desktop notification.
+        channels.append(NotificationChannel.IN_APP.value)
+    for channel in channels:
         if not getattr(settings, f"BOOKING_NOTIFICATIONS_{channel.upper()}_ENABLED", False):
             continue
         if channel == NotificationChannel.EMAIL.value and not owner.email.strip():

@@ -75,6 +75,8 @@ class NotificationAdmin(admin.ModelAdmin):
     list_filter = ("message_type",)
     search_fields = ("message", "details", "target_user__username", "target_user__email")
     autocomplete_fields = ("target_user",)
+    # Action links are set by features (e.g. slot alerts' "Book now"), not typed by admins.
+    exclude = ("action_path",)
     actions = [send_notification_action]
 
     def formfield_for_dbfield(self, db_field, request, **kwargs):

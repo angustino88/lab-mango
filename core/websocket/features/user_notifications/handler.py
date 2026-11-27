@@ -5,11 +5,11 @@ import json
 import logging
 
 from asgiref.sync import sync_to_async
-from django.db.models import Q
+from django.db.models import Exists, OuterRef, Q
 from django.utils import timezone
 
 from core.websocket import pubsub
-from core.websocket.models import Notification
+from core.websocket.models import Notification, NotificationRead
 from core.websocket.router import register_route
 
 logger = logging.getLogger(__name__)
@@ -24,6 +24,7 @@ def _get_active_user_notifications(user_id: int) -> list[dict]:
     qs = (
         Notification.objects.filter(expiry_date__gt=timezone.now())
         .filter(Q(target_user__isnull=True) | Q(target_user_id=user_id))
+        .annotate(is_read=Exists(NotificationRead.objects.filter(user_id=user_id, notification=OuterRef("pk"))))
         .order_by("-created")[:50]
     )
 
@@ -36,6 +37,10 @@ def _get_active_user_notifications(user_id: int) -> list[dict]:
             "details": n.details or "",
             "message_type": n.message_type,
             "expiry_date": n.expiry_date.isoformat() if n.expiry_date else None,
+            "action_path": n.action_path,
+            "is_read": n.is_read,
+            # Replayed on connect: clients list it but do not pop it up again.
+            "replay": True,
             "created": n.created.isoformat(),
         }
         for n in reversed(list(qs))
