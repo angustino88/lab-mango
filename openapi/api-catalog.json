@@ -137416,6 +137416,19 @@
       ],
       "parameters": [
         {
+          "name": "display_mode",
+          "in": "query",
+          "required": false,
+          "description": "Filter by presentation mode: alert (one-time bell/toast alerts) or banner (expiring top banners).",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "alert",
+              "banner"
+            ]
+          }
+        },
+        {
           "name": "page",
           "in": "query",
           "required": false,
@@ -137522,6 +137535,19 @@
                       ],
                       "readOnly": true
                     },
+                    "display_mode": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
+                    },
+                    "is_dismissible": {
+                      "type": "boolean",
+                      "readOnly": true
+                    },
                     "expires_at": {
                       "type": "string",
                       "format": "date-time",
@@ -137561,8 +137587,10 @@
                     "action_path",
                     "created_at",
                     "details",
+                    "display_mode",
                     "expires_at",
                     "id",
+                    "is_dismissible",
                     "is_read",
                     "message",
                     "message_type",
@@ -137590,6 +137618,8 @@
                 "message": "string",
                 "details": "string",
                 "message_type": {},
+                "display_mode": {},
+                "is_dismissible": true,
                 "expires_at": "2026-10-20T12:00:00Z",
                 "action_path": "string",
                 "is_read": true,
@@ -137801,6 +137831,19 @@
                     ],
                     "readOnly": true
                   },
+                  "display_mode": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "is_dismissible": {
+                    "type": "boolean",
+                    "readOnly": true
+                  },
                   "expires_at": {
                     "type": "string",
                     "format": "date-time",
@@ -137840,8 +137883,10 @@
                   "action_path",
                   "created_at",
                   "details",
+                  "display_mode",
                   "expires_at",
                   "id",
+                  "is_dismissible",
                   "is_read",
                   "message",
                   "message_type",
@@ -137860,6 +137905,8 @@
               "message": "string",
               "details": "string",
               "message_type": {},
+              "display_mode": {},
+              "is_dismissible": true,
               "expires_at": "2026-10-20T12:00:00Z",
               "action_path": "string",
               "is_read": true,
@@ -137929,7 +137976,7 @@
       "method": "POST",
       "operation_id": "notifications_actions_mark_all_read_create",
       "summary": "Mark All Read Notifications",
-      "description": "Mark the caller's visible unread notifications as read (up to 500 per call).",
+      "description": "Mark the caller's visible unread one-time alert notifications as read (up to 500 per call). Active banners are not dismissed by this action.",
       "tags": [
         "Websocket Notifications"
       ],
@@ -137948,7 +137995,7 @@
                 "properties": {
                   "marked_count": {
                     "type": "integer",
-                    "description": "Notifications newly marked as read."
+                    "description": "Alert notifications newly marked as read."
                   }
                 },
                 "required": [
@@ -137973,7 +138020,7 @@
       "method": "GET",
       "operation_id": "notifications_unread_count_retrieve",
       "summary": "Get Notifications Unread Count",
-      "description": "Number of unread, unexpired notifications for the caller (for the header bell).",
+      "description": "Number of unread, unexpired one-time alert notifications for the caller (for the header bell). Expiring banners are excluded from the badge count.",
       "tags": [
         "Websocket Notifications"
       ],
@@ -137992,7 +138039,7 @@
                 "properties": {
                   "unread_count": {
                     "type": "integer",
-                    "description": "Unread, unexpired notifications for the caller, capped at 100."
+                    "description": "Unread, unexpired alert notifications for the caller, capped at 100."
                   }
                 },
                 "required": [
@@ -138017,7 +138064,7 @@
       "method": "POST",
       "operation_id": "notifications_actions_mark_read_create_by_notification_id",
       "summary": "Mark Read Notifications by Notification ID",
-      "description": "Mark one visible notification as read. Repeating is a no-op. Others' notifications return 404.",
+      "description": "Mark one visible notification (alert or banner dismissal) as read. Repeating is a no-op. Others' notifications return 404.",
       "tags": [
         "Websocket Notifications"
       ],
@@ -138067,6 +138114,19 @@
                     ],
                     "readOnly": true
                   },
+                  "display_mode": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  },
+                  "is_dismissible": {
+                    "type": "boolean",
+                    "readOnly": true
+                  },
                   "expires_at": {
                     "type": "string",
                     "format": "date-time",
@@ -138106,8 +138166,10 @@
                   "action_path",
                   "created_at",
                   "details",
+                  "display_mode",
                   "expires_at",
                   "id",
+                  "is_dismissible",
                   "is_read",
                   "message",
                   "message_type",
@@ -138126,6 +138188,8 @@
               "message": "string",
               "details": "string",
               "message_type": {},
+              "display_mode": {},
+              "is_dismissible": true,
               "expires_at": "2026-10-20T12:00:00Z",
               "action_path": "string",
               "is_read": true,

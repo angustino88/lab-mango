@@ -10,6 +10,8 @@ class NotificationSerializer(serializers.ModelSerializer):
     """Read shape (RW-1, ENU-1, NAM-3, REL-3)."""
 
     message_type = choice_field(Notification._meta.get_field("message_type").choices)
+    display_mode = choice_field(Notification._meta.get_field("display_mode").choices)
+    is_dismissible = serializers.BooleanField(read_only=True)
     expires_at = serializers.DateTimeField(source="expiry_date", read_only=True)
     target_user = UserReferenceSerializer(read_only=True, allow_null=True)
     created_at = serializers.DateTimeField(source="created", read_only=True)
@@ -23,6 +25,8 @@ class NotificationSerializer(serializers.ModelSerializer):
             "message",
             "details",
             "message_type",
+            "display_mode",
+            "is_dismissible",
             "expires_at",
             "action_path",
             "is_read",

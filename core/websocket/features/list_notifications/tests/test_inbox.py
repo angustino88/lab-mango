@@ -13,8 +13,9 @@ URL = "/api/notifications"
 
 
 def _notify(user=None, **extra):
+    message = extra.pop("message", "Bench 07 frees up at 14:00")
     return Notification.objects.create(
-        message="Bench 07 frees up at 14:00",
+        message=message,
         expiry_date=timezone.now() + timedelta(hours=1),
         target_user=user,
         **extra,
@@ -74,6 +75,44 @@ class TestInbox:
 
     def test_invalid_unread_value(self, client):
         assert client.get(URL, {"unread": "yes"}).status_code == 400
+
+    def test_invalid_display_mode_value(self, client):
+        assert client.get(URL, {"display_mode": "popup"}).status_code == 400
+
+    def test_banners_appear_in_all_history_without_counting_toward_unread_badge(self, client, me):
+        alert = _notify(me, display_mode=Notification.ALERT)
+        banner = _notify(
+            None,
+            message="Scheduled maintenance",
+            message_type=Notification.WARNING,
+            display_mode=Notification.BANNER,
+            is_dismissible=True,
+        )
+
+        # Unread bell badge counts one-time alerts only, never banners.
+        assert client.get(f"{URL}/unread-count").json()["data"]["unread_count"] == 1
+
+        # Default "All" list includes both alerts and banners so users can re-read banners.
+        all_rows = client.get(URL).json()["data"]
+        by_id = {row["id"]: row for row in all_rows}
+        assert set(by_id) == {alert.pk, banner.pk}
+        assert by_id[banner.pk]["display_mode"]["value"] == Notification.BANNER
+        assert by_id[banner.pk]["is_dismissible"] is True
+        assert by_id[alert.pk]["display_mode"]["value"] == Notification.ALERT
+
+        # display_mode filter separates banners from alerts cleanly.
+        assert [row["id"] for row in client.get(URL, {"display_mode": "banner"}).json()["data"]] == [banner.pk]
+        assert [row["id"] for row in client.get(URL, {"display_mode": "alert"}).json()["data"]] == [alert.pk]
+
+        # Mark-all-read clears unread alerts without dismissing active banners.
+        assert client.post(f"{URL}/actions/mark-all-read").json()["data"]["marked_count"] == 1
+        assert client.get(f"{URL}/unread-count").json()["data"]["unread_count"] == 0
+        banner_row = client.get(URL, {"display_mode": "banner"}).json()["data"][0]
+        assert banner_row["is_read"] is False
+
+        # Dismissing a banner explicitly records a per-user NotificationRead.
+        dismissed = client.post(f"{URL}/{banner.pk}/actions/mark-read")
+        assert dismissed.status_code == 200 and dismissed.json()["data"]["is_read"] is True
 
     def test_anonymous_is_rejected(self):
         assert APIClient().get(f"{URL}/unread-count").status_code in (401, 403)

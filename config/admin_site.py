@@ -150,7 +150,8 @@ ADMIN_SECTIONS: tuple[AdminSection, ...] = (
         "Configuration and notifications",
         (
             "users.LabManagementEmail",
-            "websocket.Notification",
+            "websocket.BannerNotification",
+            "websocket.AlertNotification",
             "sites.Site",
             "socialaccount.SocialApp",
         ),
