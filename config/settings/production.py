@@ -20,6 +20,10 @@ REFRESH_TOKEN_COOKIE_SECURE = True
 REST_FRAMEWORK = {
     **REST_FRAMEWORK,
     "DEFAULT_AUTHENTICATION_CLASSES": ("core.users.features.auth.authentication.EntraJWTAuthentication",),
+    # Clients reach the backend only through the labmango-router Nginx (one hop that appends the caller to
+    # X-Forwarded-For), so client-IP throttles trust exactly the last entry. Override with DJANGO_NUM_PROXIES
+    # if a load balancer or another proxy is added in front of the router.
+    "NUM_PROXIES": env.int("DJANGO_NUM_PROXIES", default=1),
 }
 
 # InsecureRequestWarning suppression removed per ARCH-002.

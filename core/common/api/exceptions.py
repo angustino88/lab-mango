@@ -1,5 +1,6 @@
 """Global DRF exception mapping to the standard API error envelope."""
 
+import logging
 from collections.abc import Mapping
 from typing import Any
 
@@ -9,6 +10,7 @@ from rest_framework import exceptions, status
 from rest_framework.response import Response
 from rest_framework.views import exception_handler as drf_exception_handler
 
+from core.common.cache import is_cache_outage
 from core.common.domain.errors import (
     AuthenticationRequired,
     BadRequest,
@@ -19,6 +21,10 @@ from core.common.domain.errors import (
 )
 
 from .correlation import REQUEST_ID_HEADER, get_request_id
+
+logger = logging.getLogger(__name__)
+
+CACHE_OUTAGE_RETRY_AFTER_SECONDS = "30"
 
 _ERRORS: dict[int, tuple[str, str]] = {
     status.HTTP_400_BAD_REQUEST: ("malformed_request", "The request is invalid."),
@@ -99,9 +105,24 @@ def api_exception_handler(exc: Exception, context: dict[str, Any]) -> Response |
             challenge = view.get_authenticate_header(context.get("request")) if view else None
             mapped["WWW-Authenticate"] = challenge or 'Bearer realm="api"'
         return mapped
+    if is_cache_outage(exc):
+        # A dependency outage is retryable; never report it as an unexpected 500.
+        logger.error(
+            "Cache backend unavailable",
+            extra={"request_id": get_request_id(context.get("request")), "error_type": type(exc).__name__},
+        )
+        unavailable = _error_response(
+            context.get("request"),
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            code="service_unavailable",
+            message="The service is temporarily unavailable.",
+        )
+        unavailable["Retry-After"] = CACHE_OUTAGE_RETRY_AFTER_SECONDS
+        return unavailable
     response = drf_exception_handler(exc, context)
     if response is None:
         request_id = get_request_id(context.get("request"))
+        logger.exception("Unhandled API error", extra={"request_id": request_id})
         return Response(
             {
                 "error": {

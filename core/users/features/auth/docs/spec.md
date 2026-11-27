@@ -56,7 +56,28 @@ The Authentication feature manages session establishment, token lifecycle, local
   Frontend guide: [frontend-login.md](frontend-login.md).
 
 ### 3.3 Rate Limiting & Throttling
-- All public endpoints enforce `ScopedRateThrottle` (`auth_login`, `auth_refresh`, `auth_otp`).
+Auth endpoints use atomic fixed-window counters (`core/common/api/throttling.py::AtomicRateThrottle`,
+cache `add` + `incr`), so concurrent bursts cannot pass the limit. Each pairs a per-identity budget with a
+per-IP backstop ([throttles.py](../throttles.py)):
+
+| Endpoint | Per-identity budget | Per-IP backstop |
+|---|---|---|
+| `POST /api/aad-login` | — (no verified identity before the ID token is checked) | `auth_sso_login` (10/min, same as before) |
+| `POST /api/refresh-token` | `auth_refresh` (30/min) per user, from the signature-verified cookie; unverifiable cookies count against the IP | `auth_ip` (300/min) |
+| `POST /api/login` (non-SSO only) | `auth_login` (10/min) per submitted username | `auth_ip` (300/min) |
+| `POST /api/send-otp` (non-SSO only) | `auth_otp` (5/min) per caller | — |
+
+- The client IP comes from `REST_FRAMEWORK["NUM_PROXIES"]` (`DJANGO_NUM_PROXIES`). Production defaults to 1,
+  the `labmango-router` Nginx, so the last `X-Forwarded-For` entry is the caller and per-IP budgets cannot be
+  reset by a client-supplied header. Other settings leave it unset (DRF's default, which keys on the whole
+  `X-Forwarded-For` value).
+- Cache outage policy: SSO sign-in and refresh keep counting in a process-local fixed window
+  (`local_fallback_on_outage`), so users can still sign in and refresh while Redis is down; the limit then
+  applies per worker process. Password login and OTP (non-SSO only) fail closed: `503 service_unavailable`
+  with `Retry-After: 30`, never reaching the credential check.
+- Rates are configurable with `THROTTLE_AUTH_SSO_LOGIN`, `THROTTLE_AUTH_REFRESH`, `THROTTLE_AUTH_LOGIN`,
+  `THROTTLE_AUTH_OTP` and `THROTTLE_AUTH_IP`. When `THROTTLE_AUTH_SSO_LOGIN` is unset, `auth_sso_login`
+  takes `THROTTLE_AUTH_LOGIN` (the variable aad-login read before), so existing overrides keep working.
 
 ---
 
@@ -66,10 +87,10 @@ The Authentication feature manages session establishment, token lifecycle, local
 |---|---|---|---|---|
 | `POST /api/login` | `UserLoginView` | `LoginSerializer` (`username`, `password`) | `LoginResponseSerializer` (`token`, `user`) | 400 (`invalid_request`), 401 (`invalid_credentials`), 422, 503 |
 | `POST /api/logout` | `UserLogoutView` | Empty | 200 `EmptyPayloadSerializer` | 403 (`forbidden`) |
-| `POST /api/refresh-token` | `UserRefreshTokenView` | Cookie only (`refresh_token`) | `RefreshTokenResponseSerializer` (`token`, `user`) | 401 (`invalid_refresh_token`), 403, 503 |
+| `POST /api/refresh-token` | `UserRefreshTokenView` | Cookie only (`refresh_token`) | `RefreshTokenResponseSerializer` (`token`, `user`) | 401 (`invalid_refresh_token`), 403, 429 |
 | `POST /api/send-otp` | `SendUserOTPView` | `SendOTPSerializer` (`username`, `otp`) | `SendOTPResponseSerializer` (`message`) | 400, 403, 422, 503 (`service_unavailable`) |
 | `GET /api/csrf-token` | `CSRFTokenView` | Empty | `CSRFTokenResponseSerializer` (`csrf_token`) | — |
-| `POST /api/aad-login` | `UserAADLoginView` | `AADLoginSerializer` (`id_token`, `nonce_secret`) | `AADLoginResponseSerializer` (`token`, `user`) | 401 (`unauthorized`), 422, 503 |
+| `POST /api/aad-login` | `UserAADLoginView` | `AADLoginSerializer` (`id_token`, `nonce_secret`) | `AADLoginResponseSerializer` (`token`, `user`) | 401 (`unauthorized`), 422, 429 |
 
 ---
 
