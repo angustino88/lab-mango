@@ -1,5 +1,7 @@
 from typing import Any
 
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.core.validators import URLValidator
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
@@ -55,9 +57,22 @@ class ModelUploadField(serializers.FileField):
     pass
 
 
+_url_check = URLValidator()
+
+
+def _valid_url(value: str) -> None:
+    """Same check as URLField, behind a plain function so the schema stays a string (not format uri)."""
+    try:
+        _url_check(value)
+    except DjangoValidationError as error:
+        raise serializers.ValidationError(error.messages) from None
+
+
 class AssetDetailsSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=160)
-    source_url = serializers.URLField(required=False, allow_blank=True, default="")
+    # A text field validated as a URL when given. Not URLField: its OpenAPI schema is format "uri" with an
+    # empty default, which is not a valid URI and fails Spectral. Validation is unchanged for non-empty values.
+    source_url = serializers.CharField(required=False, allow_blank=True, default="", validators=[_valid_url])
     license = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
     rotation = serializers.FloatField(min_value=-360, max_value=360, default=0)
     surface = serializers.FloatField(min_value=0, max_value=1, default=1)
