@@ -376,6 +376,9 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 # admin (Django Celery Beat > Periodic tasks).
 # Computing heartbeat timeout: task ``labs.equipment.computing.mark_stale_activities_offline``,
 # crontab ``*/10 * * * *``.
+from .booking_notifications import slot_watch_intervals  # noqa: E402
+
+_SLOT_WATCH_INTERVALS = slot_watch_intervals(env)
 CELERY_BEAT_SCHEDULE = {
     # Expire reservations nobody checked in to and complete bookings whose end time has passed
     # (owner decision O26). Idempotent and batched, safe to run every minute.
@@ -385,15 +388,15 @@ CELERY_BEAT_SCHEDULE = {
     },
     # Slot alerts ("tell me when this bench is free"): find benches that opened up, then deliver the
     # alerts. In-app alerts are built in; email and Teams follow the booking notification switches.
-    # Idempotent and bounded.
+    # Idempotent and bounded. Intervals: BENCH_SLOT_WATCH_{COLLECT,DELIVER}_INTERVAL_SECONDS (validated).
     "bench-slot-watch-collection": {
         "task": "labs.bench_bookings.collect_slot_watch_notifications",
-        "schedule": 60.0,
+        "schedule": _SLOT_WATCH_INTERVALS["collect"],
         "options": {"queue": env("BOOKING_NOTIFICATIONS_QUEUE", default="booking_notifications")},
     },
     "bench-slot-watch-delivery": {
         "task": "labs.bench_bookings.deliver_slot_watch_notifications",
-        "schedule": 15.0,
+        "schedule": _SLOT_WATCH_INTERVALS["deliver"],
         "options": {"queue": env("BOOKING_NOTIFICATIONS_QUEUE", default="booking_notifications")},
     },
     # Daily analytics snapshots behind the /api/labs/analytics/{booking,lab-visits,user-count,lab-count}

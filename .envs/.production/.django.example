@@ -57,6 +57,9 @@ BOOKING_NOTIFICATIONS_TEAMS_EXPECTED_TENANT_ID=
 BOOKING_NOTIFICATIONS_QUEUE=booking_notifications
 # Bench slot alerts (notify when a bench frees up). In-app alerts are built in; email/Teams follow the switches above.
 BOOKING_SLOT_WATCH_LEAD_MINUTES=15
+# How often to look for freed benches (15-300 s) and send slot alerts (5-60 s).
+BENCH_SLOT_WATCH_COLLECT_INTERVAL_SECONDS=60
+BENCH_SLOT_WATCH_DELIVER_INTERVAL_SECONDS=15
 # Lab Mango web address for "Book now" links in slot alert emails and Teams messages.
 BOOKING_SLOT_WATCH_APP_URL=
 

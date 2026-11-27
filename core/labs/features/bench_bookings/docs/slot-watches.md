@@ -94,6 +94,10 @@ opens the booking form with bench and times prefilled:
 * Jobs (queue `BOOKING_NOTIFICATIONS_QUEUE`): `labs.bench_bookings.collect_slot_watch_notifications` every 60 s
   (100 watches per page, keyset continuation; also expires finished watches) and
   `labs.bench_bookings.deliver_slot_watch_notifications` every 15 s (≤ 10 rows per run).
+  Tune with `BENCH_SLOT_WATCH_COLLECT_INTERVAL_SECONDS` (15–300) and `BENCH_SLOT_WATCH_DELIVER_INTERVAL_SECONDS`
+  (5–60); other values stop startup. Collection must stay well inside the 15-minute release look-back, delivery
+  inside the 120-second claim lease. Beat rewrites the interval from these on every start, so tune here, not in
+  Django admin.
   Both are code-owned beat entries (`CELERY_BEAT_SCHEDULE` in `config/settings/base.py`), so beat creates
   them at startup in every environment. `provision_booking_notification_schedules` no longer manages them;
   migration `labs.0005_slot_alert_beat_rows` removes rows it saved as disabled so beat recreates them enabled.

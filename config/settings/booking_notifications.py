@@ -73,6 +73,29 @@ def notification_settings(env) -> dict:
     }
 
 
+# (env name, default, min, max) in seconds. Collection must run well inside its 15-minute release
+# look-back (slot_watch_collection.RELEASE_LOOKBACK) or freed benches are missed; delivery must run
+# well inside its 120-second claim lease and keep alerts timely.
+SLOT_WATCH_INTERVALS = {
+    "collect": ("BENCH_SLOT_WATCH_COLLECT_INTERVAL_SECONDS", 60, 15, 300),
+    "deliver": ("BENCH_SLOT_WATCH_DELIVER_INTERVAL_SECONDS", 15, 5, 60),
+}
+
+
+def slot_watch_intervals(env) -> dict[str, float]:
+    """How often beat runs the slot alert jobs, in seconds; out-of-range values stop startup."""
+    intervals = {}
+    for job, (name, default, low, high) in SLOT_WATCH_INTERVALS.items():
+        try:
+            seconds = int(env(name, default=str(default)))
+        except (TypeError, ValueError):
+            raise ImproperlyConfigured(f"{name} must be a whole number of seconds.") from None
+        if not low <= seconds <= high:
+            raise ImproperlyConfigured(f"{name} must be between {low} and {high} seconds.")
+        intervals[job] = float(seconds)
+    return intervals
+
+
 def slot_watch_settings(env) -> dict:
     """Bench slot alerts. In-app alerts are built in; email and Teams need the booking notification
     master switch and their channel switch (validated above)."""
