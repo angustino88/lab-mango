@@ -2,7 +2,7 @@
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
   "total_endpoints": 548,
-  "generated_at": "2026-11-26",
+  "generated_at": "2026-11-27",
   "endpoints": [
     {
       "endpoint": "/agent/bookings/actions/check-in",
@@ -130261,17 +130261,8 @@
               "maxLength": 160
             },
             "source_url": {
-              "oneOf": [
-                {
-                  "type": "string",
-                  "format": "uri",
-                  "default": ""
-                },
-                {
-                  "type": "string",
-                  "maxLength": 0
-                }
-              ]
+              "type": "string",
+              "default": ""
             },
             "license": {
               "type": "string",
@@ -130304,7 +130295,7 @@
         },
         "example_payload": {
           "name": "string",
-          "source_url": "https://example.com/resource",
+          "source_url": "",
           "license": "",
           "rotation": 0.0,
           "surface": 1.0,
@@ -130700,17 +130691,8 @@
               "maxLength": 160
             },
             "source_url": {
-              "oneOf": [
-                {
-                  "type": "string",
-                  "format": "uri",
-                  "default": ""
-                },
-                {
-                  "type": "string",
-                  "maxLength": 0
-                }
-              ]
+              "type": "string",
+              "default": ""
             },
             "license": {
               "type": "string",
@@ -130738,7 +130720,7 @@
         },
         "example_payload": {
           "name": "string",
-          "source_url": "https://example.com/resource",
+          "source_url": "",
           "license": "",
           "rotation": 0.0,
           "surface": 1.0
