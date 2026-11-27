@@ -5,6 +5,7 @@ from .cancel_for_downtime import CancelBookingsForDowntimeInput, cancel_bench_bo
 from .check_agent_booking_login import CheckAgentBookingLoginInput, check_agent_booking_login
 from .check_booking import (
     BenchBookingCheck,
+    BookingAlternative,
     BookingCheckResult,
     BookingPeriod,
     BookingProblem,
@@ -31,6 +32,7 @@ from .update_booking import UpdateBenchBookingInput, update_bench_booking
 
 __all__ = [
     "BenchBookingCheck",
+    "BookingAlternative",
     "BenchBookingPolicy",
     "BookingCheckResult",
     "BookingPeriod",

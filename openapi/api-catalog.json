@@ -1,7 +1,7 @@
 {
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
-  "total_endpoints": 558,
+  "total_endpoints": 559,
   "generated_at": "2026-11-27",
   "endpoints": [
     {
@@ -13535,6 +13535,11 @@
               "description": "A series for a new booking: up to 10 periods, checked one by one. Replaces starts_at/ends_at.",
               "maxItems": 10,
               "minItems": 1
+            },
+            "suggest_alternatives": {
+              "type": "boolean",
+              "default": false,
+              "description": "For a period that is not bookable: up to two other benches of the same type, then this bench's next free slot of the same length within a day."
             }
           }
         },
@@ -13550,7 +13555,8 @@
               "starts_at": "2026-10-20T12:00:00Z",
               "ends_at": "2026-10-20T12:00:00Z"
             }
-          ]
+          ],
+          "suggest_alternatives": false
         }
       },
       "responses": {
@@ -23498,6 +23504,250 @@
           }
         },
         "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/benches/availability",
+      "method": "GET",
+      "operation_id": "labs_benches_availability_retrieve",
+      "summary": "Get Benches Availability",
+      "description": "Benches free in a window, and when the others are busy. Busy time never names who booked it.",
+      "tags": [
+        "Bench Bookings"
+      ],
+      "parameters": [
+        {
+          "name": "bench_group_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "bench_id",
+          "in": "query",
+          "required": false,
+          "description": "Only these benches.",
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "ends_at",
+          "in": "query",
+          "required": true,
+          "description": "Window end (exclusive). The window is at most 14 days.",
+          "schema": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        {
+          "name": "has_computing",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "boolean"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "maximum": 20,
+            "minimum": 1,
+            "default": 10
+          }
+        },
+        {
+          "name": "min_free_minutes",
+          "in": "query",
+          "required": false,
+          "description": "With mode=any_free: the shortest useful free period.",
+          "schema": {
+            "type": "integer",
+            "maximum": 20160,
+            "minimum": 10
+          }
+        },
+        {
+          "name": "mode",
+          "in": "query",
+          "required": false,
+          "description": "* `fully_free` - Free for the whole window\n* `any_free` - Some free time in the window",
+          "schema": {
+            "enum": [
+              "fully_free",
+              "any_free"
+            ],
+            "type": "string",
+            "default": "fully_free",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Bench name or SKU.",
+          "schema": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1
+          }
+        },
+        {
+          "name": "setup_location_id",
+          "in": "query",
+          "required": false,
+          "description": "Station ids.",
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "starts_at",
+          "in": "query",
+          "required": true,
+          "description": "Window start, RFC 3339 with offset.",
+          "schema": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        {
+          "name": "type_id",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "description": "Ranked: fully free first, then favorites, then the longest free period.",
+                "properties": {
+                  "window_starts_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  },
+                  "window_ends_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "readOnly": true
+                  },
+                  "is_truncated": {
+                    "type": "boolean",
+                    "readOnly": true,
+                    "description": "More benches matched than were returned."
+                  },
+                  "benches": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  }
+                },
+                "required": [
+                  "benches",
+                  "is_truncated",
+                  "window_ends_at",
+                  "window_starts_at"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "window_starts_at": "2026-10-20T12:00:00Z",
+              "window_ends_at": "2026-10-20T12:00:00Z",
+              "is_truncated": true,
+              "benches": [
+                {}
+              ]
+            }
+          }
+        },
+        "400": {
           "description": "",
           "content_type": "application/json",
           "schema": {

@@ -3,6 +3,7 @@
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
+from core.common.api.filtering import CSVField, PositiveIDField, QueryDateTimeField, StrictBooleanField
 from core.common.api.options import OptionsQueryMixin
 from core.common.api.pagination import PageNumberQuerySerializer
 from core.common.api.search import SearchQueryMixin
@@ -16,6 +17,7 @@ from core.labs.features.base.serializers import (
     to_choice_reference,
 )
 from core.labs.features.bench_bookings.application import BookingPeriod
+from core.labs.features.bench_bookings.queries.availability import MAX_WINDOW as MAX_AVAILABILITY_WINDOW
 from core.labs.features.bench_bookings.queries.slot_watches import slot_availability
 from core.labs.models import (
     BenchBooking,
@@ -230,6 +232,12 @@ class BenchBookingCheckRequestSerializer(serializers.Serializer):
         max_length=10,
         help_text="A series for a new booking: up to 10 periods, checked one by one. Replaces starts_at/ends_at.",
     )
+    suggest_alternatives = serializers.BooleanField(
+        required=False,
+        default=False,
+        help_text="For a period that is not bookable: up to two other benches of the same type, then this bench's "
+        "next free slot of the same length within a day.",
+    )
 
     def validate(self, attrs):
         if "booking_id" not in attrs and "bench_id" not in attrs:
@@ -249,6 +257,12 @@ class BenchBookingProblemSerializer(serializers.Serializer):
     message = serializers.CharField(read_only=True)
 
 
+class BenchBookingAlternativeSerializer(serializers.Serializer):
+    bench = UIDNamedReferenceSerializer(read_only=True)
+    starts_at = serializers.DateTimeField(read_only=True)
+    ends_at = serializers.DateTimeField(read_only=True)
+
+
 class BenchBookingCheckResultSerializer(serializers.Serializer):
     starts_at = serializers.DateTimeField(read_only=True)
     ends_at = serializers.DateTimeField(read_only=True)
@@ -257,6 +271,9 @@ class BenchBookingCheckResultSerializer(serializers.Serializer):
         help_text="Approval the booking would have after the write; null when the period is invalid."
     )
     problems = BenchBookingProblemSerializer(many=True, read_only=True)
+    alternatives = BenchBookingAlternativeSerializer(
+        many=True, read_only=True, help_text="Empty unless suggest_alternatives was sent. Free now, not held."
+    )
 
     @extend_schema_field(ChoiceReferenceSerializer(allow_null=True))
     def get_approval_status(self, obj) -> dict[str, str] | None:
@@ -289,6 +306,80 @@ class BenchBookingPolicySerializer(serializers.Serializer):
     can_manage_others_bookings = serializers.BooleanField(read_only=True)
     can_approve = serializers.BooleanField(read_only=True)
     slot_watch = BenchSlotWatchPolicySerializer(read_only=True)
+
+
+class BenchAvailabilityQuerySerializer(serializers.Serializer):
+    starts_at = QueryDateTimeField(help_text="Window start, RFC 3339 with offset.")
+    ends_at = QueryDateTimeField(help_text="Window end (exclusive). The window is at most 14 days.")
+    bench_id = CSVField(PositiveIDField(), max_items=20, required=False, help_text="Only these benches.")
+    type_id = CSVField(PositiveIDField(), required=False)
+    bench_group_id = CSVField(PositiveIDField(), required=False)
+    setup_location_id = CSVField(PositiveIDField(), required=False, help_text="Station ids.")
+    has_computing = StrictBooleanField(required=False)
+    q = serializers.CharField(required=False, min_length=1, max_length=100, help_text="Bench name or SKU.")
+    mode = serializers.ChoiceField(
+        choices=(("fully_free", "Free for the whole window"), ("any_free", "Some free time in the window")),
+        required=False,
+        default="fully_free",
+    )
+    min_free_minutes = serializers.IntegerField(
+        required=False, min_value=10, max_value=20160, help_text="With mode=any_free: the shortest useful free period."
+    )
+    limit = serializers.IntegerField(required=False, min_value=1, max_value=20, default=10)
+
+    def validate(self, attrs):
+        if attrs["ends_at"] <= attrs["starts_at"]:
+            raise serializers.ValidationError({"ends_at": "The window must end after it starts."}, code="invalid")
+        if attrs["ends_at"] - attrs["starts_at"] > MAX_AVAILABILITY_WINDOW:
+            raise serializers.ValidationError({"ends_at": "The window is at most 14 days."}, code="invalid")
+        if "min_free_minutes" in attrs and attrs["mode"] != "any_free":
+            raise serializers.ValidationError({"min_free_minutes": "Use with mode=any_free."}, code="invalid")
+        return attrs
+
+    @staticmethod
+    def to_query_kwargs(validated_data) -> dict:
+        data = dict(validated_data)
+        mode = data.pop("mode")
+        renamed = {"bench_id": "bench_ids", "type_id": "type_ids", "bench_group_id": "bench_group_ids"}
+        kwargs = {renamed.get(key, key): value for key, value in data.items() if key != "setup_location_id"}
+        kwargs["setup_location_ids"] = data.get("setup_location_id", ())
+        kwargs["only_fully_free"] = mode == "fully_free"
+        return kwargs
+
+
+class AvailabilityPeriodSerializer(serializers.Serializer):
+    starts_at = serializers.DateTimeField(read_only=True)
+    ends_at = serializers.DateTimeField(read_only=True)
+
+
+class AvailabilityBusyPeriodSerializer(AvailabilityPeriodSerializer):
+    reason = serializers.SerializerMethodField(help_text="booking or downtime. Holders are never shown.")
+
+    @extend_schema_field(ChoiceReferenceSerializer)
+    def get_reason(self, obj) -> dict[str, str] | None:
+        return to_choice_reference(obj.reason, (("booking", "Booked"), ("downtime", "Downtime")))
+
+
+class BenchAvailabilitySerializer(serializers.Serializer):
+    bench = UIDNamedReferenceSerializer(read_only=True)
+    station = UIDNamedReferenceSerializer(read_only=True, allow_null=True)
+    room = UIDNamedReferenceSerializer(read_only=True, allow_null=True)
+    type = NamedReferenceSerializer(read_only=True, allow_null=True)
+    has_computing = serializers.BooleanField(read_only=True)
+    is_fully_free = serializers.BooleanField(read_only=True)
+    is_favorite = serializers.BooleanField(read_only=True)
+    next_free_at = serializers.DateTimeField(read_only=True, allow_null=True)
+    free_periods = AvailabilityPeriodSerializer(many=True, read_only=True)
+    busy_periods = AvailabilityBusyPeriodSerializer(many=True, read_only=True)
+
+
+class BenchAvailabilityResultSerializer(serializers.Serializer):
+    """Ranked: fully free first, then favorites, then the longest free period."""
+
+    window_starts_at = serializers.DateTimeField(read_only=True)
+    window_ends_at = serializers.DateTimeField(read_only=True)
+    is_truncated = serializers.BooleanField(read_only=True, help_text="More benches matched than were returned.")
+    benches = BenchAvailabilitySerializer(many=True, read_only=True)
 
 
 class BenchSlotWatchCreateSerializer(serializers.Serializer):

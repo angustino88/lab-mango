@@ -1,15 +1,15 @@
 """HTTP tests for bench booking endpoints: auth, contract shape and status codes."""
 
+import uuid
 from datetime import timedelta
 from unittest.mock import patch
-import uuid
 
 import pytest
 from rest_framework.test import APIClient
 
 from core.labs.models import BenchBooking, BookingApprovalStatus
-from core.users.roles import LabsRole
 from core.users.models import URSGroup
+from core.users.roles import LabsRole
 from core.users.tests.factories import UserFactory
 from tests.factories import grant_labs_role
 

@@ -50,11 +50,14 @@ from core.labs.features.bench_bookings.queries import (
     list_bench_bookings,
     list_lab_projects,
 )
+from core.labs.features.bench_bookings.queries.availability import list_bench_availability
 from core.labs.features.bench_bookings.queries.lab_projects import list_lab_project_options
 from core.labs.features.bench_bookings.queries.slot_watches import get_slot_watch, list_slot_watches
 from core.labs.models import BenchBookingWriteOperation, BookingStatus
 
 from .serializers import (
+    BenchAvailabilityQuerySerializer,
+    BenchAvailabilityResultSerializer,
     BenchBookingCancelActionSerializer,
     BenchBookingCheckRequestSerializer,
     BenchBookingCheckSerializer,
@@ -451,6 +454,25 @@ class BenchBookingPolicyAPIView(FeatureAPIView):
         response = self.respond(get_bench_booking_policy(actor=request.user))
         response["Cache-Control"] = "private, max-age=300"
         return response
+
+
+class BenchAvailabilityAPIView(FeatureAPIView):
+    """Benches free in a window, and when the others are busy. Busy time never names who booked it."""
+
+    permission_classes = BENCH_BOOKING_ACCESS
+    schema_tags = ("Bench Bookings",)
+    get_contract = OperationContract(
+        query=BenchAvailabilityQuerySerializer,
+        success=ResponseContract.success("BenchAvailability", BenchAvailabilityResultSerializer),
+        bad_request=ResponseContract.bad_request(),
+    )
+
+    def handle_get(self, request: Request, *args, **kwargs) -> Response:
+        filters, error = self.validate_query()
+        if error is not None:
+            return error
+        query = BenchAvailabilityQuerySerializer.to_query_kwargs(filters)
+        return self.respond(list_bench_availability(actor=request.user, **query))
 
 
 class LabProjectListAPIView(AppListAPIView, FeatureAPIView):

@@ -7,7 +7,7 @@ same selectors the commands use, so a preview and the real write report the same
 
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 from django.core.exceptions import ValidationError
@@ -24,6 +24,7 @@ from core.labs.features.bench_bookings.queries import (
     may_book_during_downtime,
     project_exists,
 )
+from core.labs.features.bench_bookings.queries.availability import MAX_WINDOW, ResourceRef, find_bench_availability
 from core.labs.models import Bench, BenchBooking, BookingApprovalStatus, BookingStatus
 
 from . import policies
@@ -53,6 +54,7 @@ class CheckBenchBookingInput:
     project_id: int | None = None
     booking_id: int | None = None
     occurrences: Sequence[BookingPeriod] = ()
+    suggest_alternatives: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -63,12 +65,20 @@ class BookingProblem:
 
 
 @dataclass(frozen=True, slots=True)
+class BookingAlternative:
+    bench: ResourceRef
+    starts_at: datetime
+    ends_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
 class BookingCheckResult:
     starts_at: datetime
     ends_at: datetime
     is_bookable: bool
     approval_status: str | None
     problems: list[BookingProblem] = field(default_factory=list)
+    alternatives: list[BookingAlternative] = field(default_factory=list)
 
 
 @dataclass(frozen=True, slots=True)
@@ -123,7 +133,66 @@ def check_bench_booking(*, actor: Any, data: CheckBenchBookingInput) -> BenchBoo
         )
         for period in periods
     ]
+    if data.suggest_alternatives:
+        results = [
+            _with_alternatives(result, actor=actor, bench=bench, booking=booking, lab_operator=lab_operator, now=now)
+            for result in results
+        ]
     return BenchBookingCheck(results=results)
+
+
+MAX_OTHER_BENCHES = 2
+SAME_BENCH_SEARCH = timedelta(days=1)
+
+
+def _with_alternatives(
+    result: BookingCheckResult, *, actor: Any, bench: Bench, booking: BenchBooking | None, lab_operator: bool, now
+) -> BookingCheckResult:
+    """Up to two other benches of the same type for the same period, then the bench's next free slot.
+
+    Only for a period that is not bookable but is itself valid (it ends after it starts and does not start in the
+    past). Alternatives are advice like the check itself: each is free now, not held.
+    """
+    duration = result.ends_at - result.starts_at
+    if result.is_bookable or duration <= timedelta(0) or result.starts_at < now - policies.START_GRACE:
+        return result
+    alternatives = [
+        BookingAlternative(item.bench, result.starts_at, result.ends_at)
+        for item in find_bench_availability(
+            actor=actor,
+            starts_at=result.starts_at,
+            ends_at=result.ends_at,
+            lab_operator=lab_operator,
+            type_ids=[bench.type_id] if bench.type_id else (),
+            has_computing=True,
+            exclude_bench_ids=[bench.pk],
+            exclude_booking_id=booking.pk if booking is not None else None,
+            limit=MAX_OTHER_BENCHES,
+        ).benches
+    ]
+    search_ends_at = min(result.starts_at + duration + SAME_BENCH_SEARCH, result.starts_at + MAX_WINDOW)
+    same_bench = find_bench_availability(
+        actor=actor,
+        starts_at=result.starts_at,
+        ends_at=search_ends_at,
+        lab_operator=lab_operator,
+        bench_ids=[bench.pk],
+        only_fully_free=False,
+        min_free_minutes=int(duration.total_seconds() // 60),
+        exclude_booking_id=booking.pk if booking is not None else None,
+        limit=1,
+    ).benches
+    if same_bench:
+        slot = next(period for period in same_bench[0].free_periods if period.duration >= duration)
+        alternatives.append(BookingAlternative(same_bench[0].bench, slot.starts_at, slot.starts_at + duration))
+    return BookingCheckResult(
+        starts_at=result.starts_at,
+        ends_at=result.ends_at,
+        is_bookable=result.is_bookable,
+        approval_status=result.approval_status,
+        problems=result.problems,
+        alternatives=alternatives,
+    )
 
 
 def _target_booking(*, actor: Any, data: CheckBenchBookingInput) -> BenchBooking | None:

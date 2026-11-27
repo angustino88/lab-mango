@@ -1,6 +1,6 @@
 """POST /api/labs/bench-bookings/actions/check: a preview that writes nothing."""
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import pytest
 from rest_framework.test import APIClient
@@ -125,9 +125,7 @@ class TestNewBooking:
         assert response.status_code in (400, 422)
 
     def test_unknown_field_is_refused(self, api_client, bench, project, future_window):
-        response = api_client.post(
-            URL, _body(bench, project, *future_window, suggest_alternatives=True), format="json"
-        )
+        response = api_client.post(URL, _body(bench, project, *future_window, hold_bench=True), format="json")
 
         assert response.status_code in (400, 422)
 
@@ -184,3 +182,58 @@ class TestChange:
         response = api_client.post(URL, {"booking_id": booking.pk, "occurrences": [period]}, format="json")
 
         assert response.status_code == 422
+
+
+@pytest.mark.django_db
+class TestAlternatives:
+    def test_busy_bench_suggests_other_bench_and_next_free_slot(
+        self, api_client, bench, other_bench, project, future_window, make_booking
+    ):
+        starts_at, ends_at = future_window
+        make_booking(starts_at=starts_at, ends_at=ends_at)
+
+        response = api_client.post(
+            URL, _body(bench, project, *future_window, suggest_alternatives=True), format="json"
+        )
+
+        alternatives = response.json()["data"]["results"][0]["alternatives"]
+        assert [item["bench"]["id"] for item in alternatives] == [other_bench.pk, bench.pk]
+        assert alternatives[0]["starts_at"] == response.json()["data"]["results"][0]["starts_at"]
+        same_bench = alternatives[1]
+        assert datetime.fromisoformat(same_bench["starts_at"]) == ends_at
+
+    def test_bookable_period_gets_no_alternatives(self, api_client, bench, project, future_window):
+        response = api_client.post(
+            URL, _body(bench, project, *future_window, suggest_alternatives=True), format="json"
+        )
+
+        assert response.json()["data"]["results"][0]["alternatives"] == []
+
+    def test_alternatives_are_off_by_default(
+        self, api_client, bench, other_bench, project, future_window, make_booking
+    ):
+        make_booking(starts_at=future_window[0], ends_at=future_window[1])
+
+        response = api_client.post(URL, _body(bench, project, *future_window), format="json")
+
+        assert response.json()["data"]["results"][0]["alternatives"] == []
+
+    def test_change_does_not_count_its_own_slot_as_busy(self, api_client, bench, make_booking, future_window, now):
+        starts_at, ends_at = future_window
+        own = make_booking(starts_at=starts_at, ends_at=ends_at)
+        make_booking(starts_at=ends_at, ends_at=ends_at + timedelta(hours=1))
+
+        response = api_client.post(
+            URL,
+            {
+                "booking_id": own.pk,
+                "ends_at": (ends_at + timedelta(minutes=30)).isoformat(),
+                "suggest_alternatives": True,
+            },
+            format="json",
+        )
+
+        result = response.json()["data"]["results"][0]
+        assert result["is_bookable"] is False
+        same_bench = [item for item in result["alternatives"] if item["bench"]["id"] == bench.pk]
+        assert same_bench and same_bench[0]["starts_at"].startswith(starts_at.date().isoformat())

@@ -51,6 +51,7 @@ urlpatterns = [
         views.BenchBookingFollowActionAPIView.as_view(),
         name="bench-booking-action-follow",
     ),
+    path("benches/availability", views.BenchAvailabilityAPIView.as_view(), name="bench-availability"),
     path("bench-slot-watches", views.BenchSlotWatchListCreateAPIView.as_view(), name="bench-slot-watch-list"),
     path(
         "bench-slot-watches/<int:watch_id>",
