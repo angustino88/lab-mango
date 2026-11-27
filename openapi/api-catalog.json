@@ -1,7 +1,7 @@
 {
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
-  "total_endpoints": 556,
+  "total_endpoints": 558,
   "generated_at": "2026-11-27",
   "endpoints": [
     {
@@ -13064,7 +13064,18 @@
       "tags": [
         "Bench Bookings"
       ],
-      "parameters": [],
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": false,
+          "description": "Optional UUID. A repeat with the same key and body replays the first successful response for 24 hours (Idempotency-Replayed: true); the same key with another body or booking returns 422.",
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
       "request_body": {
         "content_type": "application/json",
         "supported_content_types": [
@@ -13296,6 +13307,404 @@
           }
         },
         "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "400": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/bench-bookings/actions/check",
+      "method": "POST",
+      "operation_id": "labs_bench_bookings_actions_check_create",
+      "summary": "Check Bench Bookings",
+      "description": "Preview a new booking, a series or a change: writes nothing, takes no locks, answers for now only.",
+      "tags": [
+        "Bench Bookings"
+      ],
+      "parameters": [],
+      "request_body": {
+        "content_type": "application/json",
+        "supported_content_types": [
+          "application/json",
+          "application/x-www-form-urlencoded",
+          "multipart/form-data"
+        ],
+        "required": false,
+        "description": "",
+        "schema": {
+          "type": "object",
+          "description": "The create body, or a change to ``booking_id``. Omitted fields of a change keep the booking's values.\n\n``reason`` is accepted so the create body can be sent unchanged; it is not checked here.",
+          "properties": {
+            "booking_id": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "bench_id": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "starts_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "ends_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "project_id": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "reason": {
+              "type": "string"
+            },
+            "occurrences": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "starts_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "ends_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                },
+                "required": [
+                  "ends_at",
+                  "starts_at"
+                ]
+              },
+              "description": "A series for a new booking: up to 10 periods, checked one by one. Replaces starts_at/ends_at.",
+              "maxItems": 10,
+              "minItems": 1
+            }
+          }
+        },
+        "example_payload": {
+          "booking_id": 1,
+          "bench_id": 1,
+          "starts_at": "2026-10-20T12:00:00Z",
+          "ends_at": "2026-10-20T12:00:00Z",
+          "project_id": 1,
+          "reason": "string",
+          "occurrences": [
+            {
+              "starts_at": "2026-10-20T12:00:00Z",
+              "ends_at": "2026-10-20T12:00:00Z"
+            }
+          ]
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "description": "Advice for now: create and update check again under their locks.",
+                "properties": {
+                  "results": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "(max nesting depth reached)"
+                    },
+                    "readOnly": true
+                  },
+                  "can_book_all": {
+                    "type": "boolean",
+                    "readOnly": true,
+                    "description": "Whether every period is bookable now."
+                  }
+                },
+                "required": [
+                  "can_book_all",
+                  "results"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "results": [
+                {}
+              ],
+              "can_book_all": true
+            }
+          }
+        },
+        "404": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "409": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        },
+        "403": {
           "description": "",
           "content_type": "application/json",
           "schema": {
@@ -13725,6 +14134,16 @@
       ],
       "parameters": [
         {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": false,
+          "description": "Optional UUID. A repeat with the same key and body replays the first successful response for 24 hours (Idempotency-Replayed: true); the same key with another body or booking returns 422.",
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
           "name": "booking_code",
           "in": "path",
           "required": true,
@@ -14136,6 +14555,16 @@
       ],
       "parameters": [
         {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": false,
+          "description": "Optional UUID. A repeat with the same key and body replays the first successful response for 24 hours (Idempotency-Replayed: true); the same key with another body or booking returns 422.",
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
           "name": "booking_code",
           "in": "path",
           "required": true,
@@ -14505,6 +14934,111 @@
                 {}
               ],
               "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/bench-bookings/policy",
+      "method": "GET",
+      "operation_id": "labs_bench_bookings_policy_retrieve",
+      "summary": "Get Bench Bookings Policy",
+      "description": "The booking rules that apply to the caller.",
+      "tags": [
+        "Bench Bookings"
+      ],
+      "parameters": [],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "object",
+                "description": "The booking rules for the caller. ``max_horizon_days`` null means no limit.",
+                "properties": {
+                  "time_zone": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "min_duration_minutes": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "start_grace_minutes": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "approval_required_above_minutes": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "max_horizon_days": {
+                    "type": "integer",
+                    "readOnly": true,
+                    "nullable": true
+                  },
+                  "is_computing_required": {
+                    "type": "boolean",
+                    "readOnly": true
+                  },
+                  "can_book_during_operator_downtime": {
+                    "type": "boolean",
+                    "readOnly": true
+                  },
+                  "can_manage_others_bookings": {
+                    "type": "boolean",
+                    "readOnly": true
+                  },
+                  "can_approve": {
+                    "type": "boolean",
+                    "readOnly": true
+                  },
+                  "slot_watch": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    ],
+                    "readOnly": true
+                  }
+                },
+                "required": [
+                  "approval_required_above_minutes",
+                  "can_approve",
+                  "can_book_during_operator_downtime",
+                  "can_manage_others_bookings",
+                  "is_computing_required",
+                  "max_horizon_days",
+                  "min_duration_minutes",
+                  "slot_watch",
+                  "start_grace_minutes",
+                  "time_zone"
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": {
+              "time_zone": "string",
+              "min_duration_minutes": 1,
+              "start_grace_minutes": 1,
+              "approval_required_above_minutes": 1,
+              "max_horizon_days": 1,
+              "is_computing_required": true,
+              "can_book_during_operator_downtime": true,
+              "can_manage_others_bookings": true,
+              "can_approve": true,
+              "slot_watch": {}
             }
           }
         }
@@ -15484,6 +16018,16 @@
       ],
       "parameters": [
         {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": false,
+          "description": "Optional UUID. A repeat with the same key and body replays the first successful response for 24 hours (Idempotency-Replayed: true); the same key with another body or booking returns 422.",
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
           "name": "booking_id",
           "in": "path",
           "required": true,
@@ -16162,6 +16706,16 @@
         "Bench Bookings"
       ],
       "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": false,
+          "description": "Optional UUID. A repeat with the same key and body replays the first successful response for 24 hours (Idempotency-Replayed: true); the same key with another body or booking returns 422.",
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
         {
           "name": "booking_id",
           "in": "path",

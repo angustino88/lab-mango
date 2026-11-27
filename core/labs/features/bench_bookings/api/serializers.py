@@ -15,10 +15,12 @@ from core.labs.features.base.serializers import (
     UIDNamedReferenceSerializer,
     to_choice_reference,
 )
+from core.labs.features.bench_bookings.application import BookingPeriod
 from core.labs.features.bench_bookings.queries.slot_watches import slot_availability
 from core.labs.models import (
     BenchBooking,
     BenchSlotWatch,
+    BookingApprovalStatus,
     BookingStatus,
     LabProject,
     SlotWatchStatus,
@@ -202,6 +204,91 @@ class LabProjectSerializer(serializers.ModelSerializer):
         fields = ("id", "name", "code", "is_active", "start_date", "end_date")
         read_only_fields = fields
         ref_name = "LabProject"
+
+
+class BenchBookingCheckPeriodSerializer(serializers.Serializer):
+    starts_at = serializers.DateTimeField()
+    ends_at = serializers.DateTimeField()
+
+
+class BenchBookingCheckRequestSerializer(serializers.Serializer):
+    """The create body, or a change to ``booking_id``. Omitted fields of a change keep the booking's values.
+
+    ``reason`` is accepted so the create body can be sent unchanged; it is not checked here.
+    """
+
+    booking_id = serializers.IntegerField(min_value=1, required=False)
+    bench_id = serializers.IntegerField(min_value=1, required=False)
+    starts_at = serializers.DateTimeField(required=False)
+    ends_at = serializers.DateTimeField(required=False)
+    project_id = serializers.IntegerField(min_value=1, required=False)
+    reason = serializers.CharField(required=False, allow_blank=True)
+    occurrences = serializers.ListField(
+        child=BenchBookingCheckPeriodSerializer(),
+        required=False,
+        min_length=1,
+        max_length=10,
+        help_text="A series for a new booking: up to 10 periods, checked one by one. Replaces starts_at/ends_at.",
+    )
+
+    def validate(self, attrs):
+        if "booking_id" not in attrs and "bench_id" not in attrs:
+            raise serializers.ValidationError({"bench_id": "This field is required."})
+        return attrs
+
+    def to_command_kwargs(self) -> dict:
+        data = dict(self.validated_data)
+        data.pop("reason", None)
+        data["occurrences"] = tuple(BookingPeriod(**period) for period in data.get("occurrences", ()))
+        return data
+
+
+class BenchBookingProblemSerializer(serializers.Serializer):
+    code = serializers.CharField(read_only=True, help_text="Same code the create or update call returns.")
+    field = serializers.CharField(read_only=True, allow_null=True)
+    message = serializers.CharField(read_only=True)
+
+
+class BenchBookingCheckResultSerializer(serializers.Serializer):
+    starts_at = serializers.DateTimeField(read_only=True)
+    ends_at = serializers.DateTimeField(read_only=True)
+    is_bookable = serializers.BooleanField(read_only=True)
+    approval_status = serializers.SerializerMethodField(
+        help_text="Approval the booking would have after the write; null when the period is invalid."
+    )
+    problems = BenchBookingProblemSerializer(many=True, read_only=True)
+
+    @extend_schema_field(ChoiceReferenceSerializer(allow_null=True))
+    def get_approval_status(self, obj) -> dict[str, str] | None:
+        return to_choice_reference(obj.approval_status, BookingApprovalStatus.choices)
+
+
+class BenchBookingCheckSerializer(serializers.Serializer):
+    """Advice for now: create and update check again under their locks."""
+
+    results = BenchBookingCheckResultSerializer(many=True, read_only=True)
+    can_book_all = serializers.BooleanField(read_only=True, help_text="Whether every period is bookable now.")
+
+
+class BenchSlotWatchPolicySerializer(serializers.Serializer):
+    is_enabled = serializers.BooleanField(read_only=True)
+    lead_minutes = serializers.IntegerField(read_only=True)
+    max_active = serializers.IntegerField(read_only=True)
+
+
+class BenchBookingPolicySerializer(serializers.Serializer):
+    """The booking rules for the caller. ``max_horizon_days`` null means no limit."""
+
+    time_zone = serializers.CharField(read_only=True)
+    min_duration_minutes = serializers.IntegerField(read_only=True)
+    start_grace_minutes = serializers.IntegerField(read_only=True)
+    approval_required_above_minutes = serializers.IntegerField(read_only=True)
+    max_horizon_days = serializers.IntegerField(read_only=True, allow_null=True)
+    is_computing_required = serializers.BooleanField(read_only=True)
+    can_book_during_operator_downtime = serializers.BooleanField(read_only=True)
+    can_manage_others_bookings = serializers.BooleanField(read_only=True)
+    can_approve = serializers.BooleanField(read_only=True)
+    slot_watch = BenchSlotWatchPolicySerializer(read_only=True)
 
 
 class BenchSlotWatchCreateSerializer(serializers.Serializer):

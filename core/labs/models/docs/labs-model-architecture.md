@@ -116,7 +116,7 @@ Equipment is one table for every category (redesign step 6). `COMPUTING_PROFILE`
 
 ### Bookings and projects
 
-**Models:** abstract `Booking`; concrete `BenchBooking`, `EquipmentBooking`; `BenchBookingDecisionReceipt`; `LabProject`. `BookingStatus` and `BookingApprovalStatus` are choices.
+**Models:** abstract `Booking`; concrete `BenchBooking`, `EquipmentBooking`; `BenchBookingDecisionReceipt`; `BenchBookingWriteReceipt`; `LabProject`. `BookingStatus` and `BookingApprovalStatus` are choices.
 
 - Concrete bookings point to a bench or equipment and inherit booking code, start/end, workflow and approval status, project, approver, and reason fields. Project and approver deletion sets the reference null. A database check enforces end after start.
 - `Booking.is_reserving` combines booking and approval states. Booking status is separate from resource lifecycle and live activity.
@@ -125,6 +125,12 @@ Equipment is one table for every category (redesign step 6). `COMPUTING_PROFILE`
   stores a request fingerprint and JSON response, and indexes expiry. The decision command removes expired receipts within
   its transaction before key lookup; this also permits expired keys to be reused. Receipt rows are operational replay
   records, not approval history; booking approval fields remain the decision state.
+- `BenchBookingWriteReceipt` retains the first successful response of a bench booking create, update or cancel sent with
+  an `Idempotency-Key`, for 24 hours. It protects actor and booking references, uniquely scopes actor + UUID key (one key
+  per user across operations), checks the operation and a success status, and stores the operation, a request
+  fingerprint (operation, target booking, validated input) and the JSON envelope. A transaction-scoped advisory lock on
+  actor + key serializes same-key requests; the write and its receipt commit together, so a failed write leaves no
+  receipt. Expired receipts of the same actor and key are removed before lookup. No job purges other expired rows yet.
 - Verified (grep 2026-10-15): no `ExclusionConstraint` or `btree_gist` usage exists under `core/labs/`. Bench and equipment reservations have no database overlap guard. Valid period checks alone do not prevent concurrent overlapping reservations; do not claim race-safe availability without an agreed invariant and database/transaction enforcement.
 
 ### Procurement and expenses

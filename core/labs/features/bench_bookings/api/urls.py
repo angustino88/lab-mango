@@ -6,6 +6,12 @@ from .reference_data import urlpatterns as reference_urlpatterns
 urlpatterns = [
     path("bench-bookings", views.BenchBookingCreateAPIView.as_view(), name="bench-booking-create"),
     path(
+        "bench-bookings/actions/check",
+        views.BenchBookingCheckActionAPIView.as_view(),
+        name="bench-booking-action-check",
+    ),
+    path("bench-bookings/policy", views.BenchBookingPolicyAPIView.as_view(), name="bench-booking-policy"),
+    path(
         "bench-bookings/<int:booking_id>",
         views.BenchBookingDetailAPIView.as_view(),
         name="bench-booking-detail",

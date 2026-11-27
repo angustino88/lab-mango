@@ -4022,6 +4022,17 @@
       "post": {
         "operationId": "labs_bench_bookings_create",
         "description": "HTTP mapping for domain commands and selector projections.",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Optional UUID. A repeat with the same key and body replays the first successful response for 24 hours (Idempotency-Replayed: true); the same key with another body or booking returns 422."
+          }
+        ],
         "tags": [
           "Bench Bookings"
         ],
@@ -4171,6 +4182,15 @@
         "operationId": "labs_bench_bookings_partial_update_by_booking_id",
         "description": "HTTP mapping for domain commands and selector projections.",
         "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Optional UUID. A repeat with the same key and body replays the first successful response for 24 hours (Idempotency-Replayed: true); the same key with another body or booking returns 422."
+          },
           {
             "in": "path",
             "name": "booking_id",
@@ -4340,6 +4360,15 @@
         "operationId": "labs_bench_bookings_actions_cancel_create_by_booking_id",
         "description": "HTTP mapping for domain commands and selector projections.",
         "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Optional UUID. A repeat with the same key and body replays the first successful response for 24 hours (Idempotency-Replayed: true); the same key with another body or booking returns 422."
+          },
           {
             "in": "path",
             "name": "booking_id",
@@ -4674,6 +4703,105 @@
         "summary": "Reject Bench Bookings by Booking ID"
       }
     },
+    "/api/labs/bench-bookings/actions/check": {
+      "post": {
+        "operationId": "labs_bench_bookings_actions_check_create",
+        "description": "Preview a new booking, a series or a change: writes nothing, takes no locks, answers for now only.",
+        "tags": [
+          "Bench Bookings"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BenchBookingCheckRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/BenchBookingCheckRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/BenchBookingCheckRequest"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchBookingCheckActionSerializersBenchBookingCheckDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Check Bench Bookings"
+      }
+    },
     "/api/labs/bench-bookings/code/{booking_code}": {
       "get": {
         "operationId": "labs_bench_bookings_code_retrieve_by_booking_code",
@@ -4737,6 +4865,15 @@
         "operationId": "labs_bench_bookings_code_partial_update_by_booking_code",
         "description": "HTTP mapping for domain commands and selector projections.",
         "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Optional UUID. A repeat with the same key and body replays the first successful response for 24 hours (Idempotency-Replayed: true); the same key with another body or booking returns 422."
+          },
           {
             "in": "path",
             "name": "booking_code",
@@ -4837,6 +4974,15 @@
         "description": "HTTP mapping for domain commands and selector projections.",
         "parameters": [
           {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Optional UUID. A repeat with the same key and body replays the first successful response for 24 hours (Idempotency-Replayed: true); the same key with another body or booking returns 422."
+          },
+          {
             "in": "path",
             "name": "booking_code",
             "schema": {
@@ -4928,6 +5074,36 @@
           }
         },
         "summary": "Cancel Bench Bookings Code by Booking Code"
+      }
+    },
+    "/api/labs/bench-bookings/policy": {
+      "get": {
+        "operationId": "labs_bench_bookings_policy_retrieve",
+        "description": "The booking rules that apply to the caller.",
+        "tags": [
+          "Bench Bookings"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchBookingPolicySerializersBenchBookingPolicyDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Bench Bookings Policy"
       }
     },
     "/api/labs/bench-bookings/reference-data/projects": {
@@ -47738,6 +47914,138 @@
           "data"
         ]
       },
+      "BenchBookingCheck": {
+        "type": "object",
+        "description": "Advice for now: create and update check again under their locks.",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BenchBookingCheckResult"
+            },
+            "readOnly": true
+          },
+          "can_book_all": {
+            "type": "boolean",
+            "readOnly": true,
+            "description": "Whether every period is bookable now."
+          }
+        },
+        "required": [
+          "can_book_all",
+          "results"
+        ]
+      },
+      "BenchBookingCheckActionSerializersBenchBookingCheckDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/BenchBookingCheck"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "BenchBookingCheckPeriod": {
+        "type": "object",
+        "properties": {
+          "starts_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "ends_at",
+          "starts_at"
+        ]
+      },
+      "BenchBookingCheckRequest": {
+        "type": "object",
+        "description": "The create body, or a change to ``booking_id``. Omitted fields of a change keep the booking's values.\n\n``reason`` is accepted so the create body can be sent unchanged; it is not checked here.",
+        "properties": {
+          "booking_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "bench_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "project_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "reason": {
+            "type": "string"
+          },
+          "occurrences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BenchBookingCheckPeriod"
+            },
+            "description": "A series for a new booking: up to 10 periods, checked one by one. Replaces starts_at/ends_at.",
+            "maxItems": 10,
+            "minItems": 1
+          }
+        }
+      },
+      "BenchBookingCheckResult": {
+        "type": "object",
+        "properties": {
+          "starts_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "is_bookable": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "approval_status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "nullable": true,
+            "readOnly": true,
+            "description": "Approval the booking would have after the write; null when the period is invalid."
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BenchBookingProblem"
+            },
+            "readOnly": true
+          }
+        },
+        "required": [
+          "approval_status",
+          "ends_at",
+          "is_bookable",
+          "problems",
+          "starts_at"
+        ]
+      },
       "BenchBookingCompleteActionSerializersBenchBookingDetailResponse": {
         "type": "object",
         "description": "Base serializer for successful API responses.",
@@ -47889,6 +48197,105 @@
         },
         "required": [
           "pagination"
+        ]
+      },
+      "BenchBookingPolicy": {
+        "type": "object",
+        "description": "The booking rules for the caller. ``max_horizon_days`` null means no limit.",
+        "properties": {
+          "time_zone": {
+            "type": "string",
+            "readOnly": true
+          },
+          "min_duration_minutes": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "start_grace_minutes": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "approval_required_above_minutes": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "max_horizon_days": {
+            "type": "integer",
+            "readOnly": true,
+            "nullable": true
+          },
+          "is_computing_required": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "can_book_during_operator_downtime": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "can_manage_others_bookings": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "can_approve": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "slot_watch": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BenchSlotWatchPolicy"
+              }
+            ],
+            "readOnly": true
+          }
+        },
+        "required": [
+          "approval_required_above_minutes",
+          "can_approve",
+          "can_book_during_operator_downtime",
+          "can_manage_others_bookings",
+          "is_computing_required",
+          "max_horizon_days",
+          "min_duration_minutes",
+          "slot_watch",
+          "start_grace_minutes",
+          "time_zone"
+        ]
+      },
+      "BenchBookingPolicySerializersBenchBookingPolicyDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/BenchBookingPolicy"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "BenchBookingProblem": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "readOnly": true,
+            "description": "Same code the create or update call returns."
+          },
+          "field": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "code",
+          "field",
+          "message"
         ]
       },
       "BenchBookingRejectAction": {
@@ -49377,6 +49784,28 @@
         },
         "required": [
           "pagination"
+        ]
+      },
+      "BenchSlotWatchPolicy": {
+        "type": "object",
+        "properties": {
+          "is_enabled": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "lead_minutes": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "max_active": {
+            "type": "integer",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "is_enabled",
+          "lead_minutes",
+          "max_active"
         ]
       },
       "BenchStationReference": {

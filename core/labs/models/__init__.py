@@ -22,6 +22,8 @@ from .base import AgentReportedModel
 from .booking import (
     BenchBooking,
     BenchBookingDecisionReceipt,
+    BenchBookingWriteOperation,
+    BenchBookingWriteReceipt,
     BenchSlotNotification,
     BenchSlotWatch,
     Booking,
@@ -149,6 +151,8 @@ __all__ = [
     "Bench",
     "BenchBooking",
     "BenchBookingDecisionReceipt",
+    "BenchBookingWriteOperation",
+    "BenchBookingWriteReceipt",
     "BenchSlotNotification",
     "BenchSlotWatch",
     "BenchFavorite",

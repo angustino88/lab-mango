@@ -319,6 +319,8 @@ callers with `bench_booking.book_during_downtime`.
 
 ### C2. `POST /api/labs/bench-bookings/actions/check` — booking preview, no write [bench_bookings]
 
+**Status: implemented (phase 1), without `suggest_alternatives`** — alternatives need C1 and come with it. Field names follow NAM-2: `is_bookable`, `can_book_all`, `approval_status`.
+
 **Why:** the assistant must show a correct preview before the user confirms. Today the only way to learn whether a
 booking works is to create it.
 
@@ -332,8 +334,7 @@ under its own locks.
 {"bench_id": 12, "starts_at": "2026-11-28T09:00:00+07:00", "ends_at": "2026-11-28T12:00:00+07:00",
  "project_id": 4, "reason": "Firmware validation",
  "booking_id": null,
- "occurrences": null,
- "suggest_alternatives": true}
+ "occurrences": null}
 ```
 
 - `booking_id`: set to check a *change* of an existing booking (same rules as PATCH).
@@ -347,28 +348,27 @@ under its own locks.
 {"data": {
   "results": [{
     "starts_at": "2026-11-28T09:00:00+07:00", "ends_at": "2026-11-28T12:00:00+07:00",
-    "bookable": false,
-    "approval_status_if_created": {"value": "approved", "label": "Approved"},
-    "problems": [{"code": "bench_booking_conflict", "field": null, "message": "The bench is already booked from 10:00 to 11:00."}],
-    "alternatives": [
-      {"bench": {"id": 15, "uid": "B-0015", "name": "A-15"}, "starts_at": "2026-11-28T09:00:00+07:00", "ends_at": "2026-11-28T12:00:00+07:00"},
-      {"bench": {"id": 12, "uid": "B-0012", "name": "A-12"}, "starts_at": "2026-11-28T11:00:00+07:00", "ends_at": "2026-11-28T14:00:00+07:00"}
-    ]}],
-  "all_bookable": false}}
+    "is_bookable": false,
+    "approval_status": {"value": "approved", "label": "Approved"},
+    "problems": [{"code": "bench_booking_conflict", "field": null, "message": "The bench is not free for the requested period."}]}],
+  "can_book_all": false}}
 ```
 
 - `problems[].code` uses the **same codes as create and PATCH** (e.g. `bench_booking_conflict`,
   `lab_project_not_found`, field validation codes for minimum duration, start in the past, bench not in service, no
   computing, downtime), so preview and real write never disagree in wording.
-- `approval_status_if_created`: `pending` when the duration is over `LONG_BOOKING_APPROVAL_THRESHOLD` (4 h today).
-- `alternatives` (≤ 3): same window on other benches of the same type or location, or the same bench at the nearest
-  free time. Built with C1's query.
+- `approval_status`: the approval the booking would have after the write; `pending` when the duration is over `LONG_BOOKING_APPROVAL_THRESHOLD` (4 h today).
+- Field problems use code `invalid` with the field name, as the write's `422` details do.
+- *Planned with C1:* `alternatives` (≤ 3): same window on other benches of the same type or location, or the same
+  bench at the nearest free time.
 - Errors (request itself bad): `400 invalid_request`, `404` bench, project or booking not visible to the caller,
   `403 permission_denied`.
 - Implementation: reuse the create and update policy functions (`application/policies.py`) on a read-only
   snapshot. No copy of the rules.
 
 ### C3. `Idempotency-Key` on booking create, change and cancel [bench_bookings]
+
+**Status: implemented (phase 1).** Receipts live in `BenchBookingWriteReceipt` (migration `labs.0005`). An API-key caller sending a key gets `400 idempotency_key_unsupported`.
 
 **Why:** today only approve and reject (and reference-data create) honor `Idempotency-Key`
 (`core/labs/features/bench_bookings/api/views.py:266`). A retried confirm after a timeout must not make a second
@@ -448,6 +448,8 @@ list; OpenAPI marks it safe, and it is never cached as a write.
 
 ### C5. `GET /api/labs/bench-bookings/policy` — the caller's booking rules [bench_bookings]
 
+**Status: implemented (phase 1).** No `ETag` yet; `Cache-Control: private, max-age=300`.
+
 **Why:** the rules live only in code (`application/policies.py`). The assistant should explain them and plan
 around them, not guess.
 
@@ -460,16 +462,16 @@ around them, not guess.
   "start_grace_minutes": 10,
   "approval_required_above_minutes": 240,
   "max_horizon_days": null,
-  "requires_computing": true,
+  "is_computing_required": true,
   "can_book_during_operator_downtime": false,
   "can_manage_others_bookings": false,
   "can_approve": false,
-  "slot_watch": {"enabled": true, "lead_minutes": 15, "max_active": 20}
+  "slot_watch": {"is_enabled": true, "lead_minutes": 15, "max_active": 20}
 }}
 ```
 
 `null` means no limit. Values come from the same constants and settings the commands use, so they cannot drift.
-Cacheable per user (`Cache-Control: private, max-age=300`, `ETag`).
+Cacheable per user (`Cache-Control: private, max-age=300`).
 
 ### C6. `GET /api/labs/resources/lookup` — turn a name or code into a resource [labs, composes features via `public.py`]
 

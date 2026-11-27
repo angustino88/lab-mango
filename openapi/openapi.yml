@@ -110,10 +110,14 @@ paths:
     $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1{booking_id}~1actions~1follow
   /api/labs/bench-bookings/{booking_id}/actions/reject:
     $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1{booking_id}~1actions~1reject
+  /api/labs/bench-bookings/actions/check:
+    $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1actions~1check
   /api/labs/bench-bookings/code/{booking_code}:
     $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1code~1{booking_code}
   /api/labs/bench-bookings/code/{booking_code}/actions/cancel:
     $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1code~1{booking_code}~1actions~1cancel
+  /api/labs/bench-bookings/policy:
+    $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1policy
   /api/labs/bench-bookings/reference-data/projects:
     $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1reference-data~1projects
   /api/labs/bench-bookings/reference-data/projects/{reference_id}:

@@ -67,3 +67,50 @@ class BenchBookingDecisionReceipt(models.Model):
             ),
         ]
         indexes = [models.Index(fields=("expires_at",), name="bench_decision_receipt_exp_idx")]
+
+
+class BenchBookingWriteOperation(models.TextChoices):
+    CREATE = "create", "Create"
+    UPDATE = "update", "Update"
+    CANCEL = "cancel", "Cancel"
+
+
+class BenchBookingWriteReceipt(models.Model):
+    """Stored first response of a bench booking create, update or cancel sent with an ``Idempotency-Key``.
+
+    One key per actor: a key reused for another operation, booking or body is refused. Only successful
+    responses are stored, so a failed request leaves nothing behind and may be retried with the same key.
+    """
+
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="bench_booking_write_receipts",
+        on_delete=models.PROTECT,
+    )
+    booking = models.ForeignKey(BenchBooking, related_name="write_receipts", on_delete=models.PROTECT)
+    operation = models.CharField(max_length=8, choices=BenchBookingWriteOperation.choices)
+    key = models.CharField(max_length=36)
+    request_hash = models.CharField(max_length=64)
+    status_code = models.PositiveSmallIntegerField()
+    response_body = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    class Meta:
+        app_label = "labs"
+        constraints = [
+            models.UniqueConstraint(fields=("actor", "key"), name="bench_write_receipt_actor_key_uniq"),
+            models.CheckConstraint(
+                condition=Q(operation__in=BenchBookingWriteOperation.values),
+                name="bench_write_receipt_valid_operation",
+            ),
+            models.CheckConstraint(
+                condition=Q(status_code__gte=200, status_code__lt=300),
+                name="bench_write_receipt_success_only",
+            ),
+            models.CheckConstraint(
+                condition=Q(expires_at__gt=models.F("created_at")),
+                name="bench_write_receipt_expiry_valid",
+            ),
+        ]
+        indexes = [models.Index(fields=("expires_at",), name="bench_write_receipt_exp_idx")]
