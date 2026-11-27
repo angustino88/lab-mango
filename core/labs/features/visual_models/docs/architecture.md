@@ -65,14 +65,28 @@ are rejected. CAD conversion happens before upload. No third-party assets are bu
 
 ## Reference models
 
-`reference_models.py` builds seven original GLB models in code (no third-party content, no binary files in
-the repository): server rack 42U, lab workbench, storage cabinet, storage shelving, benchtop instrument,
-desktop computer and monitor. The bytes are deterministic, so the sha256 identifies them.
+`reference_models.py` (with embedded Pillow PNG decals in `textures.py`) builds 39 original GLB models
+in code (no third-party content, no binary files in the repository):
+- **Core lab & IT**: server rack 42U, lab workbench, storage cabinet, storage shelving, 6.5-digit benchtop
+  multimeter (`benchtop-instrument`), desktop computer, monitor.
+- **Automotive & embedded hardware**: Vector VN1630A CAN/LIN interface, Vector VN5620 Ethernet/CAN
+  interface, Vector VT System HIL chassis, Lauterbach TRACE32 PowerDebug, SEGGER J-Link PRO debugger,
+  Raspberry Pi SBC, STM32 Nucleo-144 dev board, Automotive ADAS ECU DUT, Rigol DP831 DC power supply,
+  Toellner TOE 8952 DC power supply, ITECH IT8512A+ DC electronic load, Keysight 33522B waveform generator,
+  Fluke 87V digital multimeter, trinocular PCB stereo microscope, empty 4-bench embedded test rack.
+- **Embedded systems & test**: programmable DC power supply (Keysight E36312A style), mixed-signal
+  oscilloscope, Saleae Logic Pro 16 debugger/logic analyzer, automotive SoC dev board & DUT rig, managed
+  network switch 1U, dSPACE SCALEXIO-style HIL test cabinet, Weller WT2M soldering & rework station,
+  ESPEC/Weiss environmental test chamber, APC Smart-UPS 3U, R&S/Keysight RF spectrum & signal analyzer.
+- **Lab furniture**: ESD L-shaped workstation, mobile instrument cart, lab fume hood, flammable safety
+  cabinet, ESD ergonomic lab stool, ESD component drawer cabinet, overhead cable & power gantry.
+
+The bytes are deterministic, so the sha256 identifies them.
 
 `python manage.py seed_reference_models` adds them to the library and sets them as the default of station
-types and equipment categories that have no model yet, matched by name words (rack, workbench/table/bench,
-cabinet, shelving; computing, display, instrument/debugging/laboratory/power). It never replaces a model
-someone chose and is safe to rerun. `--library-only` skips the defaults. Anyone can replace a default from
+types, equipment categories, and equipment product models that have no model yet, matched by name words
+(with specific hardware models matched before general fallbacks). It never replaces a model someone chose
+and is safe to rerun. `--library-only` skips the defaults. Anyone can replace a default from
 Spaces → 3D models.
 
 The dashboard draws mounted rack units over any rack model, and bench contents on any work-table model.
