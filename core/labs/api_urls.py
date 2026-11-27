@@ -22,5 +22,6 @@ urlpatterns = [
     path("labs/analytics/", include("core.labs.features.analytics.urls")),
     path("labs/", include("core.labs.features.dashboard.urls")),
     path("labs/", include("core.labs.features.resource_mappings.urls")),
+    path("labs/", include("core.labs.features.resource_lookup.urls")),
     path("labs/", include("core.labs.features.workbook_import.urls")),
 ]

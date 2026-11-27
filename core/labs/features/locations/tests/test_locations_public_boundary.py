@@ -40,7 +40,7 @@ def test_public_module_is_the_room_station_command_and_query_facade():
     public_path = FEATURE_ROOT / "public.py"
     assert set(_public_names(public_path)) == {
         "LocationConflict", "RoomConflict",
-        "get_station_type", "list_station_types",
+        "get_station_type", "list_station_types", "lookup_rooms", "lookup_stations",
         "change_room_lifecycle", "create_room", "delete_room", "force_delete_room", "generate_room_slots", "get_room", "get_room_for_mapping", "get_room_status_summary", "list_room_slots",
         "list_rooms", "live_room_ids", "record_room_observation", "room_mapping_rows", "room_observations",
         "room_slot_mapping_rows", "room_status_history", "update_room", "change_station_lifecycle", "create_station", "create_station_slot",

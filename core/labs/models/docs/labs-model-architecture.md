@@ -104,6 +104,10 @@ Equipment is one table for every category (redesign step 6). `COMPUTING_PROFILE`
 **Models:** `Equipment`, `EquipmentEvent`, `EquipmentAssignment`, `ComputingProfile`; references `EquipmentCategory`, `EquipmentKind`, `EquipmentType`, `EquipmentManufacturer`, `EquipmentProductModel`; no category subtypes (step 6: typed columns on `Equipment`, capability flags on `EquipmentCategory`); related reference models `TechnicalUser`, `EquipmentInterface`, `DisplayResolution`, `DisplaySize`, `Material`, `NetworkingProtocol`, `SampleCharacteristic`, `SampleCustomer`.
 
 - `Equipment` extends resource identity and references a required kind plus optional type, manufacturer, and product model. Validation aligns type and kind. Concrete category models add category-specific fields and relationships.
+- `ProductModelSpecification` holds one `value` per product model and `SpecificationDefinition` (unique pair). Its
+  `value_number` is a stored PostgreSQL generated column: the value cast to `numeric(38, 12)` when it is a plain decimal
+  (optional sign, point or comma, at most 24 integer digits), else null. No code writes it, so it cannot drift from
+  `value`. Indexed with `definition` for `POST /api/labs/equipment/actions/match` (migration `labs.0007`).
 - `EquipmentAssignment` connects equipment to a bench over an interval. Both FKs are protected. A conditional unique constraint permits at most one active bench assignment per equipment; a check enforces `unassigned_at >= assigned_at` when ended. There is no reciprocal active-capacity constraint per bench in this model.
 - Equipment lifecycle/status history, bench assignment, and equipment booking are distinct. Consult category model source for exact fields and deletion semantics.
 
@@ -116,7 +120,7 @@ Equipment is one table for every category (redesign step 6). `COMPUTING_PROFILE`
 
 ### Bookings and projects
 
-**Models:** abstract `Booking`; concrete `BenchBooking`, `EquipmentBooking`; `BenchBookingDecisionReceipt`; `LabProject`. `BookingStatus` and `BookingApprovalStatus` are choices.
+**Models:** abstract `Booking`; concrete `BenchBooking`, `EquipmentBooking`; `BenchBookingDecisionReceipt`; `BenchBookingWriteReceipt`; `LabProject`. `BookingStatus` and `BookingApprovalStatus` are choices.
 
 - Concrete bookings point to a bench or equipment and inherit booking code, start/end, workflow and approval status, project, approver, and reason fields. Project and approver deletion sets the reference null. A database check enforces end after start.
 - `Booking.is_reserving` combines booking and approval states. Booking status is separate from resource lifecycle and live activity.
@@ -125,6 +129,12 @@ Equipment is one table for every category (redesign step 6). `COMPUTING_PROFILE`
   stores a request fingerprint and JSON response, and indexes expiry. The decision command removes expired receipts within
   its transaction before key lookup; this also permits expired keys to be reused. Receipt rows are operational replay
   records, not approval history; booking approval fields remain the decision state.
+- `BenchBookingWriteReceipt` retains the first successful response of a bench booking create, update or cancel sent with
+  an `Idempotency-Key`, for 24 hours. It protects actor and booking references, uniquely scopes actor + UUID key (one key
+  per user across operations), checks the operation and a success status, and stores the operation, a request
+  fingerprint (operation, target booking, validated input) and the JSON envelope. A transaction-scoped advisory lock on
+  actor + key serializes same-key requests; the write and its receipt commit together, so a failed write leaves no
+  receipt. Expired receipts of the same actor and key are removed before lookup. No job purges other expired rows yet.
 - Verified (grep 2026-10-15): no `ExclusionConstraint` or `btree_gist` usage exists under `core/labs/`. Bench and equipment reservations have no database overlap guard. Valid period checks alone do not prevent concurrent overlapping reservations; do not claim race-safe availability without an agreed invariant and database/transaction enforcement.
 
 ### Procurement and expenses

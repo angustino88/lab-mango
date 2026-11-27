@@ -27,8 +27,10 @@ from .queries.selectors import (
     reference_data,
 )
 from .queries.summaries import get_bench_status_summary
+from .queries.lookup import lookup_benches
 
 __all__ = (
+    "lookup_benches",
     "get_bench_status_summary",
     "add_favorite",
     "BenchConflict",

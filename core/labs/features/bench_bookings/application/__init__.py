@@ -1,7 +1,17 @@
 """Supported bench booking commands and their frozen inputs."""
 
+from .booking_policy import BenchBookingPolicy, SlotWatchPolicy, get_bench_booking_policy
 from .cancel_for_downtime import CancelBookingsForDowntimeInput, cancel_bench_bookings_for_downtime
 from .check_agent_booking_login import CheckAgentBookingLoginInput, check_agent_booking_login
+from .check_booking import (
+    BenchBookingCheck,
+    BookingAlternative,
+    BookingCheckResult,
+    BookingPeriod,
+    BookingProblem,
+    CheckBenchBookingInput,
+    check_bench_booking,
+)
 from .check_in_agent_booking import CheckInAgentBookingInput, check_in_agent_booking
 from .complete_agent_booking import CompleteAgentBookingInput, complete_agent_booking
 from .create_booking import CreateBenchBookingInput, create_bench_booking
@@ -11,6 +21,7 @@ from .decide_booking_approval import (
     decide_bench_booking_approval,
 )
 from .extend_agent_booking import ExtendAgentBookingInput, extend_agent_booking
+from .idempotent_writes import IdempotentWriteResult, run_idempotent_booking_write
 from .state_transitions import (
     activate_bench_booking_for_computing_activity,
     activate_bench_bookings,
@@ -20,6 +31,18 @@ from .update_agent_booking_end_time import AgentBookingEndTimeInput, update_agen
 from .update_booking import UpdateBenchBookingInput, update_bench_booking
 
 __all__ = [
+    "BenchBookingCheck",
+    "BookingAlternative",
+    "BenchBookingPolicy",
+    "BookingCheckResult",
+    "BookingPeriod",
+    "BookingProblem",
+    "CheckBenchBookingInput",
+    "IdempotentWriteResult",
+    "SlotWatchPolicy",
+    "check_bench_booking",
+    "get_bench_booking_policy",
+    "run_idempotent_booking_write",
     "CancelBookingsForDowntimeInput",
     "cancel_bench_bookings_for_downtime",
     "CheckAgentBookingLoginInput",

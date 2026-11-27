@@ -36,6 +36,7 @@ def test_exceptions_export_stable_errors_without_layer_imports():
 def test_public_module_exports_license_commands_and_queries():
     public = FEATURE_ROOT / "public.py"
     assert set(_exports(public)) == {
+        "lookup_licenses",
         "AssignLicenseInput",
         "ChangeLicenseStatusInput",
         "CreateLicenseInput",

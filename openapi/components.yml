@@ -1355,6 +1355,40 @@ components:
         * `room` - room
 
         * `license` - license'
+    AvailabilityBusyPeriod:
+      type: object
+      properties:
+        starts_at:
+          type: string
+          format: date-time
+          readOnly: true
+        ends_at:
+          type: string
+          format: date-time
+          readOnly: true
+        reason:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+          description: booking or downtime. Holders are never shown.
+      required:
+      - ends_at
+      - reason
+      - starts_at
+    AvailabilityPeriod:
+      type: object
+      properties:
+        starts_at:
+          type: string
+          format: date-time
+          readOnly: true
+        ends_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - ends_at
+      - starts_at
     AvailableTicketTransition:
       type: object
       properties:
@@ -1568,6 +1602,98 @@ components:
           $ref: '#/components/schemas/LeaderboardAssessment'
       required:
       - data
+    BenchAvailability:
+      type: object
+      properties:
+        bench:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          readOnly: true
+        station:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          readOnly: true
+          nullable: true
+        room:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          readOnly: true
+          nullable: true
+        type:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+          nullable: true
+        has_computing:
+          type: boolean
+          readOnly: true
+        is_fully_free:
+          type: boolean
+          readOnly: true
+        is_favorite:
+          type: boolean
+          readOnly: true
+        next_free_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        free_periods:
+          type: array
+          items:
+            $ref: '#/components/schemas/AvailabilityPeriod'
+          readOnly: true
+        busy_periods:
+          type: array
+          items:
+            $ref: '#/components/schemas/AvailabilityBusyPeriod'
+          readOnly: true
+      required:
+      - bench
+      - busy_periods
+      - free_periods
+      - has_computing
+      - is_favorite
+      - is_fully_free
+      - next_free_at
+      - room
+      - station
+      - type
+    BenchAvailabilityResult:
+      type: object
+      description: 'Ranked: fully free first, then favorites, then the longest free
+        period.'
+      properties:
+        window_starts_at:
+          type: string
+          format: date-time
+          readOnly: true
+        window_ends_at:
+          type: string
+          format: date-time
+          readOnly: true
+        is_truncated:
+          type: boolean
+          readOnly: true
+          description: More benches matched than were returned.
+        benches:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchAvailability'
+          readOnly: true
+      required:
+      - benches
+      - is_truncated
+      - window_ends_at
+      - window_starts_at
+    BenchAvailabilitySerializersBenchAvailabilityResultDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchAvailabilityResult'
+      required:
+      - data
     BenchBooking:
       type: object
       description: Base model serializer that automatically exposes created_at and
@@ -1642,6 +1768,25 @@ components:
       - starts_at
       - status
       - updated_at
+    BenchBookingAlternative:
+      type: object
+      properties:
+        bench:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          readOnly: true
+        starts_at:
+          type: string
+          format: date-time
+          readOnly: true
+        ends_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - bench
+      - ends_at
+      - starts_at
     BenchBookingApproveActionSerializersBenchBookingDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -1672,6 +1817,121 @@ components:
           $ref: '#/components/schemas/BenchBooking'
       required:
       - data
+    BenchBookingCheck:
+      type: object
+      description: 'Advice for now: create and update check again under their locks.'
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchBookingCheckResult'
+          readOnly: true
+        can_book_all:
+          type: boolean
+          readOnly: true
+          description: Whether every period is bookable now.
+      required:
+      - can_book_all
+      - results
+    BenchBookingCheckActionSerializersBenchBookingCheckDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchBookingCheck'
+      required:
+      - data
+    BenchBookingCheckPeriod:
+      type: object
+      properties:
+        starts_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+      required:
+      - ends_at
+      - starts_at
+    BenchBookingCheckRequest:
+      type: object
+      description: 'The create body, or a change to ``booking_id``. Omitted fields
+        of a change keep the booking''s values.
+
+
+        ``reason`` is accepted so the create body can be sent unchanged; it is not
+        checked here.'
+      properties:
+        booking_id:
+          type: integer
+          minimum: 1
+        bench_id:
+          type: integer
+          minimum: 1
+        starts_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+        project_id:
+          type: integer
+          minimum: 1
+        reason:
+          type: string
+        occurrences:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchBookingCheckPeriod'
+          description: 'A series for a new booking: up to 10 periods, checked one
+            by one. Replaces starts_at/ends_at.'
+          maxItems: 10
+          minItems: 1
+        suggest_alternatives:
+          type: boolean
+          default: false
+          description: 'For a period that is not bookable: up to two other benches
+            of the same type, then this bench''s next free slot of the same length
+            within a day.'
+    BenchBookingCheckResult:
+      type: object
+      properties:
+        starts_at:
+          type: string
+          format: date-time
+          readOnly: true
+        ends_at:
+          type: string
+          format: date-time
+          readOnly: true
+        is_bookable:
+          type: boolean
+          readOnly: true
+        approval_status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          nullable: true
+          readOnly: true
+          description: Approval the booking would have after the write; null when
+            the period is invalid.
+        problems:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchBookingProblem'
+          readOnly: true
+        alternatives:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchBookingAlternative'
+          readOnly: true
+          description: Empty unless suggest_alternatives was sent. Free now, not held.
+      required:
+      - alternatives
+      - approval_status
+      - ends_at
+      - is_bookable
+      - problems
+      - starts_at
     BenchBookingCompleteActionSerializersBenchBookingDetailResponse:
       type: object
       description: Base serializer for successful API responses.
@@ -1779,6 +2039,80 @@ components:
           $ref: '#/components/schemas/BenchBookingListSerializersBenchBookingPagination'
       required:
       - pagination
+    BenchBookingPolicy:
+      type: object
+      description: The booking rules for the caller. ``max_horizon_days`` null means
+        no limit.
+      properties:
+        time_zone:
+          type: string
+          readOnly: true
+        min_duration_minutes:
+          type: integer
+          readOnly: true
+        start_grace_minutes:
+          type: integer
+          readOnly: true
+        approval_required_above_minutes:
+          type: integer
+          readOnly: true
+        max_horizon_days:
+          type: integer
+          readOnly: true
+          nullable: true
+        is_computing_required:
+          type: boolean
+          readOnly: true
+        can_book_during_operator_downtime:
+          type: boolean
+          readOnly: true
+        can_manage_others_bookings:
+          type: boolean
+          readOnly: true
+        can_approve:
+          type: boolean
+          readOnly: true
+        slot_watch:
+          allOf:
+          - $ref: '#/components/schemas/BenchSlotWatchPolicy'
+          readOnly: true
+      required:
+      - approval_required_above_minutes
+      - can_approve
+      - can_book_during_operator_downtime
+      - can_manage_others_bookings
+      - is_computing_required
+      - max_horizon_days
+      - min_duration_minutes
+      - slot_watch
+      - start_grace_minutes
+      - time_zone
+    BenchBookingPolicySerializersBenchBookingPolicyDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/BenchBookingPolicy'
+      required:
+      - data
+    BenchBookingProblem:
+      type: object
+      properties:
+        code:
+          type: string
+          readOnly: true
+          description: Same code the create or update call returns.
+        field:
+          type: string
+          readOnly: true
+          nullable: true
+        message:
+          type: string
+          readOnly: true
+      required:
+      - code
+      - field
+      - message
     BenchBookingRejectAction:
       type: object
       properties:
@@ -2845,6 +3179,22 @@ components:
           $ref: '#/components/schemas/BenchSlotWatchListSerializersBenchSlotWatchPagination'
       required:
       - pagination
+    BenchSlotWatchPolicy:
+      type: object
+      properties:
+        is_enabled:
+          type: boolean
+          readOnly: true
+        lead_minutes:
+          type: integer
+          readOnly: true
+        max_active:
+          type: integer
+          readOnly: true
+      required:
+      - is_enabled
+      - lead_minutes
+      - max_active
     BenchStationReference:
       type: object
       properties:
@@ -8599,6 +8949,123 @@ components:
           $ref: '#/components/schemas/EquipmentManufacturerReferenceListSerializersEquipmentManufacturerCatalogRecordPagination'
       required:
       - pagination
+    EquipmentMatch:
+      type: object
+      properties:
+        equipment:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          readOnly: true
+        product_model:
+          allOf:
+          - $ref: '#/components/schemas/LabsNamedReference'
+          readOnly: true
+        score:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,1}(?:\.\d{0,2})?$
+          readOnly: true
+          description: Share of requirements met, 0 to 1.
+        is_full_match:
+          type: boolean
+          readOnly: true
+          description: Every required requirement is met.
+        requirements:
+          type: array
+          items:
+            $ref: '#/components/schemas/RequirementResult'
+          readOnly: true
+        location:
+          type: string
+          readOnly: true
+          description: Current bench, station, room or note; may be empty.
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+        is_on_loan:
+          type: boolean
+          readOnly: true
+      required:
+      - condition
+      - equipment
+      - is_full_match
+      - is_on_loan
+      - location
+      - product_model
+      - requirements
+      - score
+    EquipmentMatchActionMatchingEquipmentMatchResultDetailResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          $ref: '#/components/schemas/EquipmentMatchResult'
+      required:
+      - data
+    EquipmentMatchRequest:
+      type: object
+      properties:
+        requirements:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpecRequirement'
+          maxItems: 10
+        category_id:
+          type: integer
+          minimum: 1
+        kind_id:
+          type: integer
+          minimum: 1
+        type_id:
+          type: integer
+          minimum: 1
+        manufacturer_id:
+          type: integer
+          minimum: 1
+        product_model_id:
+          type: integer
+          minimum: 1
+        department_id:
+          type: integer
+          minimum: 1
+        room_id:
+          type: integer
+          minimum: 1
+          description: Placed in this room now.
+        available_from:
+          type: string
+          format: date-time
+        available_until:
+          type: string
+          format: date-time
+          description: At most 31 days after available_from.
+        include_near_matches:
+          type: boolean
+          default: false
+          description: Also units missing exactly one required requirement.
+        limit:
+          type: integer
+          maximum: 50
+          minimum: 1
+          default: 20
+    EquipmentMatchResult:
+      type: object
+      description: Full matches first, then near matches; within each, more optional
+        matches first, then name.
+      properties:
+        is_truncated:
+          type: boolean
+          readOnly: true
+          description: More units matched than were returned.
+        matches:
+          type: array
+          items:
+            $ref: '#/components/schemas/EquipmentMatch'
+          readOnly: true
+      required:
+      - is_truncated
+      - matches
     EquipmentMaterialOption:
       type: object
       properties:
@@ -17859,6 +18326,29 @@ components:
       - observation_key
       - product_name
       additionalProperties: false
+    RequirementResult:
+      type: object
+      properties:
+        spec_definition_id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+          description: matched, missed, or unknown (no value for this model).
+        actual:
+          type: string
+          readOnly: true
+          nullable: true
+      required:
+      - actual
+      - name
+      - spec_definition_id
+      - status
     ResolutionCodeEnum:
       enum:
       - fixed
@@ -18128,6 +18618,47 @@ components:
             from the content.
       required:
       - file
+    ResourceLookupMatch:
+      type: object
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+          description: room, station, bench, equipment or license.
+        match:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+          description: 'How q matched, best first: uid_exact, sku_exact, name_exact,
+            prefix, contains.'
+        resource:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          readOnly: true
+        sku:
+          type: string
+          readOnly: true
+        context:
+          type: string
+          readOnly: true
+          description: Where it is, or its product; empty when unknown.
+      required:
+      - context
+      - match
+      - resource
+      - sku
+      - type
+    ResourceLookupSerializersResourceLookupMatchListResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceLookupMatch'
+      required:
+      - data
     ResourceMappingData:
       type: object
       properties:
@@ -20027,6 +20558,69 @@ components:
         * `walk_in` - Walk In
 
         * `api` - Api'
+    SpecRequirement:
+      type: object
+      properties:
+        spec_definition_id:
+          type: integer
+          minimum: 1
+        op:
+          allOf:
+          - $ref: '#/components/schemas/SpecRequirementOpEnum'
+          description: 'Numbers: eq, neq, gte, lte, between ([min, max]), in. Text:
+            eq, neq, in, contains. Yes/no: eq, neq.
+
+
+            * `eq` - eq
+
+            * `neq` - neq
+
+            * `gte` - gte
+
+            * `lte` - lte
+
+            * `between` - between
+
+            * `in` - in
+
+            * `contains` - contains'
+        value:
+          description: A number, text or yes/no; a list for in and between.
+        unit:
+          type: string
+          description: Converted with SI prefixes, e.g. GHz to MHz.
+          maxLength: 20
+        required:
+          type: boolean
+          default: true
+          description: 'False: only raises the rank.'
+      required:
+      - op
+      - spec_definition_id
+      - value
+    SpecRequirementOpEnum:
+      enum:
+      - eq
+      - neq
+      - gte
+      - lte
+      - between
+      - in
+      - contains
+      type: string
+      description: '* `eq` - eq
+
+        * `neq` - neq
+
+        * `gte` - gte
+
+        * `lte` - lte
+
+        * `between` - between
+
+        * `in` - in
+
+        * `contains` - contains'
     SpecificationDefinitionCatalogCreate:
       type: object
       properties:

@@ -110,10 +110,14 @@ paths:
     $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1{booking_id}~1actions~1follow
   /api/labs/bench-bookings/{booking_id}/actions/reject:
     $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1{booking_id}~1actions~1reject
+  /api/labs/bench-bookings/actions/check:
+    $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1actions~1check
   /api/labs/bench-bookings/code/{booking_code}:
     $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1code~1{booking_code}
   /api/labs/bench-bookings/code/{booking_code}/actions/cancel:
     $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1code~1{booking_code}~1actions~1cancel
+  /api/labs/bench-bookings/policy:
+    $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1policy
   /api/labs/bench-bookings/reference-data/projects:
     $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-bookings~1reference-data~1projects
   /api/labs/bench-bookings/reference-data/projects/{reference_id}:
@@ -124,6 +128,8 @@ paths:
     $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-slot-watches~1{watch_id}
   /api/labs/bench-slot-watches/{watch_id}/actions/cancel:
     $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1bench-slot-watches~1{watch_id}~1actions~1cancel
+  /api/labs/benches/availability:
+    $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1benches~1availability
   /api/labs/lab-projects:
     $ref: ./labs-bench-bookings.yml#/paths/~1api~1labs~1lab-projects
   /api/labs/lab-projects/{project_id}:
@@ -412,6 +418,8 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1status-changes
   /api/labs/equipment/{id}:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{id}
+  /api/labs/equipment/actions/match:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1actions~1match
   /api/labs/equipment/computing/activity-summary:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1activity-summary
   /api/labs/equipment/facets:
@@ -638,6 +646,8 @@ paths:
     $ref: ./labs-procurement.yml#/paths/~1api~1labs~1purchases~1{purchase_id}~1items~1draft
   /api/labs/purchases/{purchase_id}/transactions:
     $ref: ./labs-procurement.yml#/paths/~1api~1labs~1purchases~1{purchase_id}~1transactions
+  /api/labs/resources/lookup:
+    $ref: ./labs-resource-lookup.yml#/paths/~1api~1labs~1resources~1lookup
   /api/labs/telemetry/channels/{channel_id}:
     $ref: ./labs-telemetry.yml#/paths/~1api~1labs~1telemetry~1channels~1{channel_id}
   /api/labs/telemetry/channels/{channel_id}/actions/bind-target:
@@ -850,6 +860,8 @@ tags:
   description: Procurement endpoints
 - name: Resource Audit
   description: Resource Audit endpoints
+- name: Resource Lookup
+  description: Resource Lookup endpoints
 - name: Resource Mappings
   description: Resource Mappings endpoints
 - name: Rooms

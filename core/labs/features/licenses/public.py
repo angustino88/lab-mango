@@ -27,8 +27,10 @@ from .queries import (
     list_licenses,
 )
 from .queries.summaries import get_license_status_summary, list_license_category_summary
+from .queries.lookup import lookup_licenses
 
 __all__ = (
+    "lookup_licenses",
     "ExpiryAlertResult",
     "send_license_expiry_alerts",
     "get_license_status_summary",

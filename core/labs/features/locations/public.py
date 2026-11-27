@@ -50,8 +50,12 @@ from .stations.queries import (
     station_slot_mapping_rows,
 )
 from .stations.queries.summaries import get_station_status_summary
+from .rooms.queries.lookup import lookup_rooms
+from .stations.queries.lookup import lookup_stations
 
 __all__ = (
+    "lookup_rooms",
+    "lookup_stations",
     "get_room_status_summary",
     "get_station_status_summary",
     "LocationConflict",

@@ -22,12 +22,17 @@ from core.labs.features.base import (
     operation,
 )
 from core.labs.features.bench_bookings.application import (
+    CheckBenchBookingInput,
     CreateBenchBookingInput,
     DecideBenchBookingApprovalInput,
     DecideBenchBookingApprovalResult,
+    IdempotentWriteResult,
     UpdateBenchBookingInput,
+    check_bench_booking,
     create_bench_booking,
     decide_bench_booking_approval,
+    get_bench_booking_policy,
+    run_idempotent_booking_write,
     update_bench_booking,
 )
 from core.labs.features.bench_bookings.application.slot_watches import (
@@ -45,14 +50,20 @@ from core.labs.features.bench_bookings.queries import (
     list_bench_bookings,
     list_lab_projects,
 )
+from core.labs.features.bench_bookings.queries.availability import list_bench_availability
 from core.labs.features.bench_bookings.queries.lab_projects import list_lab_project_options
 from core.labs.features.bench_bookings.queries.slot_watches import get_slot_watch, list_slot_watches
-from core.labs.models import BookingStatus
+from core.labs.models import BenchBookingWriteOperation, BookingStatus
 
 from .serializers import (
+    BenchAvailabilityQuerySerializer,
+    BenchAvailabilityResultSerializer,
     BenchBookingCancelActionSerializer,
+    BenchBookingCheckRequestSerializer,
+    BenchBookingCheckSerializer,
     BenchBookingCreateSerializer,
     BenchBookingListQuerySerializer,
+    BenchBookingPolicySerializer,
     BenchBookingRejectActionSerializer,
     BenchBookingSerializer,
     BenchBookingUpdateSerializer,
@@ -64,6 +75,17 @@ from .serializers import (
     LabProjectSerializer,
 )
 
+_OPTIONAL_IDEMPOTENCY_KEY = OpenApiParameter(
+    name="Idempotency-Key",
+    type=OpenApiTypes.UUID,
+    location=OpenApiParameter.HEADER,
+    required=False,
+    description=(
+        "Optional UUID. A repeat with the same key and body replays the first successful response for 24 hours "
+        "(Idempotency-Replayed: true); the same key with another body or booking returns 422."
+    ),
+)
+
 
 class BenchBookingAPIView(CommandAPIView):
     permission_classes = BENCH_BOOKING_ACCESS
@@ -71,6 +93,41 @@ class BenchBookingAPIView(CommandAPIView):
 
     def project_result(self, result):
         return get_bench_booking(booking_id=result.pk)
+
+    def booking_write(self, *, operation: str, target: dict[str, Any], input_values: dict[str, Any], command) -> Response:
+        """Run a booking write; with an Idempotency-Key header, make a repeat return the first response."""
+        key, error = _optional_idempotency_key(self.request)
+        if error is not None:
+            return error
+        if key is None:
+            return self._execute(command, project=True)
+        if not getattr(self.request.user, "is_authenticated", False):
+            # Receipts belong to a user; API-key callers have none.
+            return _action_error(
+                self.request, 400, "idempotency_key_unsupported", "Idempotency-Key needs a signed-in user."
+            )
+
+        def project_response(booking) -> tuple[int, dict[str, Any]]:
+            response = self.respond(self.project_result(booking))
+            return response.status_code, response.data
+
+        return self._execute(
+            lambda: run_idempotent_booking_write(
+                actor=self.request.user,
+                operation=operation,
+                key=key,
+                request_values={**target, "input": input_values},
+                write=command,
+                project_response=project_response,
+            ),
+            project=self.write_response,
+        )
+
+    def write_response(self, result: IdempotentWriteResult) -> Response:
+        response = self._add_created_location(Response(result.response_body, status=result.status_code))
+        if result.replayed:
+            response["Idempotency-Replayed"] = "true"
+        return response
 
     def decision_body(self, booking: Any) -> dict[str, Any]:
         """Full success envelope, stored on the receipt so a replay returns identical JSON."""
@@ -95,6 +152,7 @@ class BenchBookingCreateAPIView(AppListAPIView, BenchBookingAPIView):
         BenchBookingSerializer,
         request=BenchBookingCreateSerializer,
         created=True,
+        parameters=[_OPTIONAL_IDEMPOTENCY_KEY],
     )
 
     def handle_get(self, request, **kwargs):
@@ -122,9 +180,11 @@ class BenchBookingCreateAPIView(AppListAPIView, BenchBookingAPIView):
         if error is not None:
             return error
         command_input = CreateBenchBookingInput(**serializer.validated_data)
-        return self._execute(
-            lambda: create_bench_booking(actor=request.user, data=command_input),
-            project=True,
+        return self.booking_write(
+            operation=BenchBookingWriteOperation.CREATE,
+            target={},
+            input_values=dict(serializer.validated_data),
+            command=lambda: create_bench_booking(actor=request.user, data=command_input),
         )
 
 
@@ -136,6 +196,7 @@ class BenchBookingDetailAPIView(BenchBookingAPIView):
         request=BenchBookingUpdateSerializer,
         bad_request=True,
         validation_error=True,
+        parameters=[_OPTIONAL_IDEMPOTENCY_KEY],
     )
 
     def handle_get(self, request, booking_id, **kwargs):
@@ -146,9 +207,11 @@ class BenchBookingDetailAPIView(BenchBookingAPIView):
         if error is not None:
             return error
         command_input = UpdateBenchBookingInput(booking_id=booking_id, fields=dict(serializer.validated_data))
-        return self._execute(
-            lambda: update_bench_booking(actor=request.user, data=command_input),
-            project=True,
+        return self.booking_write(
+            operation=BenchBookingWriteOperation.UPDATE,
+            target={"booking_id": booking_id},
+            input_values=dict(command_input.fields),
+            command=lambda: update_bench_booking(actor=request.user, data=command_input),
         )
 
 
@@ -159,6 +222,7 @@ class BenchBookingCancelActionAPIView(BenchBookingAPIView):
         request=BenchBookingCancelActionSerializer,
         bad_request=True,
         validation_error=True,
+        parameters=[_OPTIONAL_IDEMPOTENCY_KEY],
     )
 
     def handle_post(self, request, booking_id, **kwargs):
@@ -174,9 +238,11 @@ class BenchBookingCancelActionAPIView(BenchBookingAPIView):
                 "cancellation_reason": serializer.validated_data.get("reason", ""),
             },
         )
-        return self._execute(
-            lambda: update_bench_booking(actor=request.user, data=command_input),
-            project=True,
+        return self.booking_write(
+            operation=BenchBookingWriteOperation.CANCEL,
+            target={"booking_id": command_input.booking_id},
+            input_values=dict(command_input.fields),
+            command=lambda: update_bench_booking(actor=request.user, data=command_input),
         )
 
 
@@ -276,6 +342,12 @@ def _idempotency_key(request: Request) -> tuple[str | None, Response | None]:
     return str(parsed), None
 
 
+def _optional_idempotency_key(request: Request) -> tuple[str | None, Response | None]:
+    if request.headers.get("Idempotency-Key") is None:
+        return None, None
+    return _idempotency_key(request)
+
+
 def _action_error(request: Request, status_code: int, code: str, message: str) -> Response:
     from core.common.api.correlation import get_request_id
 
@@ -295,6 +367,7 @@ class BenchBookingCodeDetailAPIView(BenchBookingAPIView):
         request=BenchBookingUpdateSerializer,
         bad_request=True,
         validation_error=True,
+        parameters=[_OPTIONAL_IDEMPOTENCY_KEY],
     )
 
     def handle_get(self, request, booking_code, **kwargs):
@@ -308,9 +381,11 @@ class BenchBookingCodeDetailAPIView(BenchBookingAPIView):
             return error
         booking = get_bench_booking_by_code(booking_code=booking_code)
         command_input = UpdateBenchBookingInput(booking_id=booking.pk, fields=dict(serializer.validated_data))
-        return self._execute(
-            lambda: update_bench_booking(actor=request.user, data=command_input),
-            project=True,
+        return self.booking_write(
+            operation=BenchBookingWriteOperation.UPDATE,
+            target={"booking_id": booking.pk},
+            input_values=dict(command_input.fields),
+            command=lambda: update_bench_booking(actor=request.user, data=command_input),
         )
 
 
@@ -321,6 +396,7 @@ class BenchBookingCancelByCodeActionAPIView(BenchBookingAPIView):
         request=BenchBookingCancelActionSerializer,
         bad_request=True,
         validation_error=True,
+        parameters=[_OPTIONAL_IDEMPOTENCY_KEY],
     )
 
     def handle_post(self, request, booking_code, **kwargs):
@@ -337,10 +413,66 @@ class BenchBookingCancelByCodeActionAPIView(BenchBookingAPIView):
                 "cancellation_reason": serializer.validated_data.get("reason", ""),
             },
         )
-        return self._execute(
-            lambda: update_bench_booking(actor=request.user, data=command_input),
-            project=True,
+        return self.booking_write(
+            operation=BenchBookingWriteOperation.CANCEL,
+            target={"booking_id": command_input.booking_id},
+            input_values=dict(command_input.fields),
+            command=lambda: update_bench_booking(actor=request.user, data=command_input),
         )
+
+
+class BenchBookingCheckActionAPIView(BenchBookingAPIView):
+    """Preview a new booking, a series or a change: writes nothing, takes no locks, answers for now only."""
+
+    post_contract = operation(
+        "BenchBookingCheckAction",
+        BenchBookingCheckSerializer,
+        request=BenchBookingCheckRequestSerializer,
+        bad_request=True,
+        validation_error=True,
+        forbidden=True,
+    )
+
+    def handle_post(self, request, **kwargs):
+        serializer, error = self.validate_request()
+        if error is not None:
+            return error
+        command_input = CheckBenchBookingInput(**serializer.to_command_kwargs())
+        return self._execute(lambda: check_bench_booking(actor=request.user, data=command_input))
+
+
+class BenchBookingPolicyAPIView(FeatureAPIView):
+    """The booking rules that apply to the caller."""
+
+    permission_classes = BENCH_BOOKING_ACCESS
+    schema_tags = ("Bench Bookings",)
+    get_contract = OperationContract(
+        success=ResponseContract.success("BenchBookingPolicy", BenchBookingPolicySerializer),
+    )
+
+    def handle_get(self, request: Request, *args, **kwargs) -> Response:
+        response = self.respond(get_bench_booking_policy(actor=request.user))
+        response["Cache-Control"] = "private, max-age=300"
+        return response
+
+
+class BenchAvailabilityAPIView(FeatureAPIView):
+    """Benches free in a window, and when the others are busy. Busy time never names who booked it."""
+
+    permission_classes = BENCH_BOOKING_ACCESS
+    schema_tags = ("Bench Bookings",)
+    get_contract = OperationContract(
+        query=BenchAvailabilityQuerySerializer,
+        success=ResponseContract.success("BenchAvailability", BenchAvailabilityResultSerializer),
+        bad_request=ResponseContract.bad_request(),
+    )
+
+    def handle_get(self, request: Request, *args, **kwargs) -> Response:
+        filters, error = self.validate_query()
+        if error is not None:
+            return error
+        query = BenchAvailabilityQuerySerializer.to_query_kwargs(filters)
+        return self.respond(list_bench_availability(actor=request.user, **query))
 
 
 class LabProjectListAPIView(AppListAPIView, FeatureAPIView):

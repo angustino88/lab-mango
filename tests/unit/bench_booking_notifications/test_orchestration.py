@@ -60,7 +60,7 @@ def test_update_hook_noop_and_material_inside_transaction():
         data = update_module.UpdateBenchBookingInput(booking_id=7, fields=fields)
         with (
             patch.object(update_module, "policies"),
-            patch.object(update_module, "_ensure_can_modify"),
+            patch.object(update_module, "ensure_can_modify"),
             patch.object(update_module, "lock_benches", return_value={3: MagicMock()}),
             patch.object(update_module, "conflicting_bench_bookings"),
             patch.object(update_module, "bench_parent_blocker", return_value=None),

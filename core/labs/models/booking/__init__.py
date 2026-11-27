@@ -5,7 +5,12 @@ from .base import (
     BookingStatus,
     ensure_booking_status_transition,
 )
-from .bench_booking import BenchBooking, BenchBookingDecisionReceipt
+from .bench_booking import (
+    BenchBooking,
+    BenchBookingDecisionReceipt,
+    BenchBookingWriteOperation,
+    BenchBookingWriteReceipt,
+)
 from .equipment_booking import EquipmentBooking
 from .reference_data import LabProject
 from .slot_watch import BenchSlotNotification, BenchSlotWatch, SlotWatchChannel, SlotWatchKind, SlotWatchStatus
@@ -13,6 +18,8 @@ from .slot_watch import BenchSlotNotification, BenchSlotWatch, SlotWatchChannel,
 __all__ = [
     "BenchBooking",
     "BenchBookingDecisionReceipt",
+    "BenchBookingWriteOperation",
+    "BenchBookingWriteReceipt",
     "BenchSlotNotification",
     "BenchSlotWatch",
     "Booking",

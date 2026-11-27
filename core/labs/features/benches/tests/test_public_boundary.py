@@ -64,6 +64,7 @@ def test_public_exports_supported_commands_and_queries():
         "get_reference",
         "list_benches",
         "list_references",
+        "lookup_benches",
         "place_bench",
         "reference_data",
         "remove_favorite",

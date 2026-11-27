@@ -38,7 +38,7 @@ class UpdateBenchBookingInput:
     fields: Mapping[str, Any]
 
 
-def _ensure_can_modify(actor, booking: BenchBooking) -> None:
+def ensure_can_modify(actor, booking: BenchBooking) -> None:
     """Edits, cancels and completions are allowed for the owner and for lab coordinators and admins."""
     if is_owner(actor, booking) or has_permission(actor, LabsPermission.BENCH_BOOKING_MANAGE_ANY):
         return
@@ -60,7 +60,7 @@ def update_bench_booking(*, actor, data: UpdateBenchBookingInput) -> BenchBookin
         booking = BenchBooking.objects.select_for_update().get(pk=data.booking_id)
         if booking.bench_id != current_bench_id:
             raise BenchBookingConflict("The booking moved concurrently; reload it and retry.")
-        _ensure_can_modify(actor, booking)
+        ensure_can_modify(actor, booking)
         cancelling = data.fields.get("status") == BookingStatus.CANCELLED
         if (
             cancelling

@@ -26,10 +26,12 @@ def test_enum_registry_preserves_existing_names_and_choice_hashes() -> None:
         "9bee396392663d06": "KindEnum",  # downtime: planned, unplanned (kept as before)
         "c23a21501f38221e": "LicenseStatusEnum",
         "ff5970c909e77bf2": "ModeEnum",  # routing sync: delta, reset
+        "3fe8f10cd5e5cd70": "OpEnum",  # routing sync change op: upsert, delete
         "c6340131decdfe99": "PurchaseStatusEnum",
         "0ca2b20fe2f28609": "ResourceAuditResultEnum",
         "241789807f273812": "ResourceTypeEnum",
         "36424dd3c434b095": "SourceEnum",
+        "37b72c7090c531d2": "SpecRequirementOpEnum",  # equipment match: eq, neq, gte, lte, between, in, contains
         "bd28f179d97080db": "StateEnum",
         "e6f53645e41eca98": "StationSlotStatusEnum",  # in_service, out_of_service, retired (RS1)
         "1800d01ae51a5646": "SystemStateEnum",
