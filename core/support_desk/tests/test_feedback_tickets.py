@@ -6,9 +6,15 @@ import pytest
 from django.db import IntegrityError
 from django.utils import timezone
 
-from core.support_desk.contracts import TicketType
-from core.support_desk.exceptions import InvalidFieldValueError
+from core.support_desk.contracts import NON_SLA_TICKET_TYPES, TicketType
+from core.support_desk.exceptions import CsatNotAllowedError, InvalidFieldValueError, PermissionDeniedError
 from core.support_desk.features.tickets.application.create_ticket import CreateTicketInput, create_ticket
+from core.support_desk.features.tickets.application.policies import is_csat_submission_open
+from core.support_desk.features.tickets.application.submit_csat import SubmitCsatInput, submit_csat
+from core.support_desk.features.tickets.application.transition_ticket import (
+    TransitionTicketInput,
+    transition_ticket,
+)
 from core.support_desk.features.tickets.application.triage import sanitize_client_context, sanitize_page_path
 from core.support_desk.models.category import SupportCategory
 from core.support_desk.models.settings import SupportSettings
@@ -326,3 +332,90 @@ class TestFeedbackTicketWorkflow:
         assert detail_resp.status_code == 200
         assert detail_resp.json()["data"]["page_path"] == "/page-0"
         assert detail_resp.json()["data"]["client_context"] == {"browser": "Chrome", "theme": "dark"}
+
+
+def _set_sla_targets(priority, *, response=60, resolution=240):
+    priority.response_target_minutes = response
+    priority.resolution_target_minutes = resolution
+    priority.save(update_fields=["response_target_minutes", "resolution_target_minutes"])
+
+
+def _move(ticket, status, actor, **kw):
+    ticket.refresh_from_db()
+    return transition_ticket(
+        TransitionTicketInput(ticket_key=ticket.key, to_status_id=status.id, version=ticket.version, **kw),
+        actor=actor,
+    )
+
+
+def _resolve_and_reopen(setup, ticket, agent, requester):
+    ticket = _move(ticket, setup["status_active"], agent)
+    ticket = _move(ticket, setup["status_resolved"], agent, resolution_summary="done", resolution_code="fixed")
+    return _move(ticket, setup["status_open"], requester, reason="still happening")
+
+
+class TestReopenSlaRules:
+    @pytest.mark.parametrize("ticket_type", sorted(NON_SLA_TICKET_TYPES))
+    def test_reopening_non_sla_ticket_keeps_sla_clocks_off(
+        self, support_setup, requester_user, agent_user, ticket_type
+    ):
+        _set_sla_targets(support_setup["priority_med"])
+        ticket = create_ticket(
+            CreateTicketInput(subject="Suggestion", description="Please add X.", ticket_type=ticket_type),
+            actor=requester_user,
+        )
+        assert ticket.resolution_due_at is None
+
+        ticket = _resolve_and_reopen(support_setup, ticket, agent_user, requester_user)
+
+        assert ticket.reopen_count == 1
+        assert ticket.response_due_at is None
+        assert ticket.resolution_due_at is None
+        assert ticket.resolution_breached_at is None
+
+    def test_reopening_sla_ticket_restarts_resolution_clock(self, support_setup, requester_user, agent_user):
+        _set_sla_targets(support_setup["priority_med"])
+        ticket = create_ticket(
+            CreateTicketInput(subject="Export fails", description="500 on export.", ticket_type=TicketType.BUG.value),
+            actor=requester_user,
+        )
+
+        before_reopen = timezone.now()
+        ticket = _resolve_and_reopen(support_setup, ticket, agent_user, requester_user)
+
+        assert ticket.reopen_count == 1
+        assert ticket.resolution_due_at is not None
+        assert ticket.resolution_due_at >= before_reopen + timedelta(minutes=240)
+
+
+class TestCsatEligibilityParity:
+    """The ``can_submit_csat`` flag and the submit-csat command must agree in every case."""
+
+    @pytest.mark.parametrize("case", ["open", "resolved", "expired", "disabled", "not_requester"])
+    def test_flag_matches_submit_outcome(self, support_setup, requester_user, agent_user, case):
+        ticket = create_ticket(
+            CreateTicketInput(subject="Contrast", description="Low contrast.", ticket_type=TicketType.FEEDBACK.value),
+            actor=requester_user,
+        )
+        actor = agent_user if case == "not_requester" else requester_user
+        if case != "open":
+            ticket = _move(ticket, support_setup["status_active"], agent_user)
+            ticket = _move(ticket, support_setup["status_resolved"], agent_user, resolution_summary="ok")
+        app_settings = SupportSettings.get_solo()
+        if case == "expired":
+            SupportTicket.objects.filter(pk=ticket.pk).update(
+                resolved_at=timezone.now() - timedelta(days=app_settings.csat_window_days + 1)
+            )
+        if case == "disabled":
+            app_settings.csat_enabled = False
+            app_settings.save(update_fields=["csat_enabled"])
+
+        ticket = SupportTicket.objects.select_related("status").get(pk=ticket.pk)
+        flag = is_csat_submission_open(actor, ticket, app_settings=SupportSettings.get_solo())
+
+        if flag:
+            submit_csat(SubmitCsatInput(ticket_key=ticket.key, score=4), actor=actor)
+        else:
+            with pytest.raises((CsatNotAllowedError, PermissionDeniedError)):
+                submit_csat(SubmitCsatInput(ticket_key=ticket.key, score=4), actor=actor)
+        assert flag is (case == "resolved")
