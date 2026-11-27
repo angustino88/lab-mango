@@ -73,9 +73,32 @@ def notification_settings(env) -> dict:
     }
 
 
+# (env name, default, min, max) in seconds. Collection must run well inside its 15-minute release
+# look-back (slot_watch_collection.RELEASE_LOOKBACK) or freed benches are missed; delivery must run
+# well inside its 120-second claim lease and keep alerts timely.
+SLOT_WATCH_INTERVALS = {
+    "collect": ("BENCH_SLOT_WATCH_COLLECT_INTERVAL_SECONDS", 60, 15, 300),
+    "deliver": ("BENCH_SLOT_WATCH_DELIVER_INTERVAL_SECONDS", 15, 5, 60),
+}
+
+
+def slot_watch_intervals(env) -> dict[str, float]:
+    """How often beat runs the slot alert jobs, in seconds; out-of-range values stop startup."""
+    intervals = {}
+    for job, (name, default, low, high) in SLOT_WATCH_INTERVALS.items():
+        try:
+            seconds = int(env(name, default=str(default)))
+        except (TypeError, ValueError):
+            raise ImproperlyConfigured(f"{name} must be a whole number of seconds.") from None
+        if not low <= seconds <= high:
+            raise ImproperlyConfigured(f"{name} must be between {low} and {high} seconds.")
+        intervals[job] = float(seconds)
+    return intervals
+
+
 def slot_watch_settings(env) -> dict:
-    """Bench slot watches. Web delivery needs only this flag; email and Teams also need the
-    booking notification master switch and their channel switch (validated above)."""
+    """Bench slot alerts. In-app alerts are built in; email and Teams need the booking notification
+    master switch and their channel switch (validated above)."""
     try:
         lead = int(env("BOOKING_SLOT_WATCH_LEAD_MINUTES", default="15"))
     except (TypeError, ValueError):
@@ -88,7 +111,6 @@ def slot_watch_settings(env) -> dict:
         if parts.scheme not in ("https", "http") or not parts.hostname or parts.query or parts.fragment:
             raise ImproperlyConfigured("Slot watch app URL must be the Lab Mango web address, e.g. https://host.")
     return {
-        "BOOKING_SLOT_WATCH_ENABLED": env.bool("BOOKING_SLOT_WATCH_ENABLED", default=False),
         "BOOKING_SLOT_WATCH_LEAD_MINUTES": lead,
         # Public web address of the frontend, used for "Book now" links in email and Teams.
         "BOOKING_SLOT_WATCH_APP_URL": app_url,

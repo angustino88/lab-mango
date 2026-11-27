@@ -53,15 +53,8 @@ PAGE_SIZE = 100
 BOOKINGS_PER_WATCH = 200
 
 
-
-def slot_watch_enabled() -> bool:
-    return bool(getattr(settings, "BOOKING_SLOT_WATCH_ENABLED", False))
-
-
 def channel_enabled(channel: str) -> bool:
-    """Web needs only the slot watch flag; email/Teams reuse the booking notification switches."""
-    if not slot_watch_enabled():
-        return False
+    """In-app alerts are always on; email/Teams reuse the booking notification switches."""
     if channel == NotificationChannel.IN_APP.value:
         return True
     return bool(
@@ -290,8 +283,6 @@ def expire_finished_watches(*, now: datetime, limit: int = 500) -> int:
 
 def collect_slot_watch_notifications(*, now: datetime, after_watch_id: int = 0) -> dict[str, int]:
     """One bounded page. ``cursor`` is the next ``after_watch_id``, or -1 when the scan is done."""
-    if not slot_watch_enabled():
-        return {"created": 0, "expired_watches": 0, "cursor": -1}
     expired = expire_finished_watches(now=now) if after_watch_id == 0 else 0
     watches = list(
         BenchSlotWatch.objects.filter(

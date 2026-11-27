@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 from django.core.cache import cache
-from rest_framework.throttling import ScopedRateThrottle
+from rest_framework.settings import api_settings
 
 
 @pytest.fixture(autouse=True)
@@ -17,7 +17,7 @@ def _clear_throttle_cache():
 @pytest.fixture
 def tight_login_rate():
     """Make the login scope small enough to hit in a test without many requests."""
-    with patch.object(ScopedRateThrottle, "THROTTLE_RATES", {**ScopedRateThrottle.THROTTLE_RATES, "auth_login": "2/min"}):
+    with patch.dict(api_settings.DEFAULT_THROTTLE_RATES, {"auth_login": "2/min"}):
         yield
 
 

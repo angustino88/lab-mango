@@ -48310,6 +48310,13 @@
             "format": "date-time",
             "readOnly": true
           },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true,
+            "description": "When the booking was completed: when the user ended it, or its end time when the scheduled job completed it. Set exactly when the status is completed. ends_at keeps the booked end."
+          },
           "status": {
             "allOf": [
               {
@@ -48354,6 +48361,7 @@
           "approval_status",
           "bench",
           "booking_code",
+          "completed_at",
           "created_at",
           "creator",
           "ends_at",

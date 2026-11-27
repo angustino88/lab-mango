@@ -9,8 +9,8 @@ from core.labs.features.visual_models.public import seed_reference_models
 
 class Command(BaseCommand):
     help = (
-        "Add the built-in reference 3D models (rack, workbench, cabinet, shelving, instrument, computer, "
-        "monitor) to the model library, and set them as the default model of station types and equipment "
+        "Add the built-in reference 3D models (racks, benches, lab furniture, and embedded systems test "
+        "equipment) to the model library, and set them as the default model of station types and equipment "
         "categories that have none. Idempotent; never replaces a model someone chose."
     )
 
@@ -25,5 +25,6 @@ class Command(BaseCommand):
         for label, rows in (
             ("Station types", report.station_types),
             ("Equipment categories", report.equipment_categories),
+            ("Product models", report.product_models),
         ):
             self.stdout.write(f"{label}: " + (", ".join(rows) if rows else "no new defaults"))

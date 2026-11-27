@@ -475,6 +475,41 @@ class TestBenchBookingList:
         assert response.status_code == 200
         assert response.json()["data"] == []
 
+    def test_booking_calendar_hides_released_bookings_from_coordinators_too(self, actor, bench, make_booking):
+        # A cancelled, expired or rejected booking gave its slot back: no one sees it on the schedule.
+        _role(actor, "coord", 80114)
+        now = timezone.now()
+        day = timedelta(days=1)
+        hidden = [
+            make_booking(starts_at=now + 2 * day, ends_at=now + 3 * day, status="cancelled"),
+            make_booking(starts_at=now - 6 * day, ends_at=now - 5 * day, status="expired"),
+            make_booking(starts_at=now + 2 * day, ends_at=now + 3 * day),
+        ]
+        hidden[2].approval_status = "rejected"
+        hidden[2].rejection_reason = "Rejected in test setup"
+        hidden[2].save(update_fields=["approval_status", "rejection_reason"])
+        completed = make_booking(starts_at=now - 4 * day, ends_at=now - 3 * day, status="completed")
+        reserved = make_booking(starts_at=now + 4 * day, ends_at=now + 5 * day)
+
+        rows = _client(actor).get(URL, {"view_side": "booking_calendar"}).json()["data"]
+
+        assert {row["id"] for row in rows} == {completed.pk, reserved.pk}
+
+    def test_rows_carry_completion_time(self, actor, make_booking):
+        _role(actor, "member", 80115)
+        now = timezone.now()
+        completed = make_booking(
+            starts_at=now - timedelta(hours=3), ends_at=now - timedelta(hours=1), status="completed"
+        )
+        reserved = make_booking(starts_at=now + timedelta(hours=1), ends_at=now + timedelta(hours=2))
+        early = now - timedelta(hours=2)
+        type(completed).objects.filter(pk=completed.pk).update(completed_at=early)
+
+        rows = {row["id"]: row for row in _client(actor).get(URL).json()["data"]}
+
+        assert datetime.fromisoformat(rows[completed.pk]["completed_at"]) == early
+        assert rows[reserved.pk]["completed_at"] is None
+
     def test_other_views_stay_creator_scoped(self, actor, make_booking):
         _role(actor, "member", 80110)
         self._stranger_booking(make_booking)

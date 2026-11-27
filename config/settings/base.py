@@ -376,12 +376,28 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 # admin (Django Celery Beat > Periodic tasks).
 # Computing heartbeat timeout: task ``labs.equipment.computing.mark_stale_activities_offline``,
 # crontab ``*/10 * * * *``.
+from .booking_notifications import slot_watch_intervals  # noqa: E402
+
+_SLOT_WATCH_INTERVALS = slot_watch_intervals(env)
 CELERY_BEAT_SCHEDULE = {
     # Expire reservations nobody checked in to and complete bookings whose end time has passed
     # (owner decision O26). Idempotent and batched, safe to run every minute.
     "bench-booking-status-reconciliation": {
         "task": "labs.bench_bookings.reconcile_statuses",
         "schedule": env.float("BENCH_BOOKING_RECONCILE_INTERVAL_SECONDS", default=60.0),
+    },
+    # Slot alerts ("tell me when this bench is free"): find benches that opened up, then deliver the
+    # alerts. In-app alerts are built in; email and Teams follow the booking notification switches.
+    # Idempotent and bounded. Intervals: BENCH_SLOT_WATCH_{COLLECT,DELIVER}_INTERVAL_SECONDS (validated).
+    "bench-slot-watch-collection": {
+        "task": "labs.bench_bookings.collect_slot_watch_notifications",
+        "schedule": _SLOT_WATCH_INTERVALS["collect"],
+        "options": {"queue": env("BOOKING_NOTIFICATIONS_QUEUE", default="booking_notifications")},
+    },
+    "bench-slot-watch-delivery": {
+        "task": "labs.bench_bookings.deliver_slot_watch_notifications",
+        "schedule": _SLOT_WATCH_INTERVALS["deliver"],
+        "options": {"queue": env("BOOKING_NOTIFICATIONS_QUEUE", default="booking_notifications")},
     },
     # Daily analytics snapshots behind the /api/labs/analytics/{booking,lab-visits,user-count,lab-count}
     # ?unit=day charts. Each records the local day that just ended (CELERY_TIMEZONE) and is idempotent.
@@ -456,19 +472,30 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "config.schema.ProjectAutoSchema",
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 25,
+    # Default throttles allow the request when the cache is down (core.common.api.throttling), so a
+    # Redis outage cannot turn every API into a 500.
     "DEFAULT_THROTTLE_CLASSES": (
-        "rest_framework.throttling.AnonRateThrottle",
-        "rest_framework.throttling.UserRateThrottle",
+        "core.common.api.throttling.FailOpenAnonRateThrottle",
+        "core.common.api.throttling.FailOpenUserRateThrottle",
     ),
-    # Scoped throttles for public auth endpoints (see ScopedRateThrottle on each view).
-    # Counters live in the default cache (Redis in production, shared across workers).
+    # Auth endpoints use atomic, fail-closed throttles keyed per identity plus a per-IP backstop
+    # (core/users/features/auth/throttles.py). Counters live in the default cache (Redis in production,
+    # shared across workers).
     "DEFAULT_THROTTLE_RATES": {
         "anon": env("THROTTLE_ANON", default="60/min"),
         "user": env("THROTTLE_USER", default="300/min"),
-        "auth_login": env("THROTTLE_AUTH_LOGIN", default="10/min"),
-        "auth_otp": env("THROTTLE_AUTH_OTP", default="5/min"),
-        "auth_refresh": env("THROTTLE_AUTH_REFRESH", default="30/min"),
+        "auth_login": env("THROTTLE_AUTH_LOGIN", default="10/min"),  # per username (non-SSO login)
+        # per client IP (unchanged rate). aad-login used to read THROTTLE_AUTH_LOGIN, so an existing override of
+        # that variable still applies until THROTTLE_AUTH_SSO_LOGIN is set.
+        "auth_sso_login": env("THROTTLE_AUTH_SSO_LOGIN", default=env("THROTTLE_AUTH_LOGIN", default="10/min")),
+        "auth_otp": env("THROTTLE_AUTH_OTP", default="5/min"),  # per caller
+        "auth_refresh": env("THROTTLE_AUTH_REFRESH", default="30/min"),  # per user
+        "auth_ip": env("THROTTLE_AUTH_IP", default="300/min"),  # per client IP, login + refresh backstop
     },
+    # Reverse-proxy hops whose X-Forwarded-For entry is trusted for client-IP throttles (0 = use REMOTE_ADDR
+    # only). Unset keeps DRF's default, which keys on the whole X-Forwarded-For value and can be spoofed.
+    # Production defaults to 1, the labmango-router Nginx (config/settings/production.py).
+    "NUM_PROXIES": env.int("DJANGO_NUM_PROXIES", default=None),
 }
 
 CORS_URLS_REGEX = r"^/api/.*$"

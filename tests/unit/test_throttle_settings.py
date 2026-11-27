@@ -2,16 +2,18 @@
 
 import os
 import runpy
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 from django.core.cache import cache
 from rest_framework.settings import api_settings
-from rest_framework.throttling import AnonRateThrottle, ScopedRateThrottle, UserRateThrottle
 
 from config.settings import base
 from core.common.api.api_views import AppAPIView
+from core.common.api.throttling import FailOpenAnonRateThrottle, FailOpenUserRateThrottle
 from core.users.features.auth.login.api import UserLoginView
+from core.users.features.auth.throttles import AuthIPThrottle, PasswordLoginUsernameThrottle
 
 
 @pytest.mark.parametrize(
@@ -33,19 +35,21 @@ def test_global_rates_have_defaults_and_environment_overrides(overrides, expecte
         configured = runpy.run_path(base.__file__, run_name="config.settings._throttle_test")["REST_FRAMEWORK"]
 
     assert configured["DEFAULT_THROTTLE_CLASSES"] == (
-        "rest_framework.throttling.AnonRateThrottle",
-        "rest_framework.throttling.UserRateThrottle",
+        "core.common.api.throttling.FailOpenAnonRateThrottle",
+        "core.common.api.throttling.FailOpenUserRateThrottle",
     )
     assert configured["DEFAULT_THROTTLE_RATES"] == {
         **expected,
         "auth_login": "10/min",
+        "auth_sso_login": "10/min",
         "auth_otp": "5/min",
         "auth_refresh": "30/min",
+        "auth_ip": "300/min",
     }
 
 
 def test_all_enabled_global_throttles_initialize():
-    assert api_settings.DEFAULT_THROTTLE_CLASSES == [AnonRateThrottle, UserRateThrottle]
+    assert api_settings.DEFAULT_THROTTLE_CLASSES == [FailOpenAnonRateThrottle, FailOpenUserRateThrottle]
     throttles = AppAPIView().get_throttles()
 
     assert len(throttles) == len(api_settings.DEFAULT_THROTTLE_CLASSES)
@@ -55,15 +59,63 @@ def test_all_enabled_global_throttles_initialize():
         assert throttle.duration > 0
 
 
-def test_login_keeps_scoped_throttling_and_existing_auth_rates():
-    assert UserLoginView.throttle_classes == [ScopedRateThrottle]
-    assert UserLoginView.throttle_scope == "auth_login"
+def test_login_uses_atomic_auth_throttles_and_existing_auth_rates():
+    assert UserLoginView.throttle_classes == [PasswordLoginUsernameThrottle, AuthIPThrottle]
+    assert PasswordLoginUsernameThrottle.scope == "auth_login"
     for scope, variable, default in (
         ("auth_login", "THROTTLE_AUTH_LOGIN", "10/min"),
         ("auth_otp", "THROTTLE_AUTH_OTP", "5/min"),
         ("auth_refresh", "THROTTLE_AUTH_REFRESH", "30/min"),
+        ("auth_ip", "THROTTLE_AUTH_IP", "300/min"),
     ):
         assert api_settings.DEFAULT_THROTTLE_RATES[scope] == base.env(variable, default=default)
+    assert api_settings.DEFAULT_THROTTLE_RATES["auth_sso_login"] == base.env(
+        "THROTTLE_AUTH_SSO_LOGIN", default=base.env("THROTTLE_AUTH_LOGIN", default="10/min")
+    )
+
+
+@pytest.mark.parametrize(
+    ("environment", "expected"),
+    [
+        ({}, "10/min"),
+        ({"THROTTLE_AUTH_LOGIN": "600/min"}, "600/min"),
+        ({"THROTTLE_AUTH_LOGIN": "600/min", "THROTTLE_AUTH_SSO_LOGIN": "20/min"}, "20/min"),
+    ],
+)
+def test_sso_login_rate_keeps_honoring_the_previous_login_variable(environment, expected):
+    """aad-login used to read THROTTLE_AUTH_LOGIN; existing overrides (e.g. tools/stubs/entra.py) must still apply."""
+    required = {
+        "DJANGO_READ_DOT_ENV_FILE": "False",
+        "DATABASE_URL": "postgres://localhost/synthetic_throttle_tests",
+        "PROD_DATABASE_URL": "postgres://localhost/synthetic_throttle_tests",
+        "CELERY_BROKER_URL": "memory://",
+    }
+    with patch.dict(os.environ, {**required, **environment}, clear=True):
+        configured = runpy.run_path(base.__file__, run_name="config.settings._throttle_test")["REST_FRAMEWORK"]
+
+    assert configured["DEFAULT_THROTTLE_RATES"]["auth_sso_login"] == expected
+
+
+@pytest.mark.parametrize(("environment", "expected"), [({}, 1), ({"DJANGO_NUM_PROXIES": "2"}, 2)])
+def test_production_trusts_one_router_hop_for_client_ip(environment, expected):
+    """Production sits behind the labmango-router Nginx only; DJANGO_NUM_PROXIES overrides the hop count."""
+    required = {
+        "DJANGO_READ_DOT_ENV_FILE": "False",
+        "DJANGO_SECRET_KEY": "synthetic-production-settings-test-key",
+        "DATABASE_URL": "postgres://localhost/synthetic_throttle_tests",
+        "PROD_DATABASE_URL": "postgres://localhost/synthetic_throttle_tests",
+        "CELERY_BROKER_URL": "memory://",
+        "REDIS_URL": "redis://localhost:6379/1",
+    }
+    production = Path(base.__file__).with_name("production.py")
+    with patch.dict(os.environ, {**required, **environment}, clear=True):
+        configured = runpy.run_path(str(production), run_name="config.settings._production_test")["REST_FRAMEWORK"]
+
+    assert configured["NUM_PROXIES"] == expected
+
+
+def test_base_settings_leave_num_proxies_unset_outside_production():
+    assert base.REST_FRAMEWORK["NUM_PROXIES"] == base.env.int("DJANGO_NUM_PROXIES", default=None)
 
 
 @pytest.mark.django_db

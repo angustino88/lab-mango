@@ -33,7 +33,6 @@ from core.users.tests.factories import UserFactory
 from core.websocket.models import Notification
 
 ALL_CHANNELS = {
-    "BOOKING_SLOT_WATCH_ENABLED": True,
     "BOOKING_NOTIFICATIONS_ENABLED": True,
     "BOOKING_NOTIFICATIONS_EMAIL_ENABLED": True,
     "BOOKING_NOTIFICATIONS_TEAMS_ENABLED": True,
@@ -154,11 +153,15 @@ class TestCreateAndCancel:
 
 @pytest.mark.django_db
 class TestCollection:
-    def test_disabled_feature_collects_nothing(self, settings, watch_for, make_booking, now):
-        settings.BOOKING_SLOT_WATCH_ENABLED = False
-        watch_for(now, now + 2 * H)
+    def test_in_app_alerts_need_no_switch(self, settings, watch_for, make_booking, now):
+        # In-app alerts are built in; with every notification switch off only email and Teams stay quiet.
+        settings.BOOKING_NOTIFICATIONS_ENABLED = False
+        settings.BOOKING_NOTIFICATIONS_EMAIL_ENABLED = False
+        settings.BOOKING_NOTIFICATIONS_TEAMS_ENABLED = False
+        watch = watch_for(now, now + 2 * H)
         make_booking(starts_at=now - H, ends_at=now + 10 * M, status=BookingStatus.IN_PROGRESS)
-        assert collect_slot_watch_notifications(now=now)["created"] == 0
+        assert collect_slot_watch_notifications(now=now)["created"] == 1
+        assert {r.channel for r in BenchSlotNotification.objects.filter(watch=watch)} == {"in_app"}
 
     def test_ending_soon_queues_every_channel_once(self, enabled, watch_for, make_booking, now):
         watch = watch_for(now, now + 2 * H)
@@ -389,13 +392,11 @@ def test_messages_link_to_a_prefilled_booking(enabled):
     assert "Book this slot" in mail.outbox[0].body
 
 
-def test_enable_with_only_slot_watch_flag_enables_only_slot_schedules(settings):
+def test_provisioning_leaves_the_built_in_slot_alert_jobs_alone(settings):
     from unittest.mock import MagicMock
 
     from core.labs.management.commands import provision_booking_notification_schedules as schedules
 
-    settings.BOOKING_NOTIFICATIONS_ENABLED = False
-    settings.BOOKING_SLOT_WATCH_ENABLED = True
     with (
         patch.object(schedules.transaction, "atomic"),
         patch.object(schedules.IntervalSchedule.objects, "get_or_create", return_value=(MagicMock(), False)),
@@ -403,9 +404,8 @@ def test_enable_with_only_slot_watch_flag_enables_only_slot_schedules(settings):
     ):
         command = schedules.Command()
         command.stdout = MagicMock()
-        command.handle(enable=True)
-    enabled_names = {c.kwargs["name"] for c in tasks.call_args_list if c.kwargs["defaults"]["enabled"]}
-    assert enabled_names == {row[0] for row in schedules.SLOT_WATCH_SCHEDULES}
+        command.handle(enable=False)
+    assert not any(c.kwargs["name"].startswith("bench-slot-watch") for c in tasks.call_args_list)
 
 
 # --- booking follows -------------------------------------------------------------------------

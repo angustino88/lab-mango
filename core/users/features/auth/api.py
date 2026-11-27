@@ -3,8 +3,6 @@
 import logging
 from typing import Any
 
-from redis.exceptions import ConnectionError as RedisConnectionError
-from redis.exceptions import TimeoutError as RedisTimeoutError
 from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 
@@ -12,6 +10,7 @@ from config.schema import ProjectAutoSchema
 from core.common.api.api_views import AppAPIView
 from core.common.api.correlation import get_request_id
 from core.common.api.exceptions import api_exception_handler
+from core.common.cache import is_cache_outage
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +22,7 @@ class AuthenticationServiceUnavailable(APIException):
 
 
 def auth_exception_handler(exc: Exception, context: dict[str, Any]) -> Response | None:
-    if isinstance(exc, (RedisConnectionError, RedisTimeoutError)):
+    if is_cache_outage(exc):
         logger.error(
             "Authentication throttle cache unavailable",
             extra={"request_id": get_request_id(context.get("request")), "error_type": type(exc).__name__},

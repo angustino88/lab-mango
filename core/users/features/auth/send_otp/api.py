@@ -2,12 +2,12 @@ from django.conf import settings
 from drf_api_contracts import OperationContract, ResponseContract
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
-from rest_framework.throttling import ScopedRateThrottle
 
 from core.common.api.api_views import AppAPIView
 from core.common.api.permissions import HasAPIKeyAccess
 from core.users.features.auth.send_otp.serializer import SendOTPResponseSerializer, SendOTPSerializer
 from core.users.features.auth.send_otp.service import OTPDeliveryError, send_otp
+from core.users.features.auth.throttles import OTPCallerThrottle
 
 
 class SendUserOTPView(AppAPIView):
@@ -15,8 +15,7 @@ class SendUserOTPView(AppAPIView):
 
     schema_tags = ("User Authentication",)
     permission_classes = [HasAPIKeyAccess | IsAuthenticated]
-    throttle_classes = [ScopedRateThrottle]
-    throttle_scope = "auth_otp"
+    throttle_classes = [OTPCallerThrottle]
 
     post_contract = OperationContract(
         request=SendOTPSerializer,
