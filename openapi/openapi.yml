@@ -644,6 +644,8 @@ paths:
     $ref: ./labs-procurement.yml#/paths/~1api~1labs~1purchases~1{purchase_id}~1items~1draft
   /api/labs/purchases/{purchase_id}/transactions:
     $ref: ./labs-procurement.yml#/paths/~1api~1labs~1purchases~1{purchase_id}~1transactions
+  /api/labs/resources/lookup:
+    $ref: ./labs-resource-lookup.yml#/paths/~1api~1labs~1resources~1lookup
   /api/labs/telemetry/channels/{channel_id}:
     $ref: ./labs-telemetry.yml#/paths/~1api~1labs~1telemetry~1channels~1{channel_id}
   /api/labs/telemetry/channels/{channel_id}/actions/bind-target:
@@ -856,6 +858,8 @@ tags:
   description: Procurement endpoints
 - name: Resource Audit
   description: Resource Audit endpoints
+- name: Resource Lookup
+  description: Resource Lookup endpoints
 - name: Resource Mappings
   description: Resource Mappings endpoints
 - name: Rooms

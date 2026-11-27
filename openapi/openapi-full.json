@@ -29581,6 +29581,78 @@
         "summary": "Create Resources ID Audits by Resource ID"
       }
     },
+    "/api/labs/resources/lookup": {
+      "get": {
+        "operationId": "labs_resources_lookup_retrieve",
+        "description": "Every Labs role may ask; each type is searched only if the caller may read it.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "maximum": 10,
+              "minimum": 1,
+              "default": 5
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 1
+            },
+            "description": "Name, UID or SKU.",
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "types",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Comma-separated: room, station, bench, equipment, license. Default: every type you may read."
+          }
+        ],
+        "tags": [
+          "Resource Lookup"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceLookupSerializersResourceLookupMatchListResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Get Resources Lookup"
+      }
+    },
     "/api/labs/resources/sku/{sku}/audits": {
       "get": {
         "operationId": "labs_resources_sku_audits_retrieve_by_sku",
@@ -71165,6 +71237,68 @@
           "file"
         ]
       },
+      "ResourceLookupMatch": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true,
+            "description": "room, station, bench, equipment or license."
+          },
+          "match": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true,
+            "description": "How q matched, best first: uid_exact, sku_exact, name_exact, prefix, contains."
+          },
+          "resource": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsUIDNamedReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "sku": {
+            "type": "string",
+            "readOnly": true
+          },
+          "context": {
+            "type": "string",
+            "readOnly": true,
+            "description": "Where it is, or its product; empty when unknown."
+          }
+        },
+        "required": [
+          "context",
+          "match",
+          "resource",
+          "sku",
+          "type"
+        ]
+      },
+      "ResourceLookupSerializersResourceLookupMatchListResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResourceLookupMatch"
+            }
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
       "ResourceMappingData": {
         "type": "object",
         "properties": {
@@ -80193,6 +80327,10 @@
     {
       "name": "Resource Audit",
       "description": "Resource Audit endpoints"
+    },
+    {
+      "name": "Resource Lookup",
+      "description": "Resource Lookup endpoints"
     },
     {
       "name": "Resource Mappings",

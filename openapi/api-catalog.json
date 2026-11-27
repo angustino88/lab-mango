@@ -1,7 +1,7 @@
 {
   "title": "Lab Mango API Catalog",
   "version": "1.0.0",
-  "total_endpoints": 559,
+  "total_endpoints": 560,
   "generated_at": "2026-11-27",
   "endpoints": [
     {
@@ -101254,6 +101254,184 @@
           }
         },
         "422": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Document the envelope emitted by ResponseContract.respond_problem().",
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "description": "(max nesting depth reached)"
+                      }
+                    }
+                  },
+                  "request_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "details",
+                  "message",
+                  "request_id"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          "example_payload": {
+            "error": {
+              "code": "string",
+              "message": "string",
+              "details": [
+                {}
+              ],
+              "request_id": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "endpoint": "/api/labs/resources/lookup",
+      "method": "GET",
+      "operation_id": "labs_resources_lookup_retrieve",
+      "summary": "Get Resources Lookup",
+      "description": "Every Labs role may ask; each type is searched only if the caller may read it.",
+      "tags": [
+        "Resource Lookup"
+      ],
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "maximum": 10,
+            "minimum": 1,
+            "default": 5
+          }
+        },
+        {
+          "name": "q",
+          "in": "query",
+          "required": true,
+          "description": "Name, UID or SKU.",
+          "schema": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1
+          }
+        },
+        {
+          "name": "types",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated: room, station, bench, equipment, license. Default: every type you may read.",
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "content_type": "application/json",
+          "schema": {
+            "type": "object",
+            "description": "Base serializer for successful API responses.",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true,
+                      "description": "room, station, bench, equipment or license."
+                    },
+                    "match": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true,
+                      "description": "How q matched, best first: uid_exact, sku_exact, name_exact, prefix, contains."
+                    },
+                    "resource": {
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "description": "(max nesting depth reached)"
+                        }
+                      ],
+                      "readOnly": true
+                    },
+                    "sku": {
+                      "type": "string",
+                      "readOnly": true
+                    },
+                    "context": {
+                      "type": "string",
+                      "readOnly": true,
+                      "description": "Where it is, or its product; empty when unknown."
+                    }
+                  },
+                  "required": [
+                    "context",
+                    "match",
+                    "resource",
+                    "sku",
+                    "type"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "example_payload": {
+            "data": [
+              {
+                "type": {},
+                "match": {},
+                "resource": {},
+                "sku": "string",
+                "context": "string"
+              }
+            ]
+          }
+        },
+        "400": {
           "description": "",
           "content_type": "application/json",
           "schema": {

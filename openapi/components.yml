@@ -18469,6 +18469,47 @@ components:
             from the content.
       required:
       - file
+    ResourceLookupMatch:
+      type: object
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+          description: room, station, bench, equipment or license.
+        match:
+          allOf:
+          - $ref: '#/components/schemas/LabsChoiceReference'
+          readOnly: true
+          description: 'How q matched, best first: uid_exact, sku_exact, name_exact,
+            prefix, contains.'
+        resource:
+          allOf:
+          - $ref: '#/components/schemas/LabsUIDNamedReference'
+          readOnly: true
+        sku:
+          type: string
+          readOnly: true
+        context:
+          type: string
+          readOnly: true
+          description: Where it is, or its product; empty when unknown.
+      required:
+      - context
+      - match
+      - resource
+      - sku
+      - type
+    ResourceLookupSerializersResourceLookupMatchListResponse:
+      type: object
+      description: Base serializer for successful API responses.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceLookupMatch'
+      required:
+      - data
     ResourceMappingData:
       type: object
       properties:

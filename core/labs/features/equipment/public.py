@@ -110,8 +110,10 @@ from .queries.summaries import (
     get_equipment_category_status_summary,
     get_equipment_status_summary,
 )
+from .queries.lookup import lookup_equipment
 
 __all__ = (
+    "lookup_equipment",
     "active_bench_ids",
     "lock_monitoring_computing",
     "RegisterHardwareIdInput",
