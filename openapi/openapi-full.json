@@ -16105,6 +16105,105 @@
         }
       }
     },
+    "/api/labs/equipment/actions/match": {
+      "post": {
+        "operationId": "labs_equipment_actions_match_create",
+        "description": "Find units by specification requirements. Changes nothing: POST only because the body is structured.",
+        "tags": [
+          "Equipment"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipmentMatchRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipmentMatchRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipmentMatchRequest"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EquipmentMatchActionMatchingEquipmentMatchResultDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Match Equipment"
+      }
+    },
     "/api/labs/equipment/computing/activity-summary": {
       "get": {
         "operationId": "labs_equipment_computing_activity_summary_retrieve",
@@ -58200,6 +58299,168 @@
           "pagination"
         ]
       },
+      "EquipmentMatch": {
+        "type": "object",
+        "properties": {
+          "equipment": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsUIDNamedReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "product_model": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsNamedReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "score": {
+            "type": "string",
+            "format": "decimal",
+            "pattern": "^-?\\d{0,1}(?:\\.\\d{0,2})?$",
+            "readOnly": true,
+            "description": "Share of requirements met, 0 to 1."
+          },
+          "is_full_match": {
+            "type": "boolean",
+            "readOnly": true,
+            "description": "Every required requirement is met."
+          },
+          "requirements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RequirementResult"
+            },
+            "readOnly": true
+          },
+          "location": {
+            "type": "string",
+            "readOnly": true,
+            "description": "Current bench, station, room or note; may be empty."
+          },
+          "condition": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true
+          },
+          "is_on_loan": {
+            "type": "boolean",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "condition",
+          "equipment",
+          "is_full_match",
+          "is_on_loan",
+          "location",
+          "product_model",
+          "requirements",
+          "score"
+        ]
+      },
+      "EquipmentMatchActionMatchingEquipmentMatchResultDetailResponse": {
+        "type": "object",
+        "description": "Base serializer for successful API responses.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/EquipmentMatchResult"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "EquipmentMatchRequest": {
+        "type": "object",
+        "properties": {
+          "requirements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpecRequirement"
+            },
+            "maxItems": 10
+          },
+          "category_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "kind_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "type_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "manufacturer_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "product_model_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "department_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "room_id": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Placed in this room now."
+          },
+          "available_from": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "available_until": {
+            "type": "string",
+            "format": "date-time",
+            "description": "At most 31 days after available_from."
+          },
+          "include_near_matches": {
+            "type": "boolean",
+            "default": false,
+            "description": "Also units missing exactly one required requirement."
+          },
+          "limit": {
+            "type": "integer",
+            "maximum": 50,
+            "minimum": 1,
+            "default": 20
+          }
+        }
+      },
+      "EquipmentMatchResult": {
+        "type": "object",
+        "description": "Full matches first, then near matches; within each, more optional matches first, then name.",
+        "properties": {
+          "is_truncated": {
+            "type": "boolean",
+            "readOnly": true,
+            "description": "More units matched than were returned."
+          },
+          "matches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipmentMatch"
+            },
+            "readOnly": true
+          }
+        },
+        "required": [
+          "is_truncated",
+          "matches"
+        ]
+      },
       "EquipmentMaterialOption": {
         "type": "object",
         "properties": {
@@ -70890,6 +71151,39 @@
         ],
         "additionalProperties": false
       },
+      "RequirementResult": {
+        "type": "object",
+        "properties": {
+          "spec_definition_id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabsChoiceReference"
+              }
+            ],
+            "readOnly": true,
+            "description": "matched, missed, or unknown (no value for this model)."
+          },
+          "actual": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          }
+        },
+        "required": [
+          "actual",
+          "name",
+          "spec_definition_id",
+          "status"
+        ]
+      },
       "ResolutionCodeEnum": {
         "enum": [
           "fixed",
@@ -73848,6 +74142,54 @@
         ],
         "type": "string",
         "description": "* `web` - Web\n* `email` - Email\n* `phone` - Phone\n* `walk_in` - Walk In\n* `api` - Api"
+      },
+      "SpecRequirement": {
+        "type": "object",
+        "properties": {
+          "spec_definition_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "op": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SpecRequirementOpEnum"
+              }
+            ],
+            "description": "Numbers: eq, neq, gte, lte, between ([min, max]), in. Text: eq, neq, in, contains. Yes/no: eq, neq.\n\n* `eq` - eq\n* `neq` - neq\n* `gte` - gte\n* `lte` - lte\n* `between` - between\n* `in` - in\n* `contains` - contains"
+          },
+          "value": {
+            "description": "A number, text or yes/no; a list for in and between."
+          },
+          "unit": {
+            "type": "string",
+            "description": "Converted with SI prefixes, e.g. GHz to MHz.",
+            "maxLength": 20
+          },
+          "required": {
+            "type": "boolean",
+            "default": true,
+            "description": "False: only raises the rank."
+          }
+        },
+        "required": [
+          "op",
+          "spec_definition_id",
+          "value"
+        ]
+      },
+      "SpecRequirementOpEnum": {
+        "enum": [
+          "eq",
+          "neq",
+          "gte",
+          "lte",
+          "between",
+          "in",
+          "contains"
+        ],
+        "type": "string",
+        "description": "* `eq` - eq\n* `neq` - neq\n* `gte` - gte\n* `lte` - lte\n* `between` - between\n* `in` - in\n* `contains` - contains"
       },
       "SpecificationDefinitionCatalogCreate": {
         "type": "object",

@@ -4,7 +4,8 @@ from decimal import Decimal, InvalidOperation
 
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models.functions import Lower
+from django.db.models import Case, Q, Value, When
+from django.db.models.functions import Cast, Lower, Replace, Trim
 from django.utils.translation import gettext_lazy as _
 from model_utils.models import TimeStampedModel
 
@@ -13,6 +14,10 @@ from core.labs.models.resource.equipment.reference_data import EquipmentBase
 
 TRUE_VALUES = {"yes", "true", "1"}
 FALSE_VALUES = {"no", "false", "0"}
+# A plain decimal with an optional sign and one decimal point or comma: what ``clean`` accepts for numbers,
+# minus exponents and spaces inside, at most 24 integer digits so the cast to numeric(38, 12) cannot overflow.
+# PostgreSQL regex and cast are immutable, so the column can be generated.
+NUMERIC_VALUE_PATTERN = r"^\s*[-+]?[0-9]{1,24}([.,][0-9]+)?\s*$"
 
 
 class SpecificationDefinition(EquipmentBase):
@@ -64,6 +69,22 @@ class ProductModelSpecification(TimeStampedModel, UserStampedModel):
         on_delete=models.PROTECT,
     )
     value = models.CharField(max_length=255)
+    value_number = models.GeneratedField(
+        expression=Case(
+            When(
+                Q(value__regex=NUMERIC_VALUE_PATTERN),
+                then=Cast(
+                    Trim(Replace("value", Value(","), Value("."))),
+                    models.DecimalField(max_digits=38, decimal_places=12),
+                ),
+            ),
+            default=None,
+        ),
+        output_field=models.DecimalField(max_digits=38, decimal_places=12, null=True),
+        db_persist=True,
+        help_text="value as a number when it is a plain decimal, else empty. Kept by PostgreSQL; used to compare "
+        "number specifications.",
+    )
 
     def clean(self) -> None:
         super().clean()
@@ -99,3 +120,4 @@ class ProductModelSpecification(TimeStampedModel, UserStampedModel):
                 name="product_model_specification_uniq",
             ),
         ]
+        indexes = [models.Index(fields=("definition", "value_number"), name="product_model_spec_number_idx")]

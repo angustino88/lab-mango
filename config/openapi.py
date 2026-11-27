@@ -35,6 +35,10 @@ ENUM_NAME_OVERRIDES: dict[str, str | list[str]] = {
     "PurchaseStatusEnum": "core.labs.models.procurement.purchase.PurchaseStatus",
     "ResourceAuditResultEnum": "core.labs.models.auditing.resource_audit.ResourceAudit.Result",
     "ResourceTypeEnum": "core.support_desk.contracts.ResourceType.choices",
+    # Routing sync change ``op`` (core/routing): pinned so the equipment match ``op`` does not rename it.
+    "OpEnum": ["upsert", "delete"],
+    # Equipment match requirement ``op``.
+    "SpecRequirementOpEnum": "core.labs.features.equipment.api.matching.SPEC_REQUIREMENT_OPS",
     "SourceEnum": "core.support_desk.contracts.TicketSource.choices",
     # Agent identity state is distinct from downtime state.
     "StateEnum": "core.agents.models.agent_identity.AgentIdentity.State",

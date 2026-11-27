@@ -40,7 +40,10 @@ class ResourceLookupMatchSerializer(serializers.Serializer):
     )
     resource = UIDNamedReferenceSerializer(read_only=True)
     sku = serializers.CharField(read_only=True)
-    context = serializers.CharField(read_only=True, help_text="Where it is, or its product; empty when unknown.")
+    # DRF removes declared fields from the class, so this API field does not replace Field.context.
+    context = serializers.CharField(  # type: ignore[assignment]
+        read_only=True, help_text="Where it is, or its product; empty when unknown."
+    )
 
     @extend_schema_field(ChoiceReferenceSerializer)
     def get_type(self, obj) -> dict[str, str] | None:

@@ -418,6 +418,8 @@ paths:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{equipment_id}~1status-changes
   /api/labs/equipment/{id}:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1{id}
+  /api/labs/equipment/actions/match:
+    $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1actions~1match
   /api/labs/equipment/computing/activity-summary:
     $ref: ./labs-equipment.yml#/paths/~1api~1labs~1equipment~1computing~1activity-summary
   /api/labs/equipment/facets:

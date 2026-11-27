@@ -104,6 +104,10 @@ Equipment is one table for every category (redesign step 6). `COMPUTING_PROFILE`
 **Models:** `Equipment`, `EquipmentEvent`, `EquipmentAssignment`, `ComputingProfile`; references `EquipmentCategory`, `EquipmentKind`, `EquipmentType`, `EquipmentManufacturer`, `EquipmentProductModel`; no category subtypes (step 6: typed columns on `Equipment`, capability flags on `EquipmentCategory`); related reference models `TechnicalUser`, `EquipmentInterface`, `DisplayResolution`, `DisplaySize`, `Material`, `NetworkingProtocol`, `SampleCharacteristic`, `SampleCustomer`.
 
 - `Equipment` extends resource identity and references a required kind plus optional type, manufacturer, and product model. Validation aligns type and kind. Concrete category models add category-specific fields and relationships.
+- `ProductModelSpecification` holds one `value` per product model and `SpecificationDefinition` (unique pair). Its
+  `value_number` is a stored PostgreSQL generated column: the value cast to `numeric(38, 12)` when it is a plain decimal
+  (optional sign, point or comma, at most 24 integer digits), else null. No code writes it, so it cannot drift from
+  `value`. Indexed with `definition` for `POST /api/labs/equipment/actions/match` (migration `labs.0006`).
 - `EquipmentAssignment` connects equipment to a bench over an interval. Both FKs are protected. A conditional unique constraint permits at most one active bench assignment per equipment; a check enforces `unassigned_at >= assigned_at` when ended. There is no reciprocal active-capacity constraint per bench in this model.
 - Equipment lifecycle/status history, bench assignment, and equipment booking are distinct. Consult category model source for exact fields and deletion semantics.
 

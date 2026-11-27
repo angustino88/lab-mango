@@ -276,6 +276,10 @@ All follow `docs/api/response-standard.md` and `request-standard.md`. Each is re
 
 ### C1. `GET /api/labs/benches/availability` — free benches and busy periods [bench_bookings]
 
+**Status: implemented.** The response is one object (`ENV-6` allows no ad-hoc `meta` keys), booleans follow NAM-2, and
+busy reasons are only `booking` and `downtime` (benches not in service, or whose station or room is not, are never
+listed). `q` matches name or SKU. Six queries whatever the number of benches.
+
 **Why:** `GET /api/labs/benches/booking-choices` cannot filter by time, so "find a free bench tomorrow 9–12" and
 "when is A-12 free this week?" are impossible today.
 
@@ -296,30 +300,32 @@ callers with `bench_booking.book_during_downtime`.
 **Response `200`**
 
 ```json
-{"data": [
-  {"bench": {"id": 12, "uid": "B-0012", "name": "A-12"},
-   "location": {"room": {"id": 3, "uid": "R-0301", "name": "Room 3.01"}, "station": {"id": 7, "uid": "S-0007", "name": "Station 2"}},
-   "type": {"id": 2, "name": "Firmware bench"},
-   "has_computing": true,
-   "fully_free": true,
-   "free_periods": [{"starts_at": "2026-11-28T09:00:00+07:00", "ends_at": "2026-11-28T12:00:00+07:00"}],
-   "busy_periods": [{"starts_at": "2026-11-28T13:00:00+07:00", "ends_at": "2026-11-28T15:00:00+07:00", "reason": {"value": "booking", "label": "Booked"}}],
-   "next_free_at": null,
-   "is_favorite": true}
-],
- "meta": {"window_starts_at": "2026-11-28T09:00:00+07:00", "window_ends_at": "2026-11-28T12:00:00+07:00", "truncated": false}}
+{"data": {
+  "window_starts_at": "2026-11-28T09:00:00+07:00", "window_ends_at": "2026-11-28T17:00:00+07:00",
+  "is_truncated": false,
+  "benches": [
+    {"bench": {"id": 12, "uid": "…", "name": "A-12"},
+     "station": {"id": 7, "uid": "…", "name": "Station 2"},
+     "room": {"id": 3, "uid": "…", "name": "Room 3.01"},
+     "type": {"id": 2, "name": "Firmware bench"},
+     "has_computing": true,
+     "is_fully_free": false,
+     "is_favorite": true,
+     "next_free_at": "2026-11-28T09:00:00+07:00",
+     "free_periods": [{"starts_at": "2026-11-28T09:00:00+07:00", "ends_at": "2026-11-28T13:00:00+07:00"}],
+     "busy_periods": [{"starts_at": "2026-11-28T13:00:00+07:00", "ends_at": "2026-11-28T17:00:00+07:00", "reason": {"value": "booking", "label": "Booked"}}]}
+  ]}}
 ```
 
-- `busy_periods[].reason`: `booking`, `downtime`, `not_in_service`. **Other users' names, booking codes and booking
-  reasons are never returned** (open question Q2).
-- Ranking: fully free first, then favorites, then the longest free period.
-- Errors: `400 invalid_query` (bad range, window > 14 days), `403 permission_denied`.
-- Query budget: one query for candidate benches and one query each for overlapping bookings and downtime, using the
-  existing range (`TsTzRange`) indexes. No per-bench queries.
+- `busy_periods[].reason`: `booking` or `downtime`. **Other users' names, booking codes and booking reasons are never
+  returned** (open question Q2).
+- Ranking: fully free first, then favorites, then the longest free period, then name.
+- Errors: `400 validation_failed` (bad range, window > 14 days, `min_free_minutes` without `mode=any_free`),
+  `400 invalid_query` (unknown parameter), `403`.
 
 ### C2. `POST /api/labs/bench-bookings/actions/check` — booking preview, no write [bench_bookings]
 
-**Status: implemented (phase 1), without `suggest_alternatives`** — alternatives need C1 and come with it. Field names follow NAM-2: `is_bookable`, `can_book_all`, `approval_status`.
+**Status: implemented**, including `suggest_alternatives`. Field names follow NAM-2: `is_bookable`, `can_book_all`, `approval_status`.
 
 **Why:** the assistant must show a correct preview before the user confirms. Today the only way to learn whether a
 booking works is to create it.
@@ -334,7 +340,8 @@ under its own locks.
 {"bench_id": 12, "starts_at": "2026-11-28T09:00:00+07:00", "ends_at": "2026-11-28T12:00:00+07:00",
  "project_id": 4, "reason": "Firmware validation",
  "booking_id": null,
- "occurrences": null}
+ "occurrences": null,
+ "suggest_alternatives": true}
 ```
 
 - `booking_id`: set to check a *change* of an existing booking (same rules as PATCH).
@@ -350,7 +357,10 @@ under its own locks.
     "starts_at": "2026-11-28T09:00:00+07:00", "ends_at": "2026-11-28T12:00:00+07:00",
     "is_bookable": false,
     "approval_status": {"value": "approved", "label": "Approved"},
-    "problems": [{"code": "bench_booking_conflict", "field": null, "message": "The bench is not free for the requested period."}]}],
+    "problems": [{"code": "bench_booking_conflict", "field": null, "message": "The bench is not free for the requested period."}],
+    "alternatives": [
+      {"bench": {"id": 15, "uid": "…", "name": "A-15"}, "starts_at": "2026-11-28T09:00:00+07:00", "ends_at": "2026-11-28T12:00:00+07:00"},
+      {"bench": {"id": 12, "uid": "…", "name": "A-12"}, "starts_at": "2026-11-28T12:00:00+07:00", "ends_at": "2026-11-28T15:00:00+07:00"}]}],
   "can_book_all": false}}
 ```
 
@@ -359,8 +369,9 @@ under its own locks.
   computing, downtime), so preview and real write never disagree in wording.
 - `approval_status`: the approval the booking would have after the write; `pending` when the duration is over `LONG_BOOKING_APPROVAL_THRESHOLD` (4 h today).
 - Field problems use code `invalid` with the field name, as the write's `422` details do.
-- *Planned with C1:* `alternatives` (≤ 3): same window on other benches of the same type or location, or the same
-  bench at the nearest free time.
+- `alternatives` (only with `suggest_alternatives`, only for a valid period that is not bookable): up to two free
+  benches of the same type for the same period, then the same bench's next free slot of the same length within a day.
+  A change does not count its own slot as busy. Free now, not held.
 - Errors (request itself bad): `400 invalid_request`, `404` bench, project or booking not visible to the caller,
   `403 permission_denied`.
 - Implementation: reuse the create and update policy functions (`application/policies.py`) on a read-only
@@ -388,6 +399,13 @@ constraint; the key only makes retries safe. Making the key **required** later i
 plan.
 
 ### C4. `POST /api/labs/equipment/actions/match` — equipment by specs and free time [equipment]
+
+**Status: implemented**, with the `value_number` migration (`labs.0006`, a PostgreSQL generated column, so nothing
+can leave it stale). Differences from the draft below: filters are ids (`category_id`, `kind_id`, `type_id`,
+`manufacturer_id`, `product_model_id`, `department_id`, `room_id`); the response is
+`{"is_truncated", "matches": [...]}` and each match has `is_full_match`, `location` (current bench, station, room or
+note, as text), `condition` and `is_on_loan` instead of `placement`/`availability` objects; `status` is
+`{value, label}`. With a window, busy units are left out rather than marked. Four queries whatever the size.
 
 **Why:** `GET /api/labs/equipment` filters by category, model and status, not by spec values
 (`ProductModelSpecification.value`, stored as text) or by time window. Operators ask "a 4-channel scope ≥ 1 GHz free
@@ -441,10 +459,8 @@ list; OpenAPI marks it safe, and it is never cached as a write.
 - `requirements[].status`: `matched`, `missed`, `unknown` (the model has no value for that spec).
 - Near matches (`include_near_matches`) miss at most one required requirement and come after full matches.
 - Errors: `400 invalid_query`, `422 validation_failed` (unknown definition, numeric op on a text spec, bad unit).
-- **Design gate:** comparing numbers in a text column per request does not scale. Recommended: add
-  `value_number` (decimal, nullable, filled from `value` when the definition is numeric) with an index on
-  `(definition_id, value_number)`. This is a **migration** and needs its own approval. Until then, limit numeric ops
-  to categories with a small number of units and say so in OpenAPI.
+- Numbers: `value_number` holds `value` as `numeric(38, 12)` when it is a plain decimal (sign, point or comma, at
+  most 24 integer digits), else null; indexed with `definition`. Exponents such as `1e3` are not numbers here.
 
 ### C5. `GET /api/labs/bench-bookings/policy` — the caller's booking rules [bench_bookings]
 
@@ -475,6 +491,10 @@ Cacheable per user (`Cache-Control: private, max-age=300`).
 
 ### C6. `GET /api/labs/resources/lookup` — turn a name or code into a resource [labs, composes features via `public.py`]
 
+**Status: implemented** as feature `core/labs/features/resource_lookup`. Matching is exact UID, exact SKU, exact name,
+prefix, then contains (no trigram ranking). `type` and `match` are `{value, label}`; each row also carries `sku`.
+Members search only in-service benches; requested types they may not read are skipped without an error.
+
 **Why:** users type "A-12", "SC-07", a UID or a SKU, or the assistant reads one from a label photo. Today each
 resource type has its own list, so the assistant would need up to five searches.
 
@@ -489,8 +509,10 @@ resource type has its own list, so the assistant would need up to five searches.
 
 ```json
 {"data": [
-  {"type": "equipment", "match": "uid_exact", "resource": {"id": 501, "uid": "EQ-0501", "name": "Scope SC-07"}, "context": "Bench A-12 · Room 3.01"},
-  {"type": "bench", "match": "name_prefix", "resource": {"id": 12, "uid": "B-0012", "name": "A-12"}, "context": "Room 3.01"}
+  {"type": {"value": "equipment", "label": "Equipment"}, "match": {"value": "sku_exact", "label": "Exact SKU"},
+   "resource": {"id": 501, "uid": "…", "name": "Scope SC-07"}, "sku": "SC-07", "context": "A-12"},
+  {"type": {"value": "bench", "label": "Bench"}, "match": {"value": "prefix", "label": "Starts with"},
+   "resource": {"id": 12, "uid": "…", "name": "A-12"}, "sku": "BN-A12", "context": "Station 2 · Room 3.01"}
 ]}
 ```
 
@@ -527,14 +549,16 @@ lab SOPs later live in Lab Mango, add a read-only document endpoint then.
 
 ## New Lab Mango work summary
 
-| ID | Endpoint | Migration | Tier | Phase |
+| ID | Endpoint | Migration | Tier | State |
 |---|---|---|---|---|
-| C3 | `Idempotency-Key` on booking create, PATCH, cancel | Possibly (key store, or reuse the approve/reject receipt pattern) | T2 | 1 — before any booking write from chat |
-| C2 | `POST /api/labs/bench-bookings/actions/check` | No | T2 | 1 |
-| C5 | `GET /api/labs/bench-bookings/policy` | No | T1 | 1 |
-| C1 | `GET /api/labs/benches/availability` | No (uses existing range indexes; verify with `EXPLAIN`) | T2 | 2 |
-| C6 | `GET /api/labs/resources/lookup` | Maybe (trigram indexes on names if missing) | T2 | 2 |
-| C4 | `POST /api/labs/equipment/actions/match` | Yes, recommended (`value_number`) | T2 | 3 |
+| C3 | `Idempotency-Key` on booking create, PATCH, cancel | `labs.0005` (`BenchBookingWriteReceipt`) | T2 | Implemented |
+| C2 | `POST /api/labs/bench-bookings/actions/check` (+ `suggest_alternatives`) | No | T2 | Implemented |
+| C5 | `GET /api/labs/bench-bookings/policy` | No | T1 | Implemented |
+| C1 | `GET /api/labs/benches/availability` | No (index use not checked with `EXPLAIN` on production-sized data) | T2 | Implemented |
+| C6 | `GET /api/labs/resources/lookup` | No | T2 | Implemented |
+| C4 | `POST /api/labs/equipment/actions/match` | `labs.0006` (`value_number` generated column + index) | T2 | Implemented |
+
+All six are on branch `claude/admiring-shannon-ta8b0l`, not merged: T2 review and owner approval are still needed.
 
 ## Rollout
 

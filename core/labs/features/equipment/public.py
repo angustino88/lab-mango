@@ -111,8 +111,12 @@ from .queries.summaries import (
     get_equipment_status_summary,
 )
 from .queries.lookup import lookup_equipment
+from .queries.matching import MatchEquipmentInput, SpecRequirement, match_equipment
 
 __all__ = (
+    "MatchEquipmentInput",
+    "SpecRequirement",
+    "match_equipment",
     "lookup_equipment",
     "active_bench_ids",
     "lock_monitoring_computing",

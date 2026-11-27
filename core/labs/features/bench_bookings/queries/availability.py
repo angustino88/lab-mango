@@ -245,8 +245,7 @@ def _busy_periods(
     )
     if exclude_booking_id is not None:
         bookings = bookings.exclude(pk=exclude_booking_id)
-    bookings = bookings.values_list("bench_id", "starts_at", "ends_at")
-    for bench_id, starts_at, ends_at in bookings:
+    for bench_id, starts_at, ends_at in bookings.values_list("bench_id", "starts_at", "ends_at"):
         busy[bench_id].append(_clip(starts_at, ends_at, window, BUSY_BOOKING))
 
     benches_by_station: dict[int, list[int]] = defaultdict(list)
@@ -269,9 +268,10 @@ def _busy_periods(
             .blocking(lab_operator=lab_operator)
             .values_list("resource_object_id", "starts_at", "ends_at")
         )
-        for object_id, starts_at, ends_at in windows:
+        for object_id, down_from, down_until in windows:
             for bench_id in owners.get(int(object_id), ()):
-                busy[bench_id].append(_clip(starts_at, ends_at or window.ends_at, window, BUSY_DOWNTIME))
+                # An open-ended window (no end yet) is busy to the end of the asked window.
+                busy[bench_id].append(_clip(down_from, down_until or window.ends_at, window, BUSY_DOWNTIME))
     return busy
 
 
