@@ -21,31 +21,32 @@ were not checked field by field against the assistant's needs (not verified).
 ## 0. Architecture and cross-cutting rules
 
 ```
-Browser (Lab Mango FE + MSAL)
-   │  Entra access token, aud = assistant API
+Browser (Lab Mango FE)
+   │  the user's Lab Mango access token (10 min), sent on every request
    ▼
 Assistant service ── LLM, tool router, conversation store, proposal store, audit log
-   │  Entra On-Behalf-Of token, aud = Lab Mango API (same user)
+   │  the same token, forwarded for that request only
    ▼
 Lab Mango /api/...  (all authorization stays here)
 ```
 
 | # | Rule |
 |---|---|
-| X1 | **Auth.** Frontend → assistant: Entra token for the assistant API. Assistant → Lab Mango: **On-Behalf-Of** token for the same user. No service account, shared key or superuser. Lab Mango checks every call against that user's own permissions |
+| X1 | **Auth: pass-through (decided).** The frontend sends its Lab Mango access token to the assistant as `Authorization: Bearer`, as it does to Lab Mango; the assistant forwards it unchanged. No service account, shared key or superuser. Lab Mango checks every call against that user's own permissions. The token lives 10 minutes (`SIMPLE_JWT`) and is held in frontend memory; the 7-day refresh token is an HttpOnly cookie the assistant never sees. See X9 for the safeguards this choice needs |
 | X2 | **Tool filtering.** Tools are offered per user from `GET /api/users/me` permissions. Lab Mango still enforces each call (deny-by-default, object-scoped) |
 | X3 | **Writes need human confirmation.** The LLM can only create an *action proposal*. The Lab Mango write is sent only by `POST /v1/action-proposals/{id}/actions/confirm`, after a user click, with `Idempotency-Key` = proposal UUID |
 | X4 | **Stored text is data.** Booking reasons, equipment names, ticket text, notification text and uploads go to the LLM inside delimited data blocks, never as instructions |
 | X5 | **Audit.** The assistant records every tool call: user, tool, arguments, Lab Mango status and `request_id`, latency, proposal id |
 | X6 | **Traffic tagging.** Every Lab Mango call sends `X-Request-Id` and `User-Agent: lab-assistant/<version>`. Lab Mango's per-user throttle (`THROTTLE_USER`, default 300/min) still applies |
 | X7 | **Time.** All times are RFC 3339 with offset. The assistant resolves "tomorrow 9" in the user's time zone (preference, else the lab time zone from `GET /api/labs/bench-bookings/policy`) and always repeats the absolute time back in the proposal |
+| X9 | **Pass-through safeguards.** The token can do everything its user can, so: (a) the assistant never stores, logs or caches a token or the `Authorization` header, and holds it only for the request in flight; a stored proposal contains no credential, and `confirm` carries a fresh token; (b) the assistant treats the token as opaque and authenticates by calling `GET /api/users/me` with it (it holds no signing key), caching the result by token hash for at most the token's lifetime; (c) it calls only an allowlist of Lab Mango routes, the tools in Part B, and never a route or host taken from a client or model; (d) the Lab Mango base URL comes from a server-side allowlist keyed by a department or backend name sent by the frontend, never from a URL the client supplies (SSRF); (e) writes still need the confirm click (X3), which is the main guard against a manipulated model; (f) bearer tokens in headers, so no cookies and no CSRF surface on the assistant; (g) TLS only, between all three parts |
 | X8 | **Envelope.** Both services follow `docs/api/response-standard.md`: `{"data": …, "meta": …}` or `{"error": {code, message, details, request_id}}`, slashless paths, `snake_case` query names |
 
 ---
 
 ## Part A — Assistant service API
 
-Base path `/v1`. All routes need the user's Entra token unless marked. Ids are UUIDs.
+Base path `/v1`. All routes need the user's Lab Mango access token (X1) unless marked. Ids are UUIDs.
 
 ### A1. Session and capabilities
 
@@ -166,7 +167,7 @@ A proposal is a Lab Mango write the LLM prepared and the user has not yet approv
 | `GET /v1/me/preferences` / `PATCH /v1/me/preferences` | `{time_zone, language, default_project_id, preferred_bench_type_ids, preferred_location_ids, default_booking_hours, proactive_suggestions: bool}`. Used to fill gaps ("book my usual bench") |
 | `GET /v1/me/memories` | Facts the assistant saved about the user ("prefers benches near the window"), each with source message |
 | `DELETE /v1/me/memories/{id}` · `DELETE /v1/me/memories` | Forget one or all |
-| `GET /v1/me/suggestions` | Proactive cards when chat opens, built live through OBO: upcoming booking in < 1 h, booking hit by a new downtime (with alternatives from C1), a pending approval older than 24 h (operators), overdue loan (operators). `{data: [{type, title, card, actions: [prompt]}]}` |
+| `GET /v1/me/suggestions` | Proactive cards when chat opens, built live with the caller's token: upcoming booking in < 1 h, booking hit by a new downtime (with alternatives from C1), a pending approval older than 24 h (operators), overdue loan (operators). `{data: [{type, title, card, actions: [prompt]}]}` |
 
 ### A7. Feedback
 
@@ -561,19 +562,23 @@ All six are on branch `claude/admiring-shannon-ta8b0l`, not merged: T2 review an
 
 ## Rollout
 
-1. **Read-only pilot:** OBO auth, A1–A3, A7, A9, read tools in B1–B4. No proposals yet.
+1. **Read-only pilot:** pass-through auth with X9, A1–A3, A7, A9, read tools in B1–B4. No proposals yet.
 2. **Booking writes:** C3, C2, C5, then A4 for booking create, change and cancel and for slot watches.
 3. **Finding things:** C1, C6, A6 preferences and suggestions, B3 approvals.
 4. **Operators advanced:** C4 (with migration), reservations and downtime proposals, A5 attachments.
 5. **Knowledge and admin:** C7 knowledge sources, A8 evaluations.
 
-## Open questions for the owner
+## Decisions
 
-1. **Q1** OBO (recommended) or pass-through of a Lab Mango token?
-2. **Q2** In C1, may members see who booked a busy bench, or only "Booked"? (Spec assumes only "Booked".)
-3. **Q3** May approvers approve or reject from chat (B3), or only list?
-4. **Q4** Which numeric specs must C4 support first (bandwidth, channels, voltage, ...)? This decides the
-   `value_number` migration.
-5. **Q5** Retention for conversation history, attachments and the tool-call audit log.
-6. **Q6** May `notification.mark_all_read` skip confirmation as a low-risk write?
-7. **Q7** Is there a maximum booking horizon (how far ahead)? C5 `max_horizon_days` is `null` because the code has none.
+Owner decision on Q1, and recommended defaults for the rest (owner said to take the best choice; change any of
+them before build):
+
+| # | Question | Decision |
+|---|---|---|
+| Q1 | Auth between assistant and Lab Mango | **Pass-through** of the user's Lab Mango access token, with the safeguards in X9. A scoped Microsoft access token (new scope, endpoints opted in with `with_entra_access_token()`) stays an option for later; it would need its own design note and approval |
+| Q2 | May members see who booked a busy bench? | **No.** Busy time is "Booked" or "Downtime" only (as built) |
+| Q3 | May approvers approve or reject from chat? | **Yes, through the confirm card only.** Lab Mango still refuses self-approval and non-approvers |
+| Q4 | Which numeric specs first for C4? | **No fixed list.** Matching is generic over any `number` specification definition (built) |
+| Q5 | Retention | **Default:** conversations 90 days or until the user deletes them; tool-call audit 1 year, metadata only (user, tool, status, `request_id`, latency, proposal id) with no message text; attachments 24 hours if unused. Needs owner confirmation against policy |
+| Q6 | Skip confirmation for `notification.mark_all_read`? | **Yes**, it is low risk and reversible by the user. Every other write confirms |
+| Q7 | Maximum booking horizon? | **None**, as in the code; `max_horizon_days` stays `null` |
