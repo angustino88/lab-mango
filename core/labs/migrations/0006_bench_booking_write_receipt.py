@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("labs", "0004_bench_slot_watch"),
+        ("labs", "0005_slot_alert_beat_rows"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

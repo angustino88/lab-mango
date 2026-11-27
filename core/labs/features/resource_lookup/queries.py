@@ -30,27 +30,24 @@ class LookupMatch:
 
 
 def readable_types(actor: Any) -> tuple[str, ...]:
-    """Lab operators read every type; other Labs roles read only bookable benches. Deny by default."""
+    """Lab operators read every type; everyone else none (deny by default)."""
     if has_permission(actor, LabsPermission.LAB_OPERATIONS_MANAGE):
         return RESOURCE_TYPES
-    if has_permission(actor, LabsPermission.BENCH_BOOKING_MANAGE_OWN):
-        return ("bench",)
     return ()
 
 
 def lookup_resources(*, actor: Any, q: str, types: tuple[str, ...] = (), limit: int = 5) -> list[LookupMatch]:
     """Matches per type (at most ``limit`` each), in the order rooms, stations, benches, equipment, licenses.
 
-    Requested types the caller may not read are skipped silently, so the answer reveals nothing about them.
-    One query per searched type.
+    The view admits lab operators only; ``readable_types`` repeats the rule so no other caller can reach a type
+    through this function. One query per searched type.
     """
     allowed = readable_types(actor)
     wanted = [kind for kind in (types or RESOURCE_TYPES) if kind in allowed]
-    operator = "equipment" in allowed
     searches = {
         "room": lambda: lookup_rooms(q=q, limit=limit),
         "station": lambda: lookup_stations(q=q, limit=limit),
-        "bench": lambda: lookup_benches(q=q, limit=limit, bookable_only=not operator),
+        "bench": lambda: lookup_benches(q=q, limit=limit),
         "equipment": lambda: lookup_equipment(q=q, limit=limit),
         "license": lambda: lookup_licenses(q=q, limit=limit),
     }

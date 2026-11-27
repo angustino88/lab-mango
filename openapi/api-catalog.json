@@ -101860,7 +101860,7 @@
       "method": "GET",
       "operation_id": "labs_resources_lookup_retrieve",
       "summary": "Get Resources Lookup",
-      "description": "Every Labs role may ask; each type is searched only if the caller may read it.",
+      "description": "Lab operators only: it reads rooms, stations, benches, equipment and licenses.",
       "tags": [
         "Resource Lookup"
       ],

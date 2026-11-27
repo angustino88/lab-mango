@@ -29683,7 +29683,7 @@
     "/api/labs/resources/lookup": {
       "get": {
         "operationId": "labs_resources_lookup_retrieve",
-        "description": "Every Labs role may ask; each type is searched only if the caller may read it.",
+        "description": "Lab operators only: it reads rooms, stations, benches, equipment and licenses.",
         "parameters": [
           {
             "in": "query",

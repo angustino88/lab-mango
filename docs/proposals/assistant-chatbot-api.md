@@ -379,7 +379,7 @@ under its own locks.
 
 ### C3. `Idempotency-Key` on booking create, change and cancel [bench_bookings]
 
-**Status: implemented (phase 1).** Receipts live in `BenchBookingWriteReceipt` (migration `labs.0005`). An API-key caller sending a key gets `400 idempotency_key_unsupported`.
+**Status: implemented (phase 1).** Receipts live in `BenchBookingWriteReceipt` (migration `labs.0006`). An API-key caller sending a key gets `400 idempotency_key_unsupported`.
 
 **Why:** today only approve and reject (and reference-data create) honor `Idempotency-Key`
 (`core/labs/features/bench_bookings/api/views.py:266`). A retried confirm after a timeout must not make a second
@@ -400,7 +400,7 @@ plan.
 
 ### C4. `POST /api/labs/equipment/actions/match` — equipment by specs and free time [equipment]
 
-**Status: implemented**, with the `value_number` migration (`labs.0006`, a PostgreSQL generated column, so nothing
+**Status: implemented**, with the `value_number` migration (`labs.0007`, a PostgreSQL generated column, so nothing
 can leave it stale). Differences from the draft below: filters are ids (`category_id`, `kind_id`, `type_id`,
 `manufacturer_id`, `product_model_id`, `department_id`, `room_id`); the response is
 `{"is_truncated", "matches": [...]}` and each match has `is_full_match`, `location` (current bench, station, room or
@@ -493,13 +493,12 @@ Cacheable per user (`Cache-Control: private, max-age=300`).
 
 **Status: implemented** as feature `core/labs/features/resource_lookup`. Matching is exact UID, exact SKU, exact name,
 prefix, then contains (no trigram ranking). `type` and `match` are `{value, label}`; each row also carries `sku`.
-Members search only in-service benches; requested types they may not read are skipped without an error.
+**Lab operators only** (`lab_operations.manage`): members are refused with `403`. The access-policy test lists the routes members may read and this one is deliberately not on it. Members find benches with `benches/booking-choices?q=` and `benches/availability?q=`.
 
 **Why:** users type "A-12", "SC-07", a UID or a SKU, or the assistant reads one from a label photo. Today each
 resource type has its own list, so the assistant would need up to five searches.
 
-**Permission:** any signed-in user. Each type is included only if the caller may read it: members get benches
-(booking-choices visibility), operators get rooms, stations, benches, equipment and licenses.
+**Permission:** lab operators (`lab_operations.manage`): rooms, stations, benches, equipment and licenses.
 
 | Query | Notes |
 |---|---|
@@ -551,12 +550,12 @@ lab SOPs later live in Lab Mango, add a read-only document endpoint then.
 
 | ID | Endpoint | Migration | Tier | State |
 |---|---|---|---|---|
-| C3 | `Idempotency-Key` on booking create, PATCH, cancel | `labs.0005` (`BenchBookingWriteReceipt`) | T2 | Implemented |
+| C3 | `Idempotency-Key` on booking create, PATCH, cancel | `labs.0006` (`BenchBookingWriteReceipt`) | T2 | Implemented |
 | C2 | `POST /api/labs/bench-bookings/actions/check` (+ `suggest_alternatives`) | No | T2 | Implemented |
 | C5 | `GET /api/labs/bench-bookings/policy` | No | T1 | Implemented |
 | C1 | `GET /api/labs/benches/availability` | No (index use not checked with `EXPLAIN` on production-sized data) | T2 | Implemented |
 | C6 | `GET /api/labs/resources/lookup` | No | T2 | Implemented |
-| C4 | `POST /api/labs/equipment/actions/match` | `labs.0006` (`value_number` generated column + index) | T2 | Implemented |
+| C4 | `POST /api/labs/equipment/actions/match` | `labs.0007` (`value_number` generated column + index) | T2 | Implemented |
 
 All six are on branch `claude/admiring-shannon-ta8b0l`, not merged: T2 review and owner approval are still needed.
 

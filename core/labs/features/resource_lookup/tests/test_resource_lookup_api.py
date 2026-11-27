@@ -44,20 +44,17 @@ def _types(response):
 
 @pytest.mark.django_db
 class TestLookup:
-    def test_member_finds_only_bookable_benches(self, member, resources):
+    def test_member_is_forbidden(self, member, resources):
         response = member.get(URL, {"q": "A-12"})
 
-        assert response.status_code == 200
-        assert _types(response) == [("bench", "A-12")]
+        assert response.status_code == 403
+
+    def test_operator_finds_a_bench_with_where_it_is(self, operator, resources):
+        response = operator.get(URL, {"q": "A-12", "types": "bench", "limit": 1})
+
         item = response.json()["data"][0]
         assert item["match"] == {"value": "name_exact", "label": "Exact name"}
         assert item["context"] == "Station 2 · Room 3.01"
-
-    def test_member_asking_for_equipment_gets_nothing(self, member, resources):
-        response = member.get(URL, {"q": "SC-07", "types": "equipment"})
-
-        assert response.status_code == 200
-        assert response.json()["data"] == []
 
     def test_operator_finds_every_type(self, operator, resources):
         assert ("equipment", "Scope SC-07") in _types(operator.get(URL, {"q": "SC-07"}))

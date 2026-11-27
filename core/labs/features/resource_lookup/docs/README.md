@@ -6,9 +6,9 @@ knowing the type.
 
 - **Matching:** exact UID, exact SKU, exact name, then prefix, then contains (`match`). At most `limit`
   (1–10, default 5) rows per type, one query per type.
-- **Access:** every Labs role may call it. Lab operators (`lab_operations.manage`) search every type; other
-  roles search only in-service benches. A requested type the caller may not read is skipped without an error,
-  so the response reveals nothing about it.
+- **Access:** lab operators only (`lab_operations.manage`), like every other read of rooms, stations, equipment and
+  licenses. Members find benches with `GET /api/labs/benches/booking-choices?q=` and
+  `GET /api/labs/benches/availability?q=`, which are open to them.
 - **Composition:** each owner feature exposes a `lookup_*` selector through its `public.py` (benches,
   equipment, locations, licenses); ranking is `core.labs.features.base.lookup.lookup_rows`.
 - **Context:** bench → station · room; station → room; equipment → current bench, station, room or location
