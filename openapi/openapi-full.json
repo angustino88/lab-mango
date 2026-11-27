@@ -37431,6 +37431,18 @@
         "parameters": [
           {
             "in": "query",
+            "name": "display_mode",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "alert",
+                "banner"
+              ]
+            },
+            "description": "Filter by presentation mode: alert (one-time bell/toast alerts) or banner (expiring top banners)."
+          },
+          {
+            "in": "query",
             "name": "page",
             "schema": {
               "type": "integer",
@@ -37582,7 +37594,7 @@
     "/api/notifications/{notification_id}/actions/mark-read": {
       "post": {
         "operationId": "notifications_actions_mark_read_create_by_notification_id",
-        "description": "Mark one visible notification as read. Repeating is a no-op. Others' notifications return 404.",
+        "description": "Mark one visible notification (alert or banner dismissal) as read. Repeating is a no-op. Others' notifications return 404.",
         "parameters": [
           {
             "in": "path",
@@ -37632,7 +37644,7 @@
     "/api/notifications/actions/mark-all-read": {
       "post": {
         "operationId": "notifications_actions_mark_all_read_create",
-        "description": "Mark the caller's visible unread notifications as read (up to 500 per call).",
+        "description": "Mark the caller's visible unread one-time alert notifications as read (up to 500 per call). Active banners are not dismissed by this action.",
         "tags": [
           "Websocket Notifications"
         ],
@@ -37662,7 +37674,7 @@
     "/api/notifications/unread-count": {
       "get": {
         "operationId": "notifications_unread_count_retrieve",
-        "description": "Number of unread, unexpired notifications for the caller (for the header bell).",
+        "description": "Number of unread, unexpired one-time alert notifications for the caller (for the header bell). Expiring banners are excluded from the badge count.",
         "tags": [
           "Websocket Notifications"
         ],
@@ -65764,7 +65776,7 @@
         "properties": {
           "marked_count": {
             "type": "integer",
-            "description": "Notifications newly marked as read."
+            "description": "Alert notifications newly marked as read."
           }
         },
         "required": [
@@ -66465,6 +66477,18 @@
             ],
             "readOnly": true
           },
+          "display_mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Choice"
+              }
+            ],
+            "readOnly": true
+          },
+          "is_dismissible": {
+            "type": "boolean",
+            "readOnly": true
+          },
           "expires_at": {
             "type": "string",
             "format": "date-time",
@@ -66503,8 +66527,10 @@
           "action_path",
           "created_at",
           "details",
+          "display_mode",
           "expires_at",
           "id",
+          "is_dismissible",
           "is_read",
           "message",
           "message_type",
@@ -78082,7 +78108,7 @@
         "properties": {
           "unread_count": {
             "type": "integer",
-            "description": "Unread, unexpired notifications for the caller, capped at 100."
+            "description": "Unread, unexpired alert notifications for the caller, capped at 100."
           }
         },
         "required": [

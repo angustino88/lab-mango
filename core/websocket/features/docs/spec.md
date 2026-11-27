@@ -7,18 +7,24 @@ Provides real-time event distribution, asynchronous channel broadcasting, agent 
 
 ## 2. Data Models & Constraints
 
-### 2.1 `core.websocket.models.Notification`
-- **Fields:**
-  - `target_user` (FK `AUTH_USER_MODEL`, null=True for global system broadcasts).
-  - `notification_type` (CharField(64)).
-  - `title` (CharField(255)).
-  - `message` (TextField).
-  - `data` (JSONField, default=dict).
-  - `is_read` (BooleanField, default=False).
-  - `expiry_date` (DateTimeField, indexed).
+### 2.1 `core.websocket.models.Notification` & `NotificationRead`
+- **Fields (`Notification`):**
+  - `message` (`CharField(255)`): concise headline.
+  - `details` (`CharField(255)`, blank/null): optional supporting copy.
+  - `message_type` (`CharField(255)`): tone (`info`, `warning`, `error`, `success`; legacy `announcement`).
+  - `display_mode` (`CharField(16)`, default `alert`, indexed with `expiry_date`): `alert` (one-time popup + bell) or `banner` (sticky top banner until expiry/dismissal).
+  - `is_dismissible` (`BooleanField`, default `True`): banners only; `False` keeps banner pinned until `expiry_date`.
+  - `published_at` (`DateTimeField`, null/blank, non-editable): first WebSocket broadcast timestamp.
+  - `expiry_date` (`DateTimeField`, indexed): banner active cutoff / inbox retention cutoff.
+  - `action_path` (`CharField(500)`, blank): optional internal in-app path (DB check `notification_action_path_internal`).
+  - `target_user` (FK `AUTH_USER_MODEL`, null=True for global broadcasts).
+- **Read/Dismiss receipts (`NotificationRead`):**
+  - Unique `(user, notification)` per-user read/dismiss state.
+- **Proxy admin models:** `BannerNotification` ("Expiring Banners") and `AlertNotification` ("One-time Alerts").
 - **Invariants:**
+  - `display_mode` is constrained in PostgreSQL (`notification_display_mode_valid`).
   - Expired notifications (`expiry_date < now()`) are automatically filtered from active querysets.
-  - Unauthenticated clients cannot subscribe to user-directed notification channels.
+  - Unauthenticated clients cannot subscribe to notification channels.
 
 ---
 

@@ -14723,7 +14723,7 @@ components:
       properties:
         marked_count:
           type: integer
-          description: Notifications newly marked as read.
+          description: Alert notifications newly marked as read.
       required:
       - marked_count
     MaterialCatalogCreate:
@@ -15234,6 +15234,13 @@ components:
           allOf:
           - $ref: '#/components/schemas/Choice'
           readOnly: true
+        display_mode:
+          allOf:
+          - $ref: '#/components/schemas/Choice'
+          readOnly: true
+        is_dismissible:
+          type: boolean
+          readOnly: true
         expires_at:
           type: string
           format: date-time
@@ -15262,8 +15269,10 @@ components:
       - action_path
       - created_at
       - details
+      - display_mode
       - expires_at
       - id
+      - is_dismissible
       - is_read
       - message
       - message_type
@@ -23745,7 +23754,8 @@ components:
       properties:
         unread_count:
           type: integer
-          description: Unread, unexpired notifications for the caller, capped at 100.
+          description: Unread, unexpired alert notifications for the caller, capped
+            at 100.
       required:
       - unread_count
     UrgencyEnum:

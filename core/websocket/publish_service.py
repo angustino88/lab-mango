@@ -105,27 +105,93 @@ def publish_dashboard_status_update(event_type: str, data: dict) -> None:
     )
 
 
+def serialize_notification_payload(
+    notification,
+    *,
+    event: str = "created",
+    is_read: bool = False,
+    replay: bool = False,
+) -> dict:
+    """Build the canonical WebSocket payload for a Notification row."""
+    return {
+        "type": "notification",
+        "event": event,
+        "id": notification.pk,
+        "message": notification.message,
+        "details": notification.details or "",
+        "message_type": notification.message_type,
+        "display_mode": notification.display_mode,
+        "is_dismissible": notification.is_dismissible,
+        "expiry_date": notification.expiry_date.isoformat() if notification.expiry_date else None,
+        "action_path": notification.action_path,
+        "is_read": bool(is_read),
+        "replay": bool(replay),
+        "created": notification.created.isoformat(),
+    }
+
+
+def publish_notification_record(notification, *, event: str = "created") -> None:
+    """Publish a persisted Notification to either its target user channel or broadcast."""
+    payload = serialize_notification_payload(notification, event=event, is_read=False, replay=False)
+    if notification.target_user_id:
+        _publish(f"ws:notifications:user:{notification.target_user_id}", payload)
+    else:
+        _publish("ws:notifications:broadcast", payload)
+
+
+def publish_notification_removed(
+    notification_id: int,
+    *,
+    display_mode: str = "banner",
+    target_user_id: int | None = None,
+) -> None:
+    """Notify connected clients to remove an expired or deleted notification (e.g. an active banner)."""
+    payload = {
+        "type": "notification",
+        "event": "removed",
+        "id": notification_id,
+        "display_mode": display_mode,
+    }
+    if target_user_id:
+        _publish(f"ws:notifications:user:{target_user_id}", payload)
+    else:
+        _publish("ws:notifications:broadcast", payload)
+
+
 def publish_notification(
     message: str,
     message_type: str = "info",
     details: str = "",
     notification_id: int | None = None,
     target_user_id: int | None = None,
+    *,
+    display_mode: str = "alert",
+    is_dismissible: bool = True,
+    expiry_date: str | None = None,
+    action_path: str = "",
 ) -> None:
-    """Publish notification to WS clients (broadcast + optional per-user)."""
+    """Publish notification to WS clients (per-user if targeted, otherwise broadcast)."""
     from django.utils import timezone
 
     payload = {
         "type": "notification",
+        "event": "created",
         "id": notification_id,
         "message": message,
         "details": details,
         "message_type": message_type,
+        "display_mode": display_mode,
+        "is_dismissible": is_dismissible,
+        "expiry_date": expiry_date,
+        "action_path": action_path,
+        "is_read": False,
+        "replay": False,
         "created": timezone.now().isoformat(),
     }
-    _publish("ws:notifications:broadcast", payload)
     if target_user_id:
         _publish(f"ws:notifications:user:{target_user_id}", payload)
+    else:
+        _publish("ws:notifications:broadcast", payload)
 
 
 def publish_user_notification(
@@ -135,6 +201,10 @@ def publish_user_notification(
     details: str = "",
     notification_id: int | None = None,
     action_path: str = "",
+    *,
+    display_mode: str = "alert",
+    is_dismissible: bool = True,
+    expiry_date: str | None = None,
 ) -> None:
     """Publish a notification to one user's channel only (never broadcast)."""
     from django.utils import timezone
@@ -143,11 +213,17 @@ def publish_user_notification(
         f"ws:notifications:user:{target_user_id}",
         {
             "type": "notification",
+            "event": "created",
             "id": notification_id,
             "message": message,
             "details": details,
             "message_type": message_type,
+            "display_mode": display_mode,
+            "is_dismissible": is_dismissible,
+            "expiry_date": expiry_date,
             "action_path": action_path,
+            "is_read": False,
+            "replay": False,
             "created": timezone.now().isoformat(),
         },
     )

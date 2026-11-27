@@ -51,6 +51,13 @@ from .serializer import NotificationSerializer, NotificationWriteSerializer
                 description="true: only notifications the caller has not read; false: only read ones.",
             ),
             OpenApiParameter(
+                "display_mode",
+                {"type": "string", "enum": [Notification.ALERT, Notification.BANNER]},
+                OpenApiParameter.QUERY,
+                required=False,
+                description="Filter by presentation mode: alert (one-time bell/toast alerts) or banner (expiring top banners).",
+            ),
+            OpenApiParameter(
                 "user_id",
                 {"type": "integer", "minimum": 0},
                 OpenApiParameter.QUERY,
@@ -109,6 +116,9 @@ class NotificationListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         qs = visible_notifications(self.request.user)
+        display_mode = self.request.query_params.get("display_mode")
+        if display_mode is not None:
+            qs = qs.filter(display_mode=display_mode)
         unread = self.request.query_params.get("unread")
         if unread is not None:
             qs = qs.filter(is_read=unread == "false")
@@ -135,7 +145,8 @@ def visible_notifications(user):
     )
 
 
-QUERY_PARAMS = frozenset({"page", "page_size", "since", "unread", "user_id"})
+QUERY_PARAMS = frozenset({"display_mode", "page", "page_size", "since", "unread", "user_id"})
+DISPLAY_MODE_VALUES = frozenset({Notification.ALERT, Notification.BANNER})
 ID_PARAMS = ("since", "user_id")
 MAX_ID = 2**63 - 1  # BigAutoField upper bound
 
@@ -154,6 +165,9 @@ def _query_error(request):
     unread = request.query_params.get("unread")
     if unread is not None and "unread" not in errors and unread not in ("true", "false"):
         errors["unread"] = [ErrorDetail("Use true or false.", code="invalid_query")]
+    display_mode = request.query_params.get("display_mode")
+    if display_mode is not None and "display_mode" not in errors and display_mode not in DISPLAY_MODE_VALUES:
+        errors["display_mode"] = [ErrorDetail("Use alert or banner.", code="invalid_query")]
     for key in ID_PARAMS:
         raw = request.query_params.get(key)
         if raw is None or key in errors:

@@ -12,7 +12,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from core.common.api.correlation import get_request_id
-from core.websocket.models import NotificationRead
+from core.websocket.models import Notification, NotificationRead
 
 from .api import visible_notifications
 from .serializer import NotificationSerializer
@@ -23,12 +23,12 @@ MARK_ALL_LIMIT = 500
 
 class UnreadCountSerializer(serializers.Serializer):
     unread_count = serializers.IntegerField(
-        help_text=f"Unread, unexpired notifications for the caller, capped at {MAX_UNREAD_COUNT}."
+        help_text=f"Unread, unexpired alert notifications for the caller, capped at {MAX_UNREAD_COUNT}."
     )
 
 
 class MarkAllReadSerializer(serializers.Serializer):
-    marked_count = serializers.IntegerField(help_text="Notifications newly marked as read.")
+    marked_count = serializers.IntegerField(help_text="Alert notifications newly marked as read.")
 
 
 class NotificationUnreadCountView(GenericAPIView):
@@ -37,10 +37,17 @@ class NotificationUnreadCountView(GenericAPIView):
     @extend_schema(
         tags=["Websocket Notifications"],
         responses={200: ResponseContract.success("NotificationUnreadCount", UnreadCountSerializer).schema},
-        description="Number of unread, unexpired notifications for the caller (for the header bell).",
+        description=(
+            "Number of unread, unexpired one-time alert notifications for the caller (for the header bell). "
+            "Expiring banners are excluded from the badge count."
+        ),
     )
     def get(self, request):
-        count = visible_notifications(request.user).filter(is_read=False)[:MAX_UNREAD_COUNT].count()
+        count = (
+            visible_notifications(request.user)
+            .filter(display_mode=Notification.ALERT, is_read=False)[:MAX_UNREAD_COUNT]
+            .count()
+        )
         return Response({"data": {"unread_count": count}})
 
 
@@ -54,7 +61,7 @@ class NotificationMarkReadView(GenericAPIView):
             200: ResponseContract.success("NotificationMarkRead", NotificationSerializer).schema,
             404: ResponseContract.problem(404).schema,
         },
-        description="Mark one visible notification as read. Repeating is a no-op. Others' notifications return 404.",
+        description="Mark one visible notification (alert or banner dismissal) as read. Repeating is a no-op. Others' notifications return 404.",
     )
     def post(self, request, notification_id: int):
         notification = visible_notifications(request.user).filter(pk=notification_id).first()
@@ -72,11 +79,16 @@ class NotificationMarkAllReadView(GenericAPIView):
         tags=["Websocket Notifications"],
         request=None,
         responses={200: ResponseContract.success("NotificationMarkAllRead", MarkAllReadSerializer).schema},
-        description=f"Mark the caller's visible unread notifications as read (up to {MARK_ALL_LIMIT} per call).",
+        description=(
+            f"Mark the caller's visible unread one-time alert notifications as read (up to {MARK_ALL_LIMIT} per call). "
+            "Active banners are not dismissed by this action."
+        ),
     )
     def post(self, request):
         ids = list(
-            visible_notifications(request.user).filter(is_read=False).values_list("pk", flat=True)[:MARK_ALL_LIMIT]
+            visible_notifications(request.user)
+            .filter(display_mode=Notification.ALERT, is_read=False)
+            .values_list("pk", flat=True)[:MARK_ALL_LIMIT]
         )
         created = NotificationRead.objects.bulk_create(
             [NotificationRead(user=request.user, notification_id=pk) for pk in ids], ignore_conflicts=True

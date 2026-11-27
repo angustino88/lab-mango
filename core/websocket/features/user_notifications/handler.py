@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from core.websocket import pubsub
 from core.websocket.models import Notification, NotificationRead
+from core.websocket.publish_service import serialize_notification_payload
 from core.websocket.router import register_route
 
 logger = logging.getLogger(__name__)
@@ -28,23 +29,9 @@ def _get_active_user_notifications(user_id: int) -> list[dict]:
         .order_by("-created")[:50]
     )
 
-    # Reverse the queryset to replay oldest first from the bounded set
-    return [
-        {
-            "type": "notification",
-            "id": n.pk,
-            "message": n.message,
-            "details": n.details or "",
-            "message_type": n.message_type,
-            "expiry_date": n.expiry_date.isoformat() if n.expiry_date else None,
-            "action_path": n.action_path,
-            "is_read": n.is_read,
-            # Replayed on connect: clients list it but do not pop it up again.
-            "replay": True,
-            "created": n.created.isoformat(),
-        }
-        for n in reversed(list(qs))
-    ]
+    # Reverse the queryset to replay oldest first from the bounded set.
+    # Replayed on connect: clients hydrate banners / bell without popping toast alerts again.
+    return [serialize_notification_payload(n, is_read=n.is_read, replay=True) for n in reversed(list(qs))]
 
 
 async def _send_initial_notifications(send, user_id: int) -> None:
