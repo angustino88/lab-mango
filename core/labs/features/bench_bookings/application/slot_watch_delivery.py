@@ -30,7 +30,7 @@ from core.websocket.models import Notification
 from core.websocket.publish_service import publish_user_notification
 
 from ..integrations.slot_watch_transport import send_slot_email, send_slot_teams, web_expiry, web_message
-from .slot_watch_collection import channel_enabled, is_reserving, slot_still_free, slot_watch_enabled
+from .slot_watch_collection import channel_enabled, is_reserving, slot_still_free
 
 logger = logging.getLogger(__name__)
 MAX_ATTEMPTS = 5
@@ -144,8 +144,6 @@ def _send(row: BenchSlotNotification) -> DeliveryOutcome:
 
 def deliver_slot_watch_notifications(*, limit: int = 10) -> dict[str, int]:
     counts = {"claimed": 0, "sent": 0, "failed": 0, "retry": 0, "skipped": 0, "expired": 0, "fenced": 0}
-    if not slot_watch_enabled():
-        return counts
     counts["expired"] += reap_expired_records(
         BenchSlotNotification.objects, now=timezone.now(), transaction=transaction
     )

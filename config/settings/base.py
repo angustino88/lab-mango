@@ -384,8 +384,8 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": env.float("BENCH_BOOKING_RECONCILE_INTERVAL_SECONDS", default=60.0),
     },
     # Slot alerts ("tell me when this bench is free"): find benches that opened up, then deliver the
-    # alerts (web, email, Teams). Both are no-ops while BOOKING_SLOT_WATCH_ENABLED is off, idempotent and
-    # bounded. Same names as provision_booking_notification_schedules, so beat and that command share one row.
+    # alerts. In-app alerts are built in; email and Teams follow the booking notification switches.
+    # Idempotent and bounded.
     "bench-slot-watch-collection": {
         "task": "labs.bench_bookings.collect_slot_watch_notifications",
         "schedule": 60.0,

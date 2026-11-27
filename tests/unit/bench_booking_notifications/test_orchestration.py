@@ -178,11 +178,11 @@ def test_beat_provision_disabled_and_idempotent_keys():
         command.stdout = MagicMock()
         command.handle(enable=False)
         command.handle(enable=False)
-        per_run = len(schedules.SCHEDULES) + len(schedules.SLOT_WATCH_SCHEDULES)
+        per_run = len(schedules.SCHEDULES)
         assert tasks.call_count == 2 * per_run
         assert all(not call.kwargs["defaults"]["enabled"] for call in tasks.call_args_list)
         assert [call.kwargs["name"] for call in tasks.call_args_list[:per_run]] == [
-            row[0] for row in (*schedules.SCHEDULES, *schedules.SLOT_WATCH_SCHEDULES)
+            row[0] for row in schedules.SCHEDULES
         ]
 
 
