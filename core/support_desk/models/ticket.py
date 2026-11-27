@@ -64,6 +64,17 @@ class SupportTicket(models.Model):
         default="",
         help_text="Reference in an external system (vendor RMA / case number, legacy Jira key...).",
     )
+    page_path = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        help_text="Optional web app route path where the ticket or feedback was submitted.",
+    )
+    client_context = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Optional sanitized client diagnostics (browser, os, viewport, theme, app_version, language).",
+    )
 
     category = models.ForeignKey(
         "support_desk.SupportCategory",
@@ -195,6 +206,10 @@ class SupportTicket(models.Model):
                 name="ticket_csat_score_1_to_5",
             ),
             models.CheckConstraint(condition=~Q(parent=F("pk")), name="ticket_parent_not_self"),
+            models.CheckConstraint(
+                condition=Q(page_path="") | Q(page_path__startswith="/"),
+                name="ticket_page_path_relative",
+            ),
         ]
 
     def __str__(self) -> str:

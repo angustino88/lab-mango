@@ -33,7 +33,7 @@ def test_enum_registry_preserves_existing_names_and_choice_hashes() -> None:
         "bd28f179d97080db": "StateEnum",
         "e6f53645e41eca98": "StationSlotStatusEnum",  # in_service, out_of_service, retired (RS1)
         "1800d01ae51a5646": "SystemStateEnum",
-        "604305f882ced4b6": "TicketTypeEnum",
+        "d34992e1690d5c7e": "TicketTypeEnum",  # incident..question + bug, feature_request, feedback
         "70d6cee90699d25a": "UrgencyEnum",
         "c7a20840aa49e3bc": "WorkbookImportModeEnum",  # create, upsert
     }

@@ -29,6 +29,7 @@ from core.support_desk.features.tickets.application.adapters import compute_reso
 from core.support_desk.features.tickets.application.policies import (
     can_view_internal_notes,
     can_view_restricted_attachments,
+    is_csat_submission_open,
     is_reopen_transition,
 )
 from core.support_desk.features.tickets.application.sla import sla_summary
@@ -455,6 +456,8 @@ class TicketDetailSerializer(serializers.ModelSerializer):
     is_status_final = serializers.BooleanField(source="status.is_final", read_only=True)
     available_transitions = serializers.SerializerMethodField()
     is_watching = serializers.SerializerMethodField()
+    can_submit_csat = serializers.SerializerMethodField()
+    client_context = serializers.DictField(child=serializers.CharField(), read_only=True)
     sla = serializers.SerializerMethodField()
     resource_links = TicketResourceLinkSerializer(many=True, read_only=True)
     comments = serializers.SerializerMethodField()
@@ -474,6 +477,8 @@ class TicketDetailSerializer(serializers.ModelSerializer):
             "impact",
             "urgency",
             "external_reference",
+            "page_path",
+            "client_context",
             "due_date",
             "category",
             "priority",
@@ -491,6 +496,7 @@ class TicketDetailSerializer(serializers.ModelSerializer):
             "is_status_final",
             "available_transitions",
             "is_watching",
+            "can_submit_csat",
             "created_at",
             "updated_at",
             "last_activity_at",
@@ -517,8 +523,13 @@ class TicketDetailSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         return request.user if request is not None else None
 
+    def _settings(self) -> SupportSettings:
+        if "_support_settings" not in self.context:
+            self.context["_support_settings"] = SupportSettings.get_solo()
+        return self.context["_support_settings"]
+
     def get_sla(self, obj: SupportTicket) -> dict[str, Any]:
-        return sla_summary(obj)
+        return sla_summary(obj, at_risk_percent=self._settings().sla_at_risk_percent)
 
     @extend_schema_field(AvailableTicketTransitionSerializer(many=True))
     def get_available_transitions(self, obj: SupportTicket) -> list[dict[str, Any]]:
@@ -528,6 +539,9 @@ class TicketDetailSerializer(serializers.ModelSerializer):
     def get_is_watching(self, obj: SupportTicket) -> bool:
         user = self._user()
         return bool(user and any(w.user_id == user.pk for w in obj.watchers.all()))
+
+    def get_can_submit_csat(self, obj: SupportTicket) -> bool:
+        return is_csat_submission_open(self._user(), obj, app_settings=self._settings())
 
     def get_ticket_links(self, obj: SupportTicket) -> list[dict[str, Any]]:
         links = [*obj.outgoing_links.all(), *obj.incoming_links.all()]
@@ -576,7 +590,11 @@ class LinkedResourceItemSerializer(serializers.Serializer):
 class TicketCreateRequestSerializer(serializers.Serializer):
     subject = serializers.CharField(max_length=200)
     description = serializers.CharField()
-    category_id = serializers.IntegerField()
+    category_id = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        help_text="Optional: resolves to a matching active category or General when omitted.",
+    )
     priority_id = serializers.IntegerField(
         required=False,
         allow_null=True,
@@ -591,6 +609,19 @@ class TicketCreateRequestSerializer(serializers.Serializer):
         default=TicketSource.WEB.value,
     )
     external_reference = serializers.CharField(required=False, allow_blank=True, max_length=128, default="")
+    page_path = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=255,
+        default="",
+        help_text="Optional relative web app route (e.g. /booking-calendar) where the ticket was opened.",
+    )
+    client_context = serializers.DictField(
+        child=serializers.CharField(max_length=64, allow_blank=True),
+        required=False,
+        default=dict,
+        help_text="Optional non-sensitive client diagnostics (browser, os, viewport, theme, app_version, language).",
+    )
     due_date = serializers.DateField(required=False, allow_null=True)
     team_id = serializers.IntegerField(required=False, allow_null=True)
     labels = serializers.ListField(child=serializers.CharField(max_length=50), required=False, default=list)
