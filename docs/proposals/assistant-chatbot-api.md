@@ -1,150 +1,554 @@
-# Lab Assistant (chatbot) — API endpoint proposal
+# Lab Assistant (chatbot) — endpoint specification
 
-Status: **proposed, needs owner approval** · 2026-11-27 · Risk tier **T2** (new public API, authn/authz, booking writes)
+Status: **proposed, needs owner approval** · 2026-11-27 · Risk tier **T2** (new public API, authn/authz,
+booking writes, possible migration for spec matching)
 
-The Lab Assistant is a separate application (the "assistant service"). The Lab Mango frontend embeds the
-chat UI and signs the user in with the existing Entra ID (MSAL) login. The assistant service runs the LLM and
-calls Lab Mango **as that user**. This document lists:
+The Lab Assistant is a separate application (the **assistant service**). The Lab Mango frontend embeds the chat
+UI and signs the user in with the existing Entra ID (MSAL) login. The assistant service runs the LLM and calls Lab
+Mango **as that user**. This document defines every endpoint the full ("advanced") assistant needs:
 
-- **Part A**: the endpoints the assistant service exposes to the frontend.
-- **Part B**: the Lab Mango endpoints the assistant uses as LLM tools. Most already exist. A few are new, and
-  each one fills a gap found in the current API.
+| Part | What | Owner |
+|---|---|---|
+| [A](#part-a--assistant-service-api) | Endpoints the assistant service exposes to the frontend (chat, actions, preferences, admin) | Assistant team |
+| [B](#part-b--lab-mango-tool-catalog) | Lab Mango endpoints the assistant calls as LLM tools: existing ones plus new ones | Lab Mango backend |
+| [C](#part-c--new-lab-mango-endpoints-full-contracts) | Full contracts for the **new** Lab Mango endpoints | Lab Mango backend |
 
-"Exists" means the route is in `openapi/openapi-full.json` on `main` (commit `8e3a619`). Response
-shapes were not checked line by line against the assistant's needs.
-
----
-
-## 0. Architecture and security decisions
-
-```
-Browser (Lab Mango FE, MSAL) ──Entra token (aud = assistant API)──▶ Assistant service ──OBO token (aud = Lab Mango API)──▶ Lab Mango /api/...
-                                                                     │  LLM + tool router
-                                                                     └─ conversation store, audit log
-```
-
-| # | Decision | Recommendation | Why |
-|---|---|---|---|
-| D1 | How the assistant authenticates to Lab Mango | **Entra On-Behalf-Of (OBO)**: the frontend gets a token for the assistant API, and the assistant exchanges it for a Lab Mango token. Alternative: the frontend sends a Lab Mango token for the assistant to pass through (simpler, but the assistant then holds a token that can do anything the user can) | Lab Mango keeps authorization server-side, deny-by-default and object-scoped (AGENTS.md rule 5). **No service account or superuser key** |
-| D2 | Which tools the LLM sees | Filtered per user from `GET /api/users/me` permissions (see B0). A member never sees operator tools | Smaller prompt, fewer wrong tool calls. Lab Mango still enforces every call |
-| D3 | Writes (create, change or cancel a booking; reserve equipment; approve) | **Two-step: preview, then confirm.** The LLM can only *propose* a write. The user clicks **Confirm** in the UI, and that click (not the LLM) sends the write with an `Idempotency-Key` | Prompt-injection and hallucination safety. Lab Mango sees one deliberate request, and a retry cannot create two bookings |
-| D4 | Untrusted text | Booking reasons, equipment names, ticket text and other stored data go to the LLM as **data**, never as instructions | Any user can write text that another user's assistant reads |
-| D5 | Audit | The assistant logs every tool call (user, tool, arguments, status, `request_id`). Lab Mango's existing audit covers the writes themselves | Lets you trace "the bot booked this" |
-| D6 | Rate limits | Per-user limit on messages in the assistant; Lab Mango keeps its DRF throttles. Tool calls carry `X-Request-Id` and a client tag (e.g. `User-Agent: lab-assistant/1`) | Lab Mango can tell assistant traffic apart and limit it on its own |
+"Exists" means the route is in `openapi/openapi-full.json` at commit `8e3a619`. Response shapes of existing routes
+were not checked field by field against the assistant's needs (not verified).
 
 ---
 
-## Part A — Assistant service API (frontend → assistant)
+## 0. Architecture and cross-cutting rules
 
-All routes need the user's Entra token. JSON envelope as in `docs/api/response-standard.md`.
+```
+Browser (Lab Mango FE + MSAL)
+   │  Entra access token, aud = assistant API
+   ▼
+Assistant service ── LLM, tool router, conversation store, proposal store, audit log
+   │  Entra On-Behalf-Of token, aud = Lab Mango API (same user)
+   ▼
+Lab Mango /api/...  (all authorization stays here)
+```
+
+| # | Rule |
+|---|---|
+| X1 | **Auth.** Frontend → assistant: Entra token for the assistant API. Assistant → Lab Mango: **On-Behalf-Of** token for the same user. No service account, shared key or superuser. Lab Mango checks every call against that user's own permissions |
+| X2 | **Tool filtering.** Tools are offered per user from `GET /api/users/me` permissions. Lab Mango still enforces each call (deny-by-default, object-scoped) |
+| X3 | **Writes need human confirmation.** The LLM can only create an *action proposal*. The Lab Mango write is sent only by `POST /v1/action-proposals/{id}/actions/confirm`, after a user click, with `Idempotency-Key` = proposal UUID |
+| X4 | **Stored text is data.** Booking reasons, equipment names, ticket text, notification text and uploads go to the LLM inside delimited data blocks, never as instructions |
+| X5 | **Audit.** The assistant records every tool call: user, tool, arguments, Lab Mango status and `request_id`, latency, proposal id |
+| X6 | **Traffic tagging.** Every Lab Mango call sends `X-Request-Id` and `User-Agent: lab-assistant/<version>`. Lab Mango's per-user throttle (`THROTTLE_USER`, default 300/min) still applies |
+| X7 | **Time.** All times are RFC 3339 with offset. The assistant resolves "tomorrow 9" in the user's time zone (preference, else the lab time zone from `GET /api/labs/bench-bookings/policy`) and always repeats the absolute time back in the proposal |
+| X8 | **Envelope.** Both services follow `docs/api/response-standard.md`: `{"data": …, "meta": …}` or `{"error": {code, message, details, request_id}}`, slashless paths, `snake_case` query names |
+
+---
+
+## Part A — Assistant service API
+
+Base path `/v1`. All routes need the user's Entra token unless marked. Ids are UUIDs.
+
+### A1. Session and capabilities
 
 | Method / path | Purpose |
 |---|---|
-| `GET /v1/capabilities` | What this user can ask for: enabled skills (`bookings`, `equipment`, ...) built from their Lab Mango permissions, plus suggested starter prompts. The UI uses it for the empty state |
-| `POST /v1/conversations` | Start a conversation. Optional `context` (e.g. `{page: "bench", bench_id: 12}`) so "book this bench" works from a detail page |
-| `GET /v1/conversations` | The user's own conversations, paginated |
-| `GET /v1/conversations/{id}` | Conversation metadata |
-| `DELETE /v1/conversations/{id}` | Delete one's own conversation (retention, privacy) |
-| `GET /v1/conversations/{id}/messages` | Message history, paginated |
-| `POST /v1/conversations/{id}/messages` | Send a user message. Response is **SSE stream** (`text/event-stream`): `token`, `tool_call` (name + status, for "Checking availability…"), `card` (structured result: booking list, bench list, equipment table), `action_proposal`, `done`, `error` |
-| `POST /v1/conversations/{id}/actions/stop` | Stop a running answer |
-| `GET /v1/action-proposals/{id}` | A proposed write: kind, a readable summary, the exact payload, `expires_at` (e.g. 10 min), state `pending/confirmed/rejected/expired/failed` |
-| `POST /v1/action-proposals/{id}/actions/confirm` | The user confirms. The assistant checks the proposal is pending, not expired and owned by this user, then sends the Lab Mango write with `Idempotency-Key = proposal id`. Returns the Lab Mango result. Safe to repeat |
-| `POST /v1/action-proposals/{id}/actions/reject` | The user declines. The LLM is told, so it can offer alternatives |
-| `POST /v1/messages/{id}/feedback` | Thumbs up/down + optional comment (quality evaluation) |
+| `GET /v1/me` | The user as the assistant sees them: Lab Mango id, name, roles, permissions (cached ≤ 5 min from `GET /api/users/me`), enabled skills |
+| `GET /v1/capabilities` | Enabled skills (`bookings`, `equipment`, `approvals`, `operations`, `support`, `knowledge`), starter prompts per skill, limits (max message length, attachments allowed) |
 
----
+```json
+{"data": {
+  "skills": [
+    {"key": "bookings", "label": "Bench bookings", "starter_prompts": ["What are my bookings this week?", "Book a bench with a PC tomorrow 9–12"]},
+    {"key": "equipment", "label": "Equipment lookup", "starter_prompts": ["Find a free 4-channel oscilloscope ≥ 1 GHz for Friday"]}
+  ],
+  "limits": {"max_message_chars": 4000, "max_attachments": 3, "attachment_types": ["image/png", "image/jpeg", "application/pdf"]}
+}}
+```
 
-## Part B — Lab Mango tools (assistant → Lab Mango, as the user)
+### A2. Conversations and messages
 
-### B0. Identity and tool filtering — all users
+| Method / path | Purpose |
+|---|---|
+| `POST /v1/conversations` | Start a conversation. Body: `{"title"?: str, "context"?: {"page": "bench" \| "equipment" \| "booking" \| "dashboard", "resource_id"?: int}}`. `context` lets "book this bench" work from a detail page. `201` + `Location` |
+| `GET /v1/conversations` | The user's conversations, newest first. Query: `page`, `page_size` (≤ 50), `q` (title search), `archived` |
+| `GET /v1/conversations/{id}` | Metadata: title, context, created/updated, message count, open proposals |
+| `PATCH /v1/conversations/{id}` | Rename or archive: `{"title"?, "archived"?}` |
+| `DELETE /v1/conversations/{id}` | Delete one's own conversation and its messages. `204` |
+| `GET /v1/conversations/{id}/messages` | History, oldest first, cursor pagination (`cursor`, `page_size` ≤ 100) |
+| `POST /v1/conversations/{id}/messages` | Send a message and stream the answer (A3). Body: `{"content": str, "attachment_ids"?: [uuid], "client_message_id": uuid}`. `client_message_id` makes a resend safe |
+| `POST /v1/conversations/{id}/messages/{message_id}/actions/regenerate` | Answer the same user message again (streams like A3) |
+| `POST /v1/conversations/{id}/actions/stop` | Stop the running answer. Tool calls already sent are not undone; writes never run without confirmation anyway |
 
-| Tool | Endpoint | State |
+**Message object**
+
+```json
+{"id": "…", "role": "user" | "assistant", "content": "…", "created_at": "…",
+ "cards": [ /* A3 card payloads */ ], "proposal_ids": ["…"], "tool_calls": [{"tool": "list_my_bookings", "status": "ok"}],
+ "feedback": null | {"rating": "up" | "down"}}
+```
+
+### A3. Streaming events (`text/event-stream`)
+
+The response to `POST …/messages` is a stream of Server-Sent Events. Each `data:` line is one JSON object.
+
+| `event` | Payload | UI use |
 |---|---|---|
-| `whoami` | `GET /api/users/me` (profile, roles, permissions) | Exists |
+| `message.started` | `{message_id}` | Show the answer bubble |
+| `token` | `{text}` | Append text |
+| `tool.started` | `{call_id, tool, label}` e.g. label "Checking bench availability" | Progress line |
+| `tool.finished` | `{call_id, status: "ok" \| "denied" \| "error", error_code?}` | Progress line done. `denied` means Lab Mango returned `403` |
+| `card` | `{type, data}`. Types: `booking_list`, `booking`, `bench_list`, `bench_schedule`, `equipment_list`, `equipment_match`, `approval_list`, `downtime_list`, `notification_list`, `stat`, `citation_list` | Render rich results instead of text tables |
+| `action_proposal` | Proposal object (A4) | Render a Confirm/Reject card |
+| `suggestion_chips` | `{chips: [str]}` | Quick follow-ups ("Show other times", "Notify me when free") |
+| `message.completed` | `{message_id, usage: {input_tokens, output_tokens}}` | Finish |
+| `error` | `{code, message}` codes: `rate_limited`, `upstream_unavailable`, `model_error`, `context_too_long`, `cancelled` | Show error |
 
-The tool list follows permissions (`core/users/permissions.py`):
-`bench_booking.manage_own` → feature 1 · `lab_operations.manage` → feature 2 ·
-`bench_booking.approve` / `manage_any` → operator booking tools.
+Keep-alive comment every 15 s. A reconnect with `Last-Event-ID` resumes a stream that is still running.
 
-### B1. Feature 1 — personal bookings and creating a bench booking (all users)
+### A4. Action proposals (confirmed writes)
 
-| Tool | Endpoint | State | Notes |
-|---|---|---|---|
-| `list_my_bookings` | `GET /api/labs/bench-bookings?view_side=my_booking&status=&starts_at_after=&starts_at_before=&ordering=starts_at` | Exists | "What are my bookings this week?" |
-| `get_booking` | `GET /api/labs/bench-bookings/{booking_id}` · `GET /api/labs/bench-bookings/code/{booking_code}` | Exists | Look up by ID or by the code the user types |
-| `find_bench` | `GET /api/labs/benches/booking-choices?q=&has_computing=` | Exists | Resolve "bench A-12" to an ID. **No time filter** (see gap G1) |
-| `list_lab_projects` | `GET /api/labs/lab-projects/options` | Exists | `project_id` is required to create a booking |
-| `find_available_benches` | **`GET /api/labs/benches/availability`** | **New (G1)** | Query: `starts_at`, `ends_at` (required), `type_id`, `bench_group_id`, `setup_location_id`, `has_computing`, `equipment_category`, `q`, `limit` (≤20). Returns benches free for the whole window, plus each busy bench's `next_free_at`. Respects lifecycle, downtime `booking_access` and the caller's role. Read-only |
-| `check_booking` | **`POST /api/labs/bench-bookings/actions/check`** | **New (G2)** | Same body as create (`bench_id, starts_at, ends_at, project_id, reason`). **Writes nothing.** Returns `{bookable, needs_approval, conflicts[], blocked_by, suggestions[]}` with the same validation codes as create. This becomes the action-proposal preview |
-| `create_booking` *(confirm only)* | `POST /api/labs/bench-bookings` + `Idempotency-Key` | Exists, **idempotency missing (G3)** | Sent only by `/v1/action-proposals/{id}/actions/confirm` |
-| `reschedule_booking` *(confirm only)* | `PATCH /api/labs/bench-bookings/{booking_id}` | Exists | `starts_at`, `ends_at`, `bench_id`, `reason`, `project_id` |
-| `cancel_booking` *(confirm only)* | `POST /api/labs/bench-bookings/{booking_id}/actions/cancel` | Exists | |
-| `watch_bench_slot` *(confirm only)* | `POST /api/labs/bench-slot-watches` · `POST /api/labs/bench-bookings/{id}/actions/follow` | Exists | "Tell me when A-12 is free tomorrow afternoon" |
-| `list_my_slot_watches` | `GET /api/labs/bench-slot-watches` | Exists | Includes `availability` (busy blocks, next free time) |
+A proposal is a Lab Mango write the LLM prepared and the user has not yet approved.
 
-Example conversation: *"Book a bench with a PC tomorrow 9–12 for project X"* → `list_lab_projects` →
-`find_available_benches` → `check_booking` → proposal card → user confirms → `create_booking`.
+| Method / path | Purpose |
+|---|---|
+| `GET /v1/action-proposals?state=pending&conversation_id=` | The user's proposals |
+| `GET /v1/action-proposals/{id}` | One proposal |
+| `PATCH /v1/action-proposals/{id}` | Let the user edit allowed fields before confirming (e.g. `reason`, `project_id`). The assistant re-runs the preview check |
+| `POST /v1/action-proposals/{id}/actions/confirm` | Send the write. The assistant checks: owner = caller, `state = pending`, not expired, permission still present. Then it calls Lab Mango with `Idempotency-Key = id`. Repeat-safe: a confirmed proposal returns the stored result |
+| `POST /v1/action-proposals/{id}/actions/reject` | Decline. The LLM is told, so it can offer alternatives |
 
-### B2. Feature 2 — equipment and resource lookup (lab operators, `lab_operations.manage`)
+**Proposal object**
 
-| Tool | Endpoint | State | Notes |
-|---|---|---|---|
-| `resolve_equipment_terms` | `GET /api/labs/equipment/filters` · `GET /api/labs/equipment-categories/options` · `.../equipment-kinds/options` · `.../equipment-types/options` · `.../equipment-manufacturers/options` · `.../equipment-product-models/options` | Exists | Map words such as "Keysight scope" to filter IDs before searching |
-| `list_spec_definitions` | `GET /api/labs/equipment/reference-data/specification-definitions` | Exists | Which specs a category has (name, unit, value type) |
-| `search_equipment` | `GET /api/labs/equipment?q=&category=&kind=&type=&manufacturer=&product_model_id=&status=&condition=&lifecycle_state=&assigned=&on_loan=&loan_overdue=&department_id=&owner_id=` | Exists | Attribute search. **Cannot filter by spec values or free time** (G4) |
-| `count_equipment` | `GET /api/labs/equipment/facets?dimension=...` (same filters) | Exists | "How many oscilloscopes are out of service?" |
-| `match_equipment` | **`POST /api/labs/equipment/actions/match`** | **New (G4)** | Read-only search with a structured body: `category`, `requirements: [{spec_definition_id, op: eq/gte/lte/in/contains, value}]`, optional `available_from/available_until` (no loan, reservation or downtime in the window), `location`, `limit` (≤50). Returns ranked units with `matched[]`, `missing[]`, `unknown[]` per requirement (so "≥ 1 GHz, 4 channels" shows near matches), plus current location (bench/station/room) and availability. POST only because the body is structured; it must not change anything (OpenAPI marks it read-only) |
-| `get_equipment` | `GET /api/labs/equipment/{id}` · `GET /api/labs/equipment/{equipment_id}/placement` · `.../loan` | Exists | Details and specs; where it is; who has it |
-| `bench_equipment` | `GET /api/labs/benches/{bench_id}/equipment` | Exists | "What is on bench A-12?" |
-| `list_benches` / `rooms` / `stations` | `GET /api/labs/benches` · `/rooms` · `/stations` (+ `/status-summary`) | Exists | Resource lookups and status |
-| `current_downtimes` | `GET /api/labs/downtimes?state=current,scheduled&resource_type=` | Exists | "What is in maintenance right now?" |
-| `computing_activity` | `GET /api/labs/equipment/computing/activity-summary` | Exists | Which PCs are in use or offline |
-| `loans_and_reservations` | `GET /api/labs/equipment-loans` · `GET /api/labs/equipment-reservations` | Exists | "Who has the spectrum analyzer?", overdue loans |
-| `reserve_equipment` *(confirm only)* | `POST /api/labs/equipment-reservations` + `Idempotency-Key` | Exists | All-or-nothing reservation after `match_equipment` |
-| `licenses` | `GET /api/labs/licenses?…` · `/licenses/status-summary` | Exists | Expiring or unassigned licenses |
+```json
+{"data": {
+  "id": "5d1c…", "conversation_id": "…", "state": "pending",
+  "kind": "bench_booking.create",
+  "summary": "Book bench A-12 (Room 3.01) on Fri 28 Nov 2026, 09:00–12:00 for project Apollo",
+  "warnings": ["Needs approval: longer than 4 hours"],
+  "payload": {"bench_id": 12, "starts_at": "2026-11-28T09:00:00+07:00", "ends_at": "2026-11-28T12:00:00+07:00", "project_id": 4, "reason": "Firmware validation"},
+  "editable_fields": ["reason", "project_id"],
+  "preview": { /* response of the Lab Mango check endpoint, if any */ },
+  "expires_at": "2026-11-27T10:10:00Z",
+  "result": null
+}}
+```
 
-### B3. Feature 3 — further features (proposed)
+`state`: `pending` → `confirmed` | `rejected` | `expired` | `failed`. `result` holds the Lab Mango response
+(`data` or `error`) after confirm.
 
-| # | Feature | Who | Endpoints | State |
-|---|---|---|---|---|
-| F1 | **Approval inbox**: "What bookings are waiting for me?", then approve or reject from chat | `bench_booking.approve` | `GET /api/labs/bench-bookings?approval_status=pending` · `POST .../{id}/actions/approve` · `.../actions/reject` *(confirm only)* | Exists |
-| F2 | **Notifications digest**: "Anything new for me?" | All | `GET /api/notifications` · `GET /api/notifications/unread-count` · `POST /api/notifications/actions/mark-all-read` | Exists |
-| F3 | **Report a problem** with a bench or device: a support ticket with the resource linked | All | `POST /api/support/tickets` (+ resource reference) | Exists (link fields not checked) |
-| F4 | **Put a resource into downtime** after a report: "Mark scope SC-07 out of service until Friday" | Operators | `POST /api/labs/downtimes` *(confirm only)* · `.../actions/end` | Exists |
-| F5 | **Lab status at a glance**: "How busy is lab 3 today?" | All (dashboard) / operators (analytics) | `GET /api/labs/dashboard/summary` · `GET /api/labs/benches/status-summary` · `GET /api/labs/analytics/booked-vs-used` · `.../lab-usage-by-timeframe` | Exists |
-| F6 | **My usage**: "How many hours did I book this month?" | All | `GET /api/labs/leaderboard/users/{id}/weekly-usage` · `.../assessment` | Exists |
-| F7 | **Smart rebooking**: when a booked bench goes into downtime, the assistant offers alternatives | All | `find_available_benches` (G1) + notification hook | New (needs G1) |
-| F8 | **How-to and policy Q&A** (booking rules, SOPs, safety): retrieval over approved lab docs | All | Assistant-side search index; source documents chosen by the owner | New, assistant only |
-| F9 | **Booking rules for the user**: max length, how far ahead they can book, when approval is needed | All | **`GET /api/labs/bench-bookings/policy`** | **New (G5)**. Stops the LLM guessing rules; `check_booking` stays the final word |
+**Proposal kinds** (each maps to exactly one Lab Mango write; see Part B for permissions)
+
+| `kind` | Lab Mango write |
+|---|---|
+| `bench_booking.create` | `POST /api/labs/bench-bookings` |
+| `bench_booking.create_series` | Several `POST /api/labs/bench-bookings`, one key each (`{proposal_id}:{n}`); the result lists each occurrence separately |
+| `bench_booking.update` | `PATCH /api/labs/bench-bookings/{id}` |
+| `bench_booking.cancel` | `POST /api/labs/bench-bookings/{id}/actions/cancel` |
+| `bench_booking.approve` / `.reject` | `POST /api/labs/bench-bookings/{id}/actions/approve` / `reject` |
+| `slot_watch.create` / `.cancel` | `POST /api/labs/bench-slot-watches` / `…/{id}/actions/cancel` |
+| `bench_booking.follow` | `POST /api/labs/bench-bookings/{id}/actions/follow` |
+| `equipment_reservation.create` / `.cancel` | `POST /api/labs/equipment-reservations` / `…/{batch_id}/actions/cancel` |
+| `downtime.create` / `.end` | `POST /api/labs/downtimes` / `…/{id}/actions/end` |
+| `support_ticket.create` | `POST /api/support/tickets` |
+| `notification.mark_all_read` | `POST /api/notifications/actions/mark-all-read` (low risk; may skip confirmation, owner decision) |
+
+### A5. Attachments
+
+| Method / path | Purpose |
+|---|---|
+| `POST /v1/attachments` | Upload (multipart, ≤ 10 MB, types from `/v1/capabilities`). Returns `{id, kind, expires_at}`. Used for a photo of an asset label or a broken device |
+| `GET /v1/attachments/{id}` | Metadata; owner only |
+| `DELETE /v1/attachments/{id}` | Remove. Unused attachments expire after 24 h |
+
+### A6. Preferences, memory and suggestions
+
+| Method / path | Purpose |
+|---|---|
+| `GET /v1/me/preferences` / `PATCH /v1/me/preferences` | `{time_zone, language, default_project_id, preferred_bench_type_ids, preferred_location_ids, default_booking_hours, proactive_suggestions: bool}`. Used to fill gaps ("book my usual bench") |
+| `GET /v1/me/memories` | Facts the assistant saved about the user ("prefers benches near the window"), each with source message |
+| `DELETE /v1/me/memories/{id}` · `DELETE /v1/me/memories` | Forget one or all |
+| `GET /v1/me/suggestions` | Proactive cards when chat opens, built live through OBO: upcoming booking in < 1 h, booking hit by a new downtime (with alternatives from C1), a pending approval older than 24 h (operators), overdue loan (operators). `{data: [{type, title, card, actions: [prompt]}]}` |
+
+### A7. Feedback
+
+| Method / path | Purpose |
+|---|---|
+| `POST /v1/messages/{id}/feedback` | `{"rating": "up" \| "down", "reason"?: "wrong" \| "unhelpful" \| "unsafe" \| "other", "comment"?: str}`. Idempotent per user and message |
+
+### A8. Administration (assistant admins = Lab Mango `admin` role)
+
+| Method / path | Purpose |
+|---|---|
+| `GET /v1/admin/usage?from=&to=&group_by=day\|skill\|tool` | Messages, users, tokens, cost, tool error rates |
+| `GET /v1/admin/audit-events?user_id=&tool=&status=&from=&to=` | Tool-call audit log (X5). No message text unless retention policy allows |
+| `GET /v1/admin/feedback?rating=down` | Feedback for quality review |
+| `GET /v1/admin/tools` · `PATCH /v1/admin/tools/{tool}` | Turn a tool on/off or limit it to roles without redeploying (`{"enabled": bool, "roles": [...]}`) |
+| `GET /v1/admin/knowledge-sources` · `POST …` · `POST …/{id}/actions/reindex` | Manage documents used for policy and how-to answers (C7) |
+| `GET /v1/admin/evaluations` · `POST /v1/admin/evaluations` | Run the regression question set against a model or prompt version and see scores |
+
+### A9. Operations (no user token; internal network only)
+
+| Method / path | Purpose |
+|---|---|
+| `GET /healthz` | Process alive |
+| `GET /readyz` | Database, LLM provider and Lab Mango (`GET /api/schema/` HEAD) reachable |
 
 ---
 
-## Gaps in Lab Mango (new backend work)
+## Part B — Lab Mango tool catalog
 
-| ID | Gap | Proposed endpoint | Owner feature | Risk |
+Tool names are what the LLM sees. **Permission** is the Lab Mango permission (`core/users/permissions.py`) that
+makes the tool visible. "(confirm)" means the tool only creates an A4 proposal.
+
+### B0. Identity and resolution
+
+| Tool | Endpoint | Permission | State |
+|---|---|---|---|
+| `whoami` | `GET /api/users/me` | any signed-in user | Exists |
+| `resolve_resource` | **`GET /api/labs/resources/lookup`** (C6) | any; results filtered by what the user may read | **New** |
+| `booking_policy` | **`GET /api/labs/bench-bookings/policy`** (C5) | `bench_booking.manage_own` | **New** |
+
+### B1. Bookings — all users
+
+| Tool | Endpoint | Permission | State |
+|---|---|---|---|
+| `list_my_bookings` | `GET /api/labs/bench-bookings?view_side=my_booking&status=&approval_status=&starts_at_after=&starts_at_before=&ordering=starts_at` | `bench_booking.manage_own` | Exists |
+| `get_booking` | `GET /api/labs/bench-bookings/{booking_id}` · `GET /api/labs/bench-bookings/code/{booking_code}` | `bench_booking.manage_own` | Exists |
+| `find_bench` | `GET /api/labs/benches/booking-choices?q=&has_computing=` | `bench_booking.manage_own` | Exists |
+| `list_lab_projects` | `GET /api/labs/lab-projects/options` | `bench_booking.manage_own` | Exists |
+| `find_available_benches` | **`GET /api/labs/benches/availability`** (C1) | `bench_booking.manage_own` | **New** |
+| `bench_schedule` | **`GET /api/labs/benches/availability?bench_id=…`** (C1, single bench, busy periods) | `bench_booking.manage_own` | **New** |
+| `check_booking` | **`POST /api/labs/bench-bookings/actions/check`** (C2) | `bench_booking.manage_own` | **New** |
+| `create_booking` (confirm) | `POST /api/labs/bench-bookings` + `Idempotency-Key` | `bench_booking.manage_own` | Exists; **key support new (C3)** |
+| `create_booking_series` (confirm) | C2 with `occurrences[]`, then one create per occurrence | `bench_booking.manage_own` | Uses C2 + C3 |
+| `reschedule_booking` (confirm) | `PATCH /api/labs/bench-bookings/{booking_id}` + `Idempotency-Key` | owner, or `bench_booking.manage_any` | Exists; **key new (C3)** |
+| `cancel_booking` (confirm) | `POST /api/labs/bench-bookings/{booking_id}/actions/cancel` + `Idempotency-Key` | owner, or `bench_booking.manage_any` | Exists; **key new (C3)** |
+| `follow_booking` (confirm) | `POST /api/labs/bench-bookings/{booking_id}/actions/follow` | `bench_booking.manage_own` | Exists |
+| `watch_bench_slot` (confirm) | `POST /api/labs/bench-slot-watches` | `bench_booking.manage_own` | Exists |
+| `list_my_slot_watches` / `cancel_slot_watch` (confirm) | `GET /api/labs/bench-slot-watches` · `POST …/{watch_id}/actions/cancel` | `bench_booking.manage_own` | Exists |
+
+### B2. Equipment and resources — lab operators
+
+| Tool | Endpoint | Permission | State |
+|---|---|---|---|
+| `equipment_filter_options` | `GET /api/labs/equipment/filters` · `…/equipment-categories/options` · `…/equipment-kinds/options` · `…/equipment-types/options` · `…/equipment-manufacturers/options` · `…/equipment-product-models/options` | `lab_operations.manage` | Exists |
+| `list_spec_definitions` | `GET /api/labs/equipment/reference-data/specification-definitions` | `lab_operations.manage` | Exists |
+| `search_equipment` | `GET /api/labs/equipment?q=&category=&kind=&type=&manufacturer=&product_model_id=&status=&condition=&lifecycle_state=&assigned=&on_loan=&loan_overdue=&department_id=&owner_id=` | `lab_operations.manage` | Exists |
+| `count_equipment` | `GET /api/labs/equipment/facets?dimension=` (same filters) | `lab_operations.manage` | Exists |
+| `match_equipment` | **`POST /api/labs/equipment/actions/match`** (C4) | `lab_operations.manage` | **New** |
+| `get_equipment` | `GET /api/labs/equipment/{id}` · `…/{equipment_id}/placement` · `…/{equipment_id}/loan` · `…/{equipment_id}/status-changes` | `lab_operations.manage` | Exists |
+| `bench_equipment` | `GET /api/labs/benches/{bench_id}/equipment` | `lab_operations.manage` | Exists |
+| `list_benches` / `list_rooms` / `list_stations` | `GET /api/labs/benches` · `/rooms` · `/stations` and their `/status-summary` | `lab_operations.manage` | Exists |
+| `list_downtimes` | `GET /api/labs/downtimes?state=&resource_type=&resource_id=` | `lab_operations.manage` | Exists |
+| `create_downtime` / `end_downtime` (confirm) | `POST /api/labs/downtimes` · `POST …/{downtime_id}/actions/end` | `lab_operations.manage` | Exists |
+| `computing_activity` | `GET /api/labs/equipment/computing/activity-summary` · `GET /api/labs/equipment/{equipment_id}/activity` | `lab_operations.manage` | Exists |
+| `list_loans` / `list_reservations` | `GET /api/labs/equipment-loans` · `GET /api/labs/equipment-reservations` | `lab_operations.manage` | Exists |
+| `reserve_equipment` / `cancel_reservation` (confirm) | `POST /api/labs/equipment-reservations` · `POST …/{batch_id}/actions/cancel` | `lab_operations.manage` | Exists (key support not verified) |
+| `list_licenses` | `GET /api/labs/licenses?…` · `/licenses/status-summary` | `lab_operations.manage` | Exists |
+| `monitoring_events` | `GET /api/labs/monitoring-events?…` | `lab_operations.manage` | Exists |
+
+### B3. Approvals — booking approvers
+
+| Tool | Endpoint | Permission | State |
+|---|---|---|---|
+| `list_pending_approvals` | `GET /api/labs/bench-bookings?approval_status=pending&ordering=starts_at` | `bench_booking.approve` | Exists |
+| `approve_booking` / `reject_booking` (confirm) | `POST /api/labs/bench-bookings/{booking_id}/actions/approve` / `reject` + `Idempotency-Key` (UUID, already required) | `bench_booking.approve` | Exists |
+| `list_all_bookings` | `GET /api/labs/bench-bookings?view_side=booking_calendar&bench_id=&creator_id=&…` | `bench_booking.manage_any` | Exists |
+
+### B4. Insight, notifications, support, knowledge
+
+| Tool | Endpoint | Permission | State |
+|---|---|---|---|
+| `lab_status` | `GET /api/labs/dashboard/summary` · `GET /api/labs/benches/status-summary` | `dashboard.read` | Exists |
+| `my_usage` | `GET /api/labs/leaderboard/users/{id}/weekly-usage` · `…/assessment` | `leaderboard.read` (own) | Exists |
+| `lab_analytics` | `GET /api/labs/analytics/booked-vs-used` · `…/lab-usage-by-timeframe` · `…/equipment-availability` · `…/user-booking-efficiency` | `lab_operations.manage` | Exists |
+| `list_notifications` / `unread_count` | `GET /api/notifications` · `GET /api/notifications/unread-count` | any | Exists |
+| `mark_notifications_read` (confirm or direct) | `POST /api/notifications/actions/mark-all-read` · `…/{notification_id}/actions/mark-read` | any | Exists |
+| `create_support_ticket` (confirm) | `POST /api/support/tickets` | any (body fields not verified) | Exists |
+| `my_support_tickets` | `GET /api/support/tickets` | any | Exists |
+| `search_knowledge` | Assistant-side index of approved documents (A8 knowledge sources); answers cite their source | any | **New, assistant only** |
+
+---
+
+## Part C — New Lab Mango endpoints: full contracts
+
+All follow `docs/api/response-standard.md` and `request-standard.md`. Each is read-only unless stated, bounded
+(fixed `limit` caps) and checks permissions server-side, scoped to each object. Feature owner is in brackets.
+
+### C1. `GET /api/labs/benches/availability` — free benches and busy periods [bench_bookings]
+
+**Why:** `GET /api/labs/benches/booking-choices` cannot filter by time, so "find a free bench tomorrow 9–12" and
+"when is A-12 free this week?" are impossible today.
+
+**Permission:** `bench_booking.manage_own`. Downtime `booking_access = lab_operators` windows count as free only for
+callers with `bench_booking.book_during_downtime`.
+
+| Query | Type | Notes |
+|---|---|---|
+| `starts_at`, `ends_at` | RFC 3339 / date | Required. Window ≤ 14 days |
+| `bench_id` | int, comma list ≤ 20 | Restrict to these benches (single-bench schedule) |
+| `type_id`, `bench_group_id`, `setup_location_id` | int, comma list | Same meanings as `GET /api/labs/benches` |
+| `has_computing` | bool | Same as booking-choices |
+| `q` | string 1–100 | Bench name or UID |
+| `min_free_minutes` | int ≥ 10 | Return benches with any free period at least this long, not only fully free (for "any 2 hours tomorrow") |
+| `mode` | `fully_free` (default) \| `any_free` | |
+| `limit` | int ≤ 20, default 10 | No pagination: this is a ranked answer, not a listing |
+
+**Response `200`**
+
+```json
+{"data": [
+  {"bench": {"id": 12, "uid": "B-0012", "name": "A-12"},
+   "location": {"room": {"id": 3, "uid": "R-0301", "name": "Room 3.01"}, "station": {"id": 7, "uid": "S-0007", "name": "Station 2"}},
+   "type": {"id": 2, "name": "Firmware bench"},
+   "has_computing": true,
+   "fully_free": true,
+   "free_periods": [{"starts_at": "2026-11-28T09:00:00+07:00", "ends_at": "2026-11-28T12:00:00+07:00"}],
+   "busy_periods": [{"starts_at": "2026-11-28T13:00:00+07:00", "ends_at": "2026-11-28T15:00:00+07:00", "reason": {"value": "booking", "label": "Booked"}}],
+   "next_free_at": null,
+   "is_favorite": true}
+],
+ "meta": {"window_starts_at": "2026-11-28T09:00:00+07:00", "window_ends_at": "2026-11-28T12:00:00+07:00", "truncated": false}}
+```
+
+- `busy_periods[].reason`: `booking`, `downtime`, `not_in_service`. **Other users' names, booking codes and booking
+  reasons are never returned** (open question Q2).
+- Ranking: fully free first, then favorites, then the longest free period.
+- Errors: `400 invalid_query` (bad range, window > 14 days), `403 permission_denied`.
+- Query budget: one query for candidate benches and one query each for overlapping bookings and downtime, using the
+  existing range (`TsTzRange`) indexes. No per-bench queries.
+
+### C2. `POST /api/labs/bench-bookings/actions/check` — booking preview, no write [bench_bookings]
+
+**Why:** the assistant must show a correct preview before the user confirms. Today the only way to learn whether a
+booking works is to create it.
+
+**Permission:** as create (`bench_booking.manage_own`; editing another user's booking needs `manage_any`).
+**Writes nothing**, takes no locks, needs no `Idempotency-Key`. The result is advice: create still checks again
+under its own locks.
+
+**Request**
+
+```json
+{"bench_id": 12, "starts_at": "2026-11-28T09:00:00+07:00", "ends_at": "2026-11-28T12:00:00+07:00",
+ "project_id": 4, "reason": "Firmware validation",
+ "booking_id": null,
+ "occurrences": null,
+ "suggest_alternatives": true}
+```
+
+- `booking_id`: set to check a *change* of an existing booking (same rules as PATCH).
+- `occurrences`: optional list (≤ 10) of `{starts_at, ends_at}` for a series. The bench, project and reason stay
+  the same. Each occurrence is checked on its own.
+- Unknown fields → `422` (strict writer).
+
+**Response `200`** (also when the booking is not possible: the check itself succeeded)
+
+```json
+{"data": {
+  "results": [{
+    "starts_at": "2026-11-28T09:00:00+07:00", "ends_at": "2026-11-28T12:00:00+07:00",
+    "bookable": false,
+    "approval_status_if_created": {"value": "approved", "label": "Approved"},
+    "problems": [{"code": "bench_booking_conflict", "field": null, "message": "The bench is already booked from 10:00 to 11:00."}],
+    "alternatives": [
+      {"bench": {"id": 15, "uid": "B-0015", "name": "A-15"}, "starts_at": "2026-11-28T09:00:00+07:00", "ends_at": "2026-11-28T12:00:00+07:00"},
+      {"bench": {"id": 12, "uid": "B-0012", "name": "A-12"}, "starts_at": "2026-11-28T11:00:00+07:00", "ends_at": "2026-11-28T14:00:00+07:00"}
+    ]}],
+  "all_bookable": false}}
+```
+
+- `problems[].code` uses the **same codes as create and PATCH** (e.g. `bench_booking_conflict`,
+  `lab_project_not_found`, field validation codes for minimum duration, start in the past, bench not in service, no
+  computing, downtime), so preview and real write never disagree in wording.
+- `approval_status_if_created`: `pending` when the duration is over `LONG_BOOKING_APPROVAL_THRESHOLD` (4 h today).
+- `alternatives` (≤ 3): same window on other benches of the same type or location, or the same bench at the nearest
+  free time. Built with C1's query.
+- Errors (request itself bad): `400 invalid_request`, `404` bench, project or booking not visible to the caller,
+  `403 permission_denied`.
+- Implementation: reuse the create and update policy functions (`application/policies.py`) on a read-only
+  snapshot. No copy of the rules.
+
+### C3. `Idempotency-Key` on booking create, change and cancel [bench_bookings]
+
+**Why:** today only approve and reject (and reference-data create) honor `Idempotency-Key`
+(`core/labs/features/bench_bookings/api/views.py:266`). A retried confirm after a timeout must not make a second
+booking or fail with a confusing conflict (WRT-7, WRT-8).
+
+| Route | Change |
+|---|---|
+| `POST /api/labs/bench-bookings` | Accept `Idempotency-Key` (UUID). **Optional** for compatibility; the assistant always sends it |
+| `PATCH /api/labs/bench-bookings/{booking_id}` | Same |
+| `POST /api/labs/bench-bookings/{booking_id}/actions/cancel` | Same |
+| `POST /api/labs/bench-bookings/code/{booking_code}/actions/cancel` | Same |
+
+Behavior, matching the existing approve/reject handling: same key + same user + same body → replay the stored first
+response with `Idempotency-Replayed: true`. Same key + different body → `422 idempotency_key_reuse`. A key that is
+not a UUID → `400 invalid_idempotency_key`. Key lifetime ≥ 24 h. The race guard stays the database overlap
+constraint; the key only makes retries safe. Making the key **required** later is a breaking change and needs its own
+plan.
+
+### C4. `POST /api/labs/equipment/actions/match` — equipment by specs and free time [equipment]
+
+**Why:** `GET /api/labs/equipment` filters by category, model and status, not by spec values
+(`ProductModelSpecification.value`, stored as text) or by time window. Operators ask "a 4-channel scope ≥ 1 GHz free
+on Friday".
+
+**Permission:** `lab_operations.manage`. **Read-only.** It uses POST because the requirements are a structured
+list; OpenAPI marks it safe, and it is never cached as a write.
+
+**Request**
+
+```json
+{"category": "oscilloscope",
+ "kind": null, "type": null, "manufacturer": null, "product_model_id": null,
+ "requirements": [
+   {"spec_definition_id": 31, "op": "gte", "value": "1", "unit": "GHz", "required": true},
+   {"spec_definition_id": 32, "op": "gte", "value": "4", "required": true},
+   {"spec_definition_id": 40, "op": "in", "value": ["USB", "LAN"], "required": false}
+ ],
+ "available_from": "2026-11-28T08:00:00+07:00", "available_until": "2026-11-28T17:00:00+07:00",
+ "location": {"room_id": null, "setup_location_id": null, "department_id": null},
+ "include_near_matches": true,
+ "limit": 20}
+```
+
+| Field | Rules |
+|---|---|
+| `requirements[]` | ≤ 10. `op`: `eq`, `neq`, `gte`, `lte`, `between` (`value: [min, max]`), `in`, `contains`. Numeric ops only for `value_type = number` definitions; `unit` is converted to the definition's unit (SI prefixes) or rejected |
+| `required` | `false` means it affects ranking only |
+| `available_from/until` | Optional, ≤ 31 days. Excludes units with an overlapping loan, reservation or downtime, units whose lifecycle state is not usable, and condition `out_of_service` |
+| `limit` | ≤ 50 |
+
+**Response `200`**
+
+```json
+{"data": [
+  {"equipment": {"id": 501, "uid": "EQ-0501", "name": "Scope SC-07"},
+   "product_model": {"id": 88, "name": "Keysight DSOX4104A"},
+   "score": 1.0,
+   "requirements": [
+     {"spec_definition_id": 31, "name": "Bandwidth", "status": "matched", "actual": "1 GHz"},
+     {"spec_definition_id": 32, "name": "Channels", "status": "matched", "actual": "4"},
+     {"spec_definition_id": 40, "name": "Interface", "status": "unknown", "actual": null}],
+   "placement": {"bench": {"id": 12, "uid": "B-0012", "name": "A-12"}, "room": {"id": 3, "uid": "R-0301", "name": "Room 3.01"}},
+   "availability": {"available": true, "busy_periods": []},
+   "condition": {"value": "operational", "label": "Operational"},
+   "on_loan": false}
+],
+ "meta": {"matched_count": 3, "near_match_count": 2, "truncated": false}}
+```
+
+- `requirements[].status`: `matched`, `missed`, `unknown` (the model has no value for that spec).
+- Near matches (`include_near_matches`) miss at most one required requirement and come after full matches.
+- Errors: `400 invalid_query`, `422 validation_failed` (unknown definition, numeric op on a text spec, bad unit).
+- **Design gate:** comparing numbers in a text column per request does not scale. Recommended: add
+  `value_number` (decimal, nullable, filled from `value` when the definition is numeric) with an index on
+  `(definition_id, value_number)`. This is a **migration** and needs its own approval. Until then, limit numeric ops
+  to categories with a small number of units and say so in OpenAPI.
+
+### C5. `GET /api/labs/bench-bookings/policy` — the caller's booking rules [bench_bookings]
+
+**Why:** the rules live only in code (`application/policies.py`). The assistant should explain them and plan
+around them, not guess.
+
+**Permission:** `bench_booking.manage_own`. Values reflect the caller's role.
+
+```json
+{"data": {
+  "time_zone": "Asia/Ho_Chi_Minh",
+  "min_duration_minutes": 10,
+  "start_grace_minutes": 10,
+  "approval_required_above_minutes": 240,
+  "max_horizon_days": null,
+  "requires_computing": true,
+  "can_book_during_operator_downtime": false,
+  "can_manage_others_bookings": false,
+  "can_approve": false,
+  "slot_watch": {"enabled": true, "lead_minutes": 15, "max_active": 20}
+}}
+```
+
+`null` means no limit. Values come from the same constants and settings the commands use, so they cannot drift.
+Cacheable per user (`Cache-Control: private, max-age=300`, `ETag`).
+
+### C6. `GET /api/labs/resources/lookup` — turn a name or code into a resource [labs, composes features via `public.py`]
+
+**Why:** users type "A-12", "SC-07", a UID or a SKU, or the assistant reads one from a label photo. Today each
+resource type has its own list, so the assistant would need up to five searches.
+
+**Permission:** any signed-in user. Each type is included only if the caller may read it: members get benches
+(booking-choices visibility), operators get rooms, stations, benches, equipment and licenses.
+
+| Query | Notes |
+|---|---|
+| `q` | Required, 1–100 chars. Exact UID/SKU first, then name prefix, then trigram match |
+| `types` | Comma list: `room`, `station`, `bench`, `equipment`, `license`. Default: everything the caller may read |
+| `limit` | ≤ 10 per type, default 5 |
+
+```json
+{"data": [
+  {"type": "equipment", "match": "uid_exact", "resource": {"id": 501, "uid": "EQ-0501", "name": "Scope SC-07"}, "context": "Bench A-12 · Room 3.01"},
+  {"type": "bench", "match": "name_prefix", "resource": {"id": 12, "uid": "B-0012", "name": "A-12"}, "context": "Room 3.01"}
+]}
+```
+
+Errors: `400 invalid_query`. A useful command palette for the web app too.
+
+### C7. Not a Lab Mango endpoint: knowledge sources
+
+Policy and how-to answers ("Can I bring my own laptop?", calibration steps) come from documents the owner approves.
+The assistant indexes them (A8) and cites the source in a `citation_list` card. Lab Mango gets no new endpoint. If
+lab SOPs later live in Lab Mango, add a read-only document endpoint then.
+
+---
+
+## Feature → endpoint map
+
+| Feature | Who | Assistant (A) | Lab Mango (B/C) |
+|---|---|---|---|
+| My bookings Q&A | All | A2, A3 | `list_my_bookings`, `get_booking` |
+| Book a bench by need and time | All | A2–A4 | C1, C2, `create_booking` + C3 |
+| Recurring booking ("every Monday 9–12 for 4 weeks") | All | A4 `create_series` | C2 `occurrences`, C3 |
+| Reschedule or cancel | All | A4 | C2 `booking_id`, PATCH/cancel + C3 |
+| Notify me when free | All | A4 | slot watches, follow |
+| "Book my usual bench" | All | A6 preferences/memory | C1, C2 |
+| Proactive reminders and rebooking after downtime | All | A6 suggestions | `list_my_bookings`, `list_notifications`, C1 |
+| Booking rules Q&A | All | A3 | C5 + knowledge (C7) |
+| Equipment by spec and time | Operators | A3 `equipment_match` card | C4, C6, B2 resolvers |
+| Where is / who has device X | Operators | A5 label photo | C6, `get_equipment` placement and loan |
+| Reserve matched equipment | Operators | A4 | `reserve_equipment` |
+| Put a resource into downtime | Operators | A4 | `create_downtime` |
+| Approval inbox | Approvers | A4, A6 suggestions | B3 |
+| Lab status and usage | All / operators | A3 `stat` card | B4 |
+| Report a problem | All | A4, A5 photo | `create_support_ticket`, C6 |
+| Admin, quality, cost | Assistant admins | A8 | — |
+
+## New Lab Mango work summary
+
+| ID | Endpoint | Migration | Tier | Phase |
 |---|---|---|---|---|
-| G1 | No search for benches free in a time window; `booking-choices` takes only `q` and `has_computing` | `GET /api/labs/benches/availability` | bench_bookings (reads benches via `public.py`) | T2 (booking rules, query budget; bounded `limit`) |
-| G2 | No dry-run before create; the LLM would have to try the create to learn the errors | `POST /api/labs/bench-bookings/actions/check` | bench_bookings (reuse create validation; no write) | T2 |
-| G3 | `POST /api/labs/bench-bookings` does not appear to honor `Idempotency-Key` (WRT-7/8); a retried confirm could make two bookings. The overlap constraint stops two bookings of the same bench, but idempotency should still be added | Add `Idempotency-Key` to booking create, patch and cancel | bench_bookings | T2 |
-| G4 | Equipment search cannot filter by spec values (`ProductModelSpecification.value` is a string per definition) or by free time window | `POST /api/labs/equipment/actions/match` | equipment | T2 (numeric compare on text values needs a typed column or parsing; index plan) |
-| G5 | Booking rules are only in code (`policies.default_approval_status`, ...) | `GET /api/labs/bench-bookings/policy` | bench_bookings | T1 |
+| C3 | `Idempotency-Key` on booking create, PATCH, cancel | Possibly (key store, or reuse the approve/reject receipt pattern) | T2 | 1 — before any booking write from chat |
+| C2 | `POST /api/labs/bench-bookings/actions/check` | No | T2 | 1 |
+| C5 | `GET /api/labs/bench-bookings/policy` | No | T1 | 1 |
+| C1 | `GET /api/labs/benches/availability` | No (uses existing range indexes; verify with `EXPLAIN`) | T2 | 2 |
+| C6 | `GET /api/labs/resources/lookup` | Maybe (trigram indexes on names if missing) | T2 | 2 |
+| C4 | `POST /api/labs/equipment/actions/match` | Yes, recommended (`value_number`) | T2 | 3 |
 
-Not needed in Lab Mango: conversation storage, action proposals and the LLM. All of these stay in the assistant
-service, so Lab Mango gains no chat state.
+## Rollout
 
-## Rollout order (suggestion)
-
-1. **Read-only pilot:** D1 OBO, B0, the B1 reads, the B2 reads and F2. No writes, so the security risk is low.
-2. **G1 + G2 + G3**, then booking writes through confirm-only proposals.
-3. **G4** equipment matching, then F1, F3 and F4.
-4. F7–F9.
+1. **Read-only pilot:** OBO auth, A1–A3, A7, A9, read tools in B1–B4. No proposals yet.
+2. **Booking writes:** C3, C2, C5, then A4 for booking create, change and cancel and for slot watches.
+3. **Finding things:** C1, C6, A6 preferences and suggestions, B3 approvals.
+4. **Operators advanced:** C4 (with migration), reservations and downtime proposals, A5 attachments.
+5. **Knowledge and admin:** C7 knowledge sources, A8 evaluations.
 
 ## Open questions for the owner
 
-1. OBO (recommended) or pass-through token (D1)?
-2. Should members see other users' names in availability results, or only "busy"?
-3. May the assistant approve or reject bookings (F1), or only list them?
-4. Which numeric specs must `match_equipment` support first (e.g. bandwidth, channels, voltage)? This decides
-   whether G4 needs a typed value column.
-5. Retention period for conversation history and the tool-call audit log.
+1. **Q1** OBO (recommended) or pass-through of a Lab Mango token?
+2. **Q2** In C1, may members see who booked a busy bench, or only "Booked"? (Spec assumes only "Booked".)
+3. **Q3** May approvers approve or reject from chat (B3), or only list?
+4. **Q4** Which numeric specs must C4 support first (bandwidth, channels, voltage, ...)? This decides the
+   `value_number` migration.
+5. **Q5** Retention for conversation history, attachments and the tool-call audit log.
+6. **Q6** May `notification.mark_all_read` skip confirmation as a low-risk write?
+7. **Q7** Is there a maximum booking horizon (how far ahead)? C5 `max_horizon_days` is `null` because the code has none.
