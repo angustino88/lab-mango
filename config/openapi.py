@@ -26,6 +26,9 @@ ENUM_NAME_OVERRIDES: dict[str, str | list[str]] = {
     # Hardware ID kinds (equipment and agent observations): pinned so ``kind`` does not rename KindEnum.
     "EquipmentHardwareIdKindEnum": "core.labs.models.EquipmentHardwareIdKind",
     "EquipmentLifecycleStateEnum": "core.labs.models.EquipmentLifecycleState",
+    # Telemetry target / install-location type (core.labs.models.telemetry.target.TelemetryTargetType). The same
+    # choice set is published as ``type``, ``target_type`` and ``install_location_type``; pinned so it keeps one name.
+    "InstallLocationTypeEnum": "core.labs.models.telemetry.target.TelemetryTargetType",
     "LicenseStatusEnum": "core.labs.models.LicenseStatus",
     # Downtime ``kind`` (planned / unplanned): pinned so other ``kind`` enums do not rename it.
     "KindEnum": "core.labs.models.resource.base.downtime.DowntimeKind",

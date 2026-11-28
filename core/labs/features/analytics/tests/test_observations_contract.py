@@ -187,6 +187,8 @@ def test_websocket_get_pagination_audit_and_precise_candidate(schema, rows, page
             "message": "Synthetic notification",
             "details": "Synthetic details",
             "message_type": {"value": "info", "label": "Info"},
+            "display_mode": {"value": "alert", "label": "One-time alert"},
+            "is_dismissible": True,
             "expires_at": "2026-11-10T12:00:00Z",
             "action_path": "",
             "is_read": False,

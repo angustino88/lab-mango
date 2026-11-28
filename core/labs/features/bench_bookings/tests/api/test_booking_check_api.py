@@ -236,4 +236,7 @@ class TestAlternatives:
         result = response.json()["data"]["results"][0]
         assert result["is_bookable"] is False
         same_bench = [item for item in result["alternatives"] if item["bench"]["id"] == bench.pk]
-        assert same_bench and same_bench[0]["starts_at"].startswith(starts_at.date().isoformat())
+        # The bench's next free slot of the requested length starts when the blocking booking ends. Compare datetimes:
+        # the API answers in local time (TIME_ZONE) while ``starts_at`` is UTC, so their calendar dates can differ.
+        assert same_bench
+        assert datetime.fromisoformat(same_bench[0]["starts_at"]) == ends_at + timedelta(hours=1)
