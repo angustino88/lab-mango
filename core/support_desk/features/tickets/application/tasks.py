@@ -11,6 +11,7 @@ from django.utils.html import escape, linebreaks
 
 from config.celery_app import app as celery_app
 from core.support_desk.contracts import (
+    NON_SLA_TICKET_TYPES,
     ActivityEventType,
     AttachmentScanStatus,
     OutboxChannel,
@@ -224,6 +225,8 @@ def flag_sla_breaches() -> int:
     base = (
         SupportTicket.objects.select_related("status", "team", "team__lead", "assignee", "requester", "priority")
         .exclude(status__system_state=SystemState.DONE.value)
+        # Feedback-style types never carry SLA clocks; skipping them also ignores any stale deadline columns.
+        .exclude(ticket_type__in=NON_SLA_TICKET_TYPES)
         .filter(sla_paused_at__isnull=True)
     )
     breached = 0

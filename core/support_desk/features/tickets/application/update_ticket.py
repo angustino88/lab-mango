@@ -22,7 +22,7 @@ from core.support_desk.features.tickets.application.policies import (
     can_view_ticket,
 )
 from core.support_desk.features.tickets.application.shared import actor_display_name
-from core.support_desk.features.tickets.application.sla import compute_deadlines
+from core.support_desk.features.tickets.application.sla import compute_deadlines, sla_applies
 from core.support_desk.features.tickets.application.triage import (
     get_or_create_labels,
     label_names,
@@ -194,14 +194,36 @@ def update_ticket(command: UpdateTicketInput, *, actor: Any) -> SupportTicket:
             updates["sla_paused_at"] = None
             updates["response_breached_at"] = None
             updates["resolution_breached_at"] = None
-        elif priority_changed or ticket.ticket_type in NON_SLA_TICKET_TYPES:
-            effective_priority = priority_changed or ticket.priority
-            deadlines = compute_deadlines(
-                effective_priority,
-                start=ticket.created_at,
-                paused_seconds=ticket.sla_paused_seconds,
-                enabled=SupportSettings.get_solo().sla_enabled,
-            )
+        elif ticket.ticket_type in NON_SLA_TICKET_TYPES:
+            # Becoming SLA-bound: clocks start now, so time spent as feedback never counts as an instant breach.
+            now = timezone.now()
+            app_settings = SupportSettings.get_solo()
+            clocks_on = sla_applies(final_ticket_type, app_settings=app_settings)
+            deadlines = compute_deadlines(priority_changed or ticket.priority, start=now, enabled=clocks_on)
+            if ticket.first_response_at is None:
+                updates["response_due_at"] = deadlines["response_due_at"]
+            updates["resolution_due_at"] = deadlines["resolution_due_at"]
+            updates["response_breached_at"] = None
+            updates["resolution_breached_at"] = None
+            updates["sla_paused_at"] = now if clocks_on and ticket.status.pauses_sla else None
+            updates["sla_paused_seconds"] = 0
+            updates["response_clock_base_at"] = now
+            updates["resolution_clock_base_at"] = now
+        elif priority_changed:
+            # Each clock keeps its own origin (creation, reopen or reclassification); the new targets apply from there.
+            sla_enabled = SupportSettings.get_solo().sla_enabled
+            deadlines = {
+                field: compute_deadlines(
+                    priority_changed,
+                    start=base or ticket.created_at,
+                    paused_seconds=ticket.sla_paused_seconds,
+                    enabled=sla_enabled,
+                )[field]
+                for field, base in (
+                    ("response_due_at", ticket.response_clock_base_at),
+                    ("resolution_due_at", ticket.resolution_clock_base_at),
+                )
+            }
             if ticket.first_response_at is None:
                 updates["response_due_at"] = deadlines["response_due_at"]
             updates["resolution_due_at"] = deadlines["resolution_due_at"]

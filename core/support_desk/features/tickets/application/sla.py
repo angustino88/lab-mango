@@ -10,7 +10,7 @@ from typing import Any
 
 from django.utils import timezone
 
-from core.support_desk.contracts import SlaState, SystemState
+from core.support_desk.contracts import NON_SLA_TICKET_TYPES, SlaState, SystemState
 from core.support_desk.models.priority import SupportPriority
 from core.support_desk.models.settings import SupportSettings
 from core.support_desk.models.status import SupportStatus
@@ -19,6 +19,13 @@ from core.support_desk.models.ticket import SupportTicket
 
 def _add_minutes(start: datetime, minutes: int | None) -> datetime | None:
     return start + timedelta(minutes=minutes) if minutes else None
+
+
+def sla_applies(ticket_type: str, *, app_settings: SupportSettings | None = None) -> bool:
+    """True when tickets of ``ticket_type`` run SLA clocks (SLA switched on and not a feedback-style type)."""
+    if ticket_type in NON_SLA_TICKET_TYPES:
+        return False
+    return (app_settings or SupportSettings.get_solo()).sla_enabled
 
 
 def compute_deadlines(
@@ -54,6 +61,9 @@ def apply_status_sla_transition(
     Returns ``(updates, event)`` where ``event`` is ``"paused"``, ``"resumed"`` or ``None``.
     """
     updates: dict[str, Any] = {}
+    if ticket.ticket_type in NON_SLA_TICKET_TYPES:
+        # No clocks to pause or resume; leave the pause columns empty so stats and activity stay clean.
+        return updates, None
     if to_status.pauses_sla and not from_status.pauses_sla and ticket.sla_paused_at is None:
         updates["sla_paused_at"] = now
         return updates, "paused"
@@ -100,7 +110,7 @@ def sla_summary(ticket: SupportTicket, *, now: datetime | None = None, at_risk_p
     now = now or timezone.now()
     if at_risk_percent is None:
         at_risk_percent = SupportSettings.get_solo().sla_at_risk_percent
-    paused = ticket.sla_paused_at is not None
+    paused = ticket.sla_paused_at is not None and ticket.ticket_type not in NON_SLA_TICKET_TYPES
     is_done = ticket.status.system_state == SystemState.DONE.value
     resolved_marker = ticket.resolved_at or (ticket.closed_at if is_done else None)
 

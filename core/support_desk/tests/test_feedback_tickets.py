@@ -6,19 +6,26 @@ import pytest
 from django.db import IntegrityError
 from django.utils import timezone
 
-from core.support_desk.contracts import NON_SLA_TICKET_TYPES, TicketType
+from core.support_desk.contracts import NON_SLA_TICKET_TYPES, ActivityEventType, SystemState, TicketType
 from core.support_desk.exceptions import CsatNotAllowedError, InvalidFieldValueError, PermissionDeniedError
 from core.support_desk.features.tickets.application.create_ticket import CreateTicketInput, create_ticket
 from core.support_desk.features.tickets.application.policies import is_csat_submission_open
+from core.support_desk.features.tickets.application.sla import sla_applies, sla_summary
 from core.support_desk.features.tickets.application.submit_csat import SubmitCsatInput, submit_csat
+from core.support_desk.features.tickets.application.tasks import flag_sla_breaches
 from core.support_desk.features.tickets.application.transition_ticket import (
     TransitionTicketInput,
     transition_ticket,
 )
 from core.support_desk.features.tickets.application.triage import sanitize_client_context, sanitize_page_path
+from core.support_desk.features.tickets.application.update_ticket import UpdateTicketInput, update_ticket
+from core.support_desk.features.tickets.queries.stats import get_queue_stats
+from core.support_desk.models.activity import TicketActivity
 from core.support_desk.models.category import SupportCategory
 from core.support_desk.models.settings import SupportSettings
+from core.support_desk.models.status import SupportStatus
 from core.support_desk.models.ticket import SupportTicket
+from core.support_desk.models.transition import SupportStatusTransition
 
 pytestmark = pytest.mark.django_db
 
@@ -419,3 +426,179 @@ class TestCsatEligibilityParity:
             with pytest.raises((CsatNotAllowedError, PermissionDeniedError)):
                 submit_csat(SubmitCsatInput(ticket_key=ticket.key, score=4), actor=actor)
         assert flag is (case == "resolved")
+
+
+def _add_waiting_status(setup):
+    """A *Waiting for Customer* status that pauses SLA clocks, reachable from and back to *In Progress*."""
+    waiting = SupportStatus.objects.create(
+        name="Waiting for Customer",
+        system_state=SystemState.ACTIVE.value,
+        pauses_sla=True,
+        is_active=True,
+        sort_order=5,
+    )
+    for from_status, to_status in ((setup["status_active"], waiting), (waiting, setup["status_active"])):
+        SupportStatusTransition.objects.create(
+            from_status=from_status, to_status=to_status, allowed_roles=["agent", "admin"]
+        )
+    return waiting
+
+
+def _create(actor, ticket_type, **kw):
+    return create_ticket(
+        CreateTicketInput(subject="Ticket", description="Details.", ticket_type=ticket_type, **kw), actor=actor
+    )
+
+
+def _reclassify(ticket, ticket_type, actor):
+    ticket.refresh_from_db()
+    return update_ticket(
+        UpdateTicketInput(ticket_key=ticket.key, version=ticket.version, ticket_type=ticket_type), actor=actor
+    )
+
+
+class TestSlaApplies:
+    @pytest.mark.parametrize("ticket_type", sorted(NON_SLA_TICKET_TYPES))
+    def test_non_sla_types_never_apply(self, support_setup, ticket_type):
+        assert sla_applies(ticket_type, app_settings=SupportSettings.get_solo()) is False
+
+    def test_sla_types_follow_the_global_switch(self, support_setup):
+        app_settings = SupportSettings.get_solo()
+        assert sla_applies(TicketType.BUG.value, app_settings=app_settings) is True
+        app_settings.sla_enabled = False
+        assert sla_applies(TicketType.BUG.value, app_settings=app_settings) is False
+
+
+class TestReclassifyToSlaType:
+    def test_clock_starts_at_reclassification_not_creation(self, support_setup, requester_user, agent_user):
+        _set_sla_targets(support_setup["priority_med"])
+        ticket = _create(requester_user, TicketType.FEEDBACK.value)
+        SupportTicket.objects.filter(pk=ticket.pk).update(created_at=timezone.now() - timedelta(days=30))
+
+        before = timezone.now()
+        ticket = _reclassify(ticket, TicketType.BUG.value, agent_user)
+
+        assert ticket.response_due_at >= before + timedelta(minutes=60)
+        assert ticket.resolution_due_at >= before + timedelta(minutes=240)
+        assert flag_sla_breaches() == 0
+
+    def test_reclassifying_while_paused_starts_a_paused_clock(self, support_setup, requester_user, agent_user):
+        _set_sla_targets(support_setup["priority_med"])
+        waiting = _add_waiting_status(support_setup)
+        ticket = _create(requester_user, TicketType.FEEDBACK.value)
+        ticket = _move(ticket, support_setup["status_active"], agent_user)
+        ticket = _move(ticket, waiting, agent_user)
+
+        ticket = _reclassify(ticket, TicketType.BUG.value, agent_user)
+
+        assert ticket.resolution_due_at is not None
+        assert ticket.sla_paused_at is not None
+        assert ticket.sla_paused_seconds == 0
+
+
+class TestNonSlaPauseBookkeeping:
+    @pytest.mark.parametrize("ticket_type", sorted(NON_SLA_TICKET_TYPES))
+    def test_pausing_status_leaves_non_sla_ticket_untouched(
+        self, support_setup, requester_user, agent_user, ticket_type
+    ):
+        waiting = _add_waiting_status(support_setup)
+        ticket = _create(requester_user, ticket_type)
+        ticket = _move(ticket, support_setup["status_active"], agent_user)
+
+        ticket = _move(ticket, waiting, agent_user)
+        assert ticket.sla_paused_at is None
+
+        ticket = _move(ticket, support_setup["status_active"], agent_user)
+        assert ticket.sla_paused_seconds == 0
+        sla_events = {ActivityEventType.SLA_PAUSED.value, ActivityEventType.SLA_RESUMED.value}
+        assert not TicketActivity.objects.filter(ticket=ticket, event_type__in=sla_events).exists()
+
+    def test_sla_ticket_still_pauses(self, support_setup, requester_user, agent_user):
+        _set_sla_targets(support_setup["priority_med"])
+        waiting = _add_waiting_status(support_setup)
+        ticket = _create(requester_user, TicketType.BUG.value)
+        ticket = _move(ticket, support_setup["status_active"], agent_user)
+
+        ticket = _move(ticket, waiting, agent_user)
+
+        assert ticket.sla_paused_at is not None
+        assert TicketActivity.objects.filter(ticket=ticket, event_type=ActivityEventType.SLA_PAUSED.value).exists()
+
+
+class TestNonSlaReadsIgnoreStaleClocks:
+    """Rows written before these fixes can still carry SLA columns; reads and the breach scan must ignore them."""
+
+    @pytest.mark.parametrize("ticket_type", sorted(NON_SLA_TICKET_TYPES))
+    def test_breach_scan_skips_non_sla_types(self, support_setup, requester_user, ticket_type):
+        ticket = _create(requester_user, ticket_type)
+        past = timezone.now() - timedelta(hours=1)
+        SupportTicket.objects.filter(pk=ticket.pk).update(response_due_at=past, resolution_due_at=past)
+
+        assert flag_sla_breaches() == 0
+        ticket.refresh_from_db()
+        assert ticket.response_breached_at is None
+        assert ticket.resolution_breached_at is None
+
+    def test_stats_and_summary_ignore_stale_pause_on_non_sla(self, support_setup, requester_user, agent_user):
+        feedback = _create(requester_user, TicketType.FEEDBACK.value)
+        SupportTicket.objects.filter(pk=feedback.pk).update(sla_paused_at=timezone.now())
+
+        assert get_queue_stats(viewer=agent_user)["sla"]["paused"] == 0
+        feedback = SupportTicket.objects.select_related("status").get(pk=feedback.pk)
+        assert sla_summary(feedback)["paused"] is False
+
+
+def _change_priority(ticket, priority, actor):
+    ticket.refresh_from_db()
+    return update_ticket(
+        UpdateTicketInput(ticket_key=ticket.key, version=ticket.version, priority_id=priority.id), actor=actor
+    )
+
+
+class TestPriorityChangeKeepsClockOrigin:
+    """A priority change re-bases deadlines on where each clock started, not always on ``created_at``."""
+
+    def test_after_reopen_resolution_is_measured_from_the_reopen(self, support_setup, requester_user, agent_user):
+        _set_sla_targets(support_setup["priority_med"])
+        _set_sla_targets(support_setup["priority_high"], response=30, resolution=120)
+        ticket = _create(requester_user, TicketType.BUG.value)
+        # Old ticket that already spent an hour paused before it was resolved.
+        SupportTicket.objects.filter(pk=ticket.pk).update(
+            created_at=timezone.now() - timedelta(days=30), sla_paused_seconds=3600
+        )
+        reopened_at = timezone.now()
+        ticket = _resolve_and_reopen(support_setup, ticket, agent_user, requester_user)
+
+        ticket = _change_priority(ticket, support_setup["priority_high"], agent_user)
+
+        assert reopened_at + timedelta(minutes=120) <= ticket.resolution_due_at
+        assert ticket.resolution_due_at < reopened_at + timedelta(minutes=125)
+        flag_sla_breaches()
+        ticket.refresh_from_db()
+        assert ticket.resolution_breached_at is None
+
+    def test_after_reclassification_both_clocks_keep_their_new_origin(self, support_setup, requester_user, agent_user):
+        _set_sla_targets(support_setup["priority_med"])
+        _set_sla_targets(support_setup["priority_high"], response=30, resolution=120)
+        ticket = _create(requester_user, TicketType.FEEDBACK.value)
+        SupportTicket.objects.filter(pk=ticket.pk).update(created_at=timezone.now() - timedelta(days=30))
+        reclassified_at = timezone.now()
+        ticket = _reclassify(ticket, TicketType.BUG.value, agent_user)
+
+        ticket = _change_priority(ticket, support_setup["priority_high"], agent_user)
+
+        assert ticket.response_due_at >= reclassified_at + timedelta(minutes=30)
+        assert ticket.resolution_due_at >= reclassified_at + timedelta(minutes=120)
+        assert flag_sla_breaches() == 0
+
+    def test_untouched_ticket_still_rebases_on_creation(self, support_setup, requester_user, agent_user):
+        _set_sla_targets(support_setup["priority_med"])
+        _set_sla_targets(support_setup["priority_high"], response=30, resolution=120)
+        ticket = _create(requester_user, TicketType.BUG.value)
+        SupportTicket.objects.filter(pk=ticket.pk).update(sla_paused_seconds=600)
+        ticket.refresh_from_db()
+
+        ticket = _change_priority(ticket, support_setup["priority_high"], agent_user)
+
+        assert ticket.response_due_at == ticket.created_at + timedelta(minutes=30, seconds=600)
+        assert ticket.resolution_due_at == ticket.created_at + timedelta(minutes=120, seconds=600)

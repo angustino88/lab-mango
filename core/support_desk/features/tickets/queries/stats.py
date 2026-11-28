@@ -6,7 +6,7 @@ from typing import Any
 from django.db.models import Avg, Count, F, Q
 from django.utils import timezone
 
-from core.support_desk.contracts import SystemState
+from core.support_desk.contracts import NON_SLA_TICKET_TYPES, SystemState
 from core.support_desk.models.ticket import SupportTicket
 
 
@@ -45,7 +45,8 @@ def get_queue_stats(*, viewer: Any, days: int = 30) -> dict[str, Any]:
         row["ticket_type"]: row["count"] for row in open_qs.values("ticket_type").annotate(count=Count("id"))
     }
 
-    sla = open_qs.aggregate(
+    # SLA health counts only SLA-bound tickets; feedback-style types never run clocks.
+    sla = open_qs.exclude(ticket_type__in=NON_SLA_TICKET_TYPES).aggregate(
         response_breached=Count("id", filter=Q(response_breached_at__isnull=False)),
         resolution_breached=Count("id", filter=Q(resolution_breached_at__isnull=False)),
         overdue_resolution=Count("id", filter=Q(resolution_due_at__lt=now, sla_paused_at__isnull=True)),
