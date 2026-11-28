@@ -56,6 +56,7 @@ Append-only. Enforced by model `save/delete` guards **and** PostgreSQL triggers 
 - Entering a `pauses_sla` status stores `sla_paused_at`; leaving it pushes pending due dates out by the paused time and accumulates `sla_paused_seconds`. A requester reply that auto-resumes a ticket (waiting → active) does the same.
 - Only a **public reply by an agent other than the requester** sets `first_response_at` (internal notes never stop the response clock).
 - Changing priority re-bases open deadlines on `created_at + target + paused`. Reopening restarts the resolution clock.
+- `feature_request` and `feedback` tickets never run clocks (`sla_applies` in `sla.py`): no deadlines on create or reopen, no pause bookkeeping or `sla_paused/resumed` events, and they are skipped by the breach scan and the stats SLA counts. Reclassifying one to an SLA-bound type starts both clocks at that moment (paused if its current status pauses SLA), so time spent as feedback is never an instant breach.
 - `support_desk.flag_sla_breaches` stamps `*_breached_at` exactly once, writes an `sla_breached` activity and notifies assignee + team lead.
 - API exposes `sla` = `{state, paused, response{state,due_at,breached_at}, resolution{…}}`, `state ∈ none|ok|at_risk|breached|paused|met`.
 

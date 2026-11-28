@@ -10,7 +10,6 @@ from django.db import IntegrityError, transaction
 
 from core.common.domain.errors import Conflict
 from core.support_desk.contracts import (
-    NON_SLA_TICKET_TYPES,
     ActivityEventType,
     SystemState,
     TicketSource,
@@ -32,7 +31,7 @@ from core.support_desk.features.tickets.application.policies import (
     can_triage_ticket,
 )
 from core.support_desk.features.tickets.application.shared import actor_display_name
-from core.support_desk.features.tickets.application.sla import compute_deadlines
+from core.support_desk.features.tickets.application.sla import compute_deadlines, sla_applies
 from core.support_desk.features.tickets.application.triage import (
     get_or_create_labels,
     resolve_category,
@@ -222,8 +221,8 @@ def create_ticket(command: CreateTicketInput, *, actor: Any) -> SupportTicket:
             )
 
             # SLA deadlines are measured from the moment the ticket was created, except for non-SLA feedback types.
-            sla_applies = app_settings.sla_enabled and ticket_type not in NON_SLA_TICKET_TYPES
-            deadlines = compute_deadlines(priority, start=ticket.created_at, enabled=sla_applies)
+            clocks_on = sla_applies(ticket_type, app_settings=app_settings)
+            deadlines = compute_deadlines(priority, start=ticket.created_at, enabled=clocks_on)
             for field, value in deadlines.items():
                 setattr(ticket, field, value)
             if any(deadlines.values()):

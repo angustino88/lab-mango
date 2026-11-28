@@ -6,7 +6,7 @@ from typing import Any
 from django.db import transaction
 from django.utils import timezone
 
-from core.support_desk.contracts import NON_SLA_TICKET_TYPES, ActivityEventType, ResolutionCode, SystemState
+from core.support_desk.contracts import ActivityEventType, ResolutionCode, SystemState
 from core.support_desk.exceptions import (
     ConcurrencyConflictError,
     InvalidFieldValueError,
@@ -27,7 +27,11 @@ from core.support_desk.features.tickets.application.shared import (
     actor_or_none,
     get_ticket_for_actor,
 )
-from core.support_desk.features.tickets.application.sla import apply_status_sla_transition, compute_deadlines
+from core.support_desk.features.tickets.application.sla import (
+    apply_status_sla_transition,
+    compute_deadlines,
+    sla_applies,
+)
 from core.support_desk.models.activity import TicketActivity
 from core.support_desk.models.settings import SupportSettings
 from core.support_desk.models.status import SupportStatus
@@ -147,11 +151,11 @@ def transition_ticket(command: TransitionTicketInput, *, actor: Any) -> SupportT
         updates["root_cause"] = ""
         updates["reopen_count"] = ticket.reopen_count + 1
         # Fresh resolution clock from the reopen moment (response clock is not restarted); non-SLA types stay off.
-        sla_applies = app_settings.sla_enabled and ticket.ticket_type not in NON_SLA_TICKET_TYPES
-        deadlines = compute_deadlines(ticket.priority, start=now, enabled=sla_applies)
+        clocks_on = sla_applies(ticket.ticket_type, app_settings=app_settings)
+        deadlines = compute_deadlines(ticket.priority, start=now, enabled=clocks_on)
         updates["resolution_due_at"] = deadlines["resolution_due_at"]
         updates["resolution_breached_at"] = None
-        updates["sla_paused_at"] = now if to_status.pauses_sla else None
+        updates["sla_paused_at"] = now if clocks_on and to_status.pauses_sla else None
 
     with transaction.atomic():
         rows = SupportTicket.objects.filter(
