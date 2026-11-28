@@ -156,6 +156,22 @@ class SupportTicket(models.Model):
     )
     response_breached_at = models.DateTimeField(null=True, blank=True)
     resolution_breached_at = models.DateTimeField(null=True, blank=True)
+    response_clock_base_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=(
+            "Response clock origin minus the paused seconds already counted when it started; "
+            "due = base + target + sla_paused_seconds. Empty means created_at."
+        ),
+    )
+    resolution_clock_base_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=(
+            "Resolution clock origin (creation, reopen or reclassification) minus the paused seconds already "
+            "counted when it started; due = base + target + sla_paused_seconds. Empty means created_at."
+        ),
+    )
 
     reopen_count = models.PositiveIntegerField(default=0)
     resolution_code = models.CharField(max_length=20, choices=RESOLUTION_CODE_CHOICES, blank=True, default="")

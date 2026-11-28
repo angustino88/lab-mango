@@ -1,6 +1,7 @@
 """Transition ticket status command use case."""
 
 from dataclasses import dataclass
+from datetime import timedelta
 from typing import Any
 
 from django.db import transaction
@@ -156,6 +157,8 @@ def transition_ticket(command: TransitionTicketInput, *, actor: Any) -> SupportT
         updates["resolution_due_at"] = deadlines["resolution_due_at"]
         updates["resolution_breached_at"] = None
         updates["sla_paused_at"] = now if clocks_on and to_status.pauses_sla else None
+        # Pause time counted before the reopen must not stretch the new clock when priority re-bases it later.
+        updates["resolution_clock_base_at"] = now - timedelta(seconds=ticket.sla_paused_seconds)
 
     with transaction.atomic():
         rows = SupportTicket.objects.filter(
