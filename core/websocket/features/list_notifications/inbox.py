@@ -36,7 +36,10 @@ class NotificationUnreadCountView(GenericAPIView):
 
     @extend_schema(
         tags=["Websocket Notifications"],
-        responses={200: ResponseContract.success("NotificationUnreadCount", UnreadCountSerializer).schema},
+        responses={
+            200: ResponseContract.success("NotificationUnreadCount", UnreadCountSerializer).schema,
+            401: ResponseContract.unauthorized().schema,
+        },
         description=(
             "Number of unread, unexpired one-time alert notifications for the caller (for the header bell). "
             "Expiring banners are excluded from the badge count."
@@ -78,7 +81,10 @@ class NotificationMarkAllReadView(GenericAPIView):
     @extend_schema(
         tags=["Websocket Notifications"],
         request=None,
-        responses={200: ResponseContract.success("NotificationMarkAllRead", MarkAllReadSerializer).schema},
+        responses={
+            200: ResponseContract.success("NotificationMarkAllRead", MarkAllReadSerializer).schema,
+            401: ResponseContract.unauthorized().schema,
+        },
         description=(
             f"Mark the caller's visible unread one-time alert notifications as read (up to {MARK_ALL_LIMIT} per call). "
             "Active banners are not dismissed by this action."

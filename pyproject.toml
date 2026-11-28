@@ -3,13 +3,13 @@ name = "prj-labmango-backend-refactor"
 version = "0.1.0"
 description = "LabMango Backend — Django 5.2 LTS"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 dependencies = [
     "drf-api-contracts",
     # Core Django
     "channels>=4.0.0",
     "channels-redis>=4.0.0",
-    "django==5.2.13",
+    "django==5.2.19",
     "django-environ>=0.11.2",
     "django-model-utils>=4.5.0",
     # ASGI server (replaces gunicorn + daphne)
@@ -99,7 +99,7 @@ markers = [
 ]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.14"
 check_untyped_defs = true
 ignore_missing_imports = true
 warn_unused_ignores = true
@@ -111,7 +111,7 @@ django_settings_module = "config.settings.test"
 
 [tool.ruff]
 line-length = 119
-target-version = "py312"
+target-version = "py314"
 exclude = [".git", "*/migrations/*", ".venv"]
 
 [tool.ruff.lint]

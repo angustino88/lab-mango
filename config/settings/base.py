@@ -56,6 +56,7 @@ DJANGO_APPS = [
     "django.contrib.sites",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.postgres",  # required by Django 6.1+ checks for GinIndex/ExclusionConstraint/ArrayField
     "config.admin_site.LabMangoAdminConfig",  # django.contrib.admin with the Lab Mango site
     "django.forms",
 ]

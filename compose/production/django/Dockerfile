@@ -1,7 +1,7 @@
 # ============================================================
-# Stage 1: OS base with Python 3.12 + uv
+# Stage 1: OS base with Python 3.14 + uv
 # ============================================================
-FROM python:3.12-slim-bookworm AS python-base
+FROM python:3.14-slim-bookworm AS python-base
 
 ARG PIP_INDEX_URL=""
 ARG PIP_EXTRA_INDEX_URL=""

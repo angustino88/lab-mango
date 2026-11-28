@@ -448,6 +448,8 @@ class BenchBookingPolicyAPIView(FeatureAPIView):
     schema_tags = ("Bench Bookings",)
     get_contract = OperationContract(
         success=ResponseContract.success("BenchBookingPolicy", BenchBookingPolicySerializer),
+        unauthorized=ResponseContract.unauthorized(),
+        forbidden=ResponseContract.forbidden(),
     )
 
     def handle_get(self, request: Request, *args, **kwargs) -> Response:

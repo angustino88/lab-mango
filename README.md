@@ -17,7 +17,7 @@ Start with the [feature standard](docs/architecture/feature-template.md), then t
 
 ## Development environment
 
-The project requires Python 3.12 or newer and uses `uv` with the committed lockfile. On Windows, `setup_venv.py` bootstraps/synchronizes the local `.venv`; review that script's proxy settings for your network before running it. The Django test settings use a PostgreSQL test database; configure `DATABASE_URL` or use the documented local development environment before running tests.
+The project requires Python 3.14 or newer and uses `uv` with the committed lockfile. On Windows, `setup_venv.py` bootstraps/synchronizes the local `.venv`; review that script's proxy settings for your network before running it. The Django test settings use a PostgreSQL test database; configure `DATABASE_URL` or use the documented local development environment before running tests.
 
 After activating the environment, run the automated suite with:
 

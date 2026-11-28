@@ -1,5 +1,5 @@
 # Local development image: dev dependencies included, source code bind-mounted at /app.
-FROM python:3.12-slim-bookworm
+FROM python:3.14-slim-bookworm
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \

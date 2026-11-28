@@ -24,6 +24,8 @@ class CSRFTokenView(AuthAPIView):
     authentication_classes = []
     get_contract = OperationContract(
         success=ResponseContract.success("CSRFToken", CSRFTokenResponseSerializer),
+        # Open to everyone but subject to the default anonymous rate limit.
+        rate_limited=ResponseContract.problem(429),
     )
 
     def handle_get(self, request: Request, *args, **kwargs):

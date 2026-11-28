@@ -237,7 +237,7 @@ def test_api_workflow_covers_sources_and_preserves_existing_lint_gates():
     assert "services" not in job
     steps = job["steps"]
     assert any(
-        step.get("uses") == "actions/setup-python@v5" and step["with"]["python-version"] == "3.12" for step in steps
+        step.get("uses") == "actions/setup-python@v5" and step["with"]["python-version"] == "3.14" for step in steps
     )
     assert any(step.get("uses") == "astral-sh/setup-uv@v5" for step in steps)
     assert [step["run"] for step in steps if "run" in step] == [

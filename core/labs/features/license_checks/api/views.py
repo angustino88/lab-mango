@@ -134,7 +134,9 @@ class LicenseCheckPresetListAPIView(_LicenseCheckAPIView):
     """Templates for new checks (for example the Vector License Client)."""
 
     get_contract = OperationContract(
-        success=ResponseContract.success("LicenseCheckPresetList", LicenseCheckPresetListSerializer)
+        success=ResponseContract.success("LicenseCheckPresetList", LicenseCheckPresetListSerializer),
+        unauthorized=ResponseContract.unauthorized(),
+        forbidden=ResponseContract.forbidden(),
     )
 
     def handle_get(self, request):
