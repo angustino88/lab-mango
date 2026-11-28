@@ -2071,6 +2071,16 @@
               }
             },
             "description": ""
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
           }
         },
         "summary": "Get Csrf Token"
@@ -5097,6 +5107,26 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/BenchBookingPolicySerializersBenchBookingPolicyDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
                 }
               }
             },
@@ -23543,6 +23573,26 @@
               }
             },
             "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
           }
         },
         "summary": "Get License Checks Presets"
@@ -38160,6 +38210,16 @@
               }
             },
             "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
+                }
+              }
+            },
+            "description": ""
           }
         },
         "summary": "Mark All Read Notifications"
@@ -38186,6 +38246,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/NotificationUnreadCountInboxUnreadCountDetailResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponseEnvelope"
                 }
               }
             },
